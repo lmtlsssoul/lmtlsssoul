@@ -12,6 +12,10 @@ vi.mock('node:child_process', () => ({
     pid: 4242,
     unref: vi.fn(),
   })),
+  spawnSync: vi.fn(() => ({
+    status: 1,
+    stdout: '',
+  })),
 }));
 
 vi.mock('../soul/branding.ts', () => ({
@@ -95,6 +99,22 @@ describe('CLI entrypoint', () => {
     process.argv.push('status');
     await main();
     expect(log).toHaveBeenCalledWith('--- Soul Status ---');
+  });
+
+  it('toggles grownup mode on and persists state', async () => {
+    process.argv.push('grownup', 'on');
+    await main();
+
+    expect(success).toHaveBeenCalledWith(expect.stringContaining('Grownup mode enabled'));
+    const modePath = path.join(tempStateDir, 'grownup-mode.json');
+    const saved = JSON.parse(fs.readFileSync(modePath, 'utf-8')) as { enabled: boolean };
+    expect(saved.enabled).toBe(true);
+  });
+
+  it('shows grownup mode status with no argument', async () => {
+    process.argv.push('grownup');
+    await main();
+    expect(log).toHaveBeenCalledWith('--- Grownup Mode ---');
   });
 
   it('verifies archive hash-chain command', async () => {

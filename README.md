@@ -72,6 +72,7 @@ RELEASE_ACK=I_UNDERSTAND_RELEASE_IS_FINAL pnpm run release:ready -- --publish
 |---------|-------------|
 | `soul birth` | Launch Birth Portal setup (captures birthday core memory first) |
 | `soul start` / `soul stop` / `soul status` | Start, stop, and inspect daemon lifecycle + runtime stats |
+| `soul grownup [on|off|status]` | Master switch for Author capabilities with cross-substrate deepest-permission scan |
 | `soul models scan` | Discover available models from all substrates |
 | `soul models set <role> <modelRef>` | Assign model to an agent role (`<substrate>:<modelId>`) |
 | `soul gateway start [-p|--port] [-H|--host]` | Start gateway server in foreground |
@@ -81,6 +82,14 @@ RELEASE_ACK=I_UNDERSTAND_RELEASE_IS_FINAL pnpm run release:ready -- --publish
 | `soul treasury status` | Show treasury totals, budget caps, category spend, pending escalations |
 | `soul wallet status` | Show registered watch-only wallet balances |
 | `soul approve <approvalId> <signature> <approverId>` | Approve a pending spend request |
+
+Gateway reserved socket routes:
+- `/socket/mobile`
+- `/socket/robotics`
+- `/socket/plugins`
+- `/socket/pattern-input`
+- `/socket/hardware-oracle`
+- `/sockets` (runtime socket status JSON)
 
 ## Architecture
 

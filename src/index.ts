@@ -47,6 +47,13 @@ export { DistillationEngine } from './soul/distillation.ts';
 export type { DistillationOptions, ProbeResult, ProbeType } from './soul/distillation.ts';
 export { ConvergenceAnalyzer } from './soul/convergence.ts';
 export type { ConvergenceResult } from './soul/convergence.ts';
+export {
+  getGrownupModePath,
+  readGrownupMode,
+  setGrownupMode,
+  deriveGrownupCapabilities,
+} from './soul/modes.ts';
+export type { GrownupModeState, GrownupCapabilities } from './soul/modes.ts';
 export { GoalDecompositionEngine } from './agents/goals.ts';
 export type {
   Goal as DecomposedGoal,

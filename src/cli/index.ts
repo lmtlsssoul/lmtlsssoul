@@ -7,6 +7,7 @@ import { registerTreasuryCommands } from './treasury.ts';
 import { getStateDir } from '../soul/types.ts';
 import { GraphDB } from '../soul/graph-db.ts';
 import { ArchiveDB } from '../soul/archive-db.ts';
+import { deriveGrownupCapabilities, readGrownupMode, setGrownupMode } from '../soul/modes.ts';
 import { Reflection } from '../agents/reflection.ts';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -125,6 +126,30 @@ export async function main() {
       }
       console.log(`Graph Nodes: ${graph.getNodeCount()}`);
       console.log(`Archive Events: ${archive.getEventCount()}`);
+    });
+
+  program.command('grownup')
+    .description('Master switch for Author-level self-optimization, self-authoring, and root intent')
+    .argument('[state]', 'on | off | status', 'status')
+    .action((stateInput: string) => {
+      const state = normalizeGrownupState(stateInput);
+      if (!state) {
+        throw new Error('Invalid grownup mode state. Use "on", "off", or "status".');
+      }
+
+      if (state === 'status') {
+        printGrownupModeStatus();
+        return;
+      }
+
+      const mode = setGrownupMode(state === 'on', { updatedBy: 'author_cli' });
+      const capabilities = deriveGrownupCapabilities(mode);
+      success(`Grownup mode ${mode.enabled ? 'enabled' : 'disabled'}.`);
+      printGrownupSummary(mode, capabilities);
+
+      if (mode.enabled && capabilities.deepestPrivilege !== 'root') {
+        warn('Root-intent is enabled, but no root-grade path is available in this session.');
+      }
     });
 
   const modelsCommand = program.command('models')
@@ -364,4 +389,44 @@ async function getGatewayHealth(
       resolve({ ok: false, detail: 'Timed out' });
     });
   });
+}
+
+function normalizeGrownupState(value: string | undefined): 'on' | 'off' | 'status' | null {
+  const normalized = (value ?? 'status').trim().toLowerCase();
+  if (normalized === 'on' || normalized === 'off' || normalized === 'status') {
+    return normalized;
+  }
+  return null;
+}
+
+function printGrownupModeStatus(): void {
+  const mode = readGrownupMode();
+  const capabilities = deriveGrownupCapabilities(mode);
+  log('--- Grownup Mode ---');
+  printGrownupSummary(mode, capabilities);
+}
+
+function printGrownupSummary(
+  mode: ReturnType<typeof readGrownupMode>,
+  capabilities: ReturnType<typeof deriveGrownupCapabilities>
+): void {
+  console.log(`State: ${mode.enabled ? 'on' : 'off'}`);
+  console.log(`Self Optimize: ${capabilities.selfOptimize ? 'enabled' : 'disabled'}`);
+  console.log(`Self Author: ${capabilities.selfAuthor ? 'enabled' : 'disabled'}`);
+  console.log(`Root Intent: ${capabilities.rootIntent ? 'enabled' : 'disabled'}`);
+  console.log(`Root Access: ${capabilities.rootAccessActive ? 'active' : 'inactive'}`);
+  console.log(`Privilege Level: ${capabilities.privilegeLevel}`);
+  console.log(`Substrate: ${capabilities.substrate}`);
+  console.log(`Cloud Runtime: ${capabilities.cloud ? 'yes' : 'no'}`);
+  console.log(`Current Privilege: ${capabilities.currentPrivilege}`);
+  console.log(`Deepest Privilege: ${capabilities.deepestPrivilege}`);
+  console.log(`Escalation Strategy: ${capabilities.escalationStrategy}`);
+  if (capabilities.notes.length > 0) {
+    for (const note of capabilities.notes) {
+      console.log(`- ${note}`);
+    }
+  }
+  if (mode.updatedAt) {
+    console.log(`Updated At: ${mode.updatedAt}`);
+  }
 }
