@@ -144,6 +144,18 @@ export class GraphDB {
     return rows.map(row => this.mapNode(row));
   }
 
+  public getTopSalienceNodes(limit: number = 50): SoulNode[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM soul_nodes 
+      WHERE status = 'active' 
+      ORDER BY salience DESC 
+      LIMIT ?
+    `);
+    
+    const rows = stmt.all(limit) as any[];
+    return rows.map(row => this.mapNode(row));
+  }
+
   // ─── Edges ──────────────────────────────────────────────────────
 
   public createEdge(params: {
@@ -175,6 +187,32 @@ export class GraphDB {
     `);
     
     const rows = stmt.all(nodeId, nodeId) as any[];
+    return rows.map(row => ({
+      edgeId: row.edge_id,
+      sourceId: row.source_id,
+      targetId: row.target_id,
+      relation: row.relation as EdgeRelation,
+      strength: row.strength,
+      createdAt: row.created_at
+    }));
+  }
+
+  public getEdgesForNodes(nodeIds: string[]): SoulEdge[] {
+    if (nodeIds.length === 0) return [];
+
+    const placeholders = nodeIds.map(() => '?').join(',');
+    const stmt = this.db.prepare(`
+      SELECT * FROM soul_edges 
+      WHERE source_id IN (${placeholders}) 
+      AND target_id IN (${placeholders})
+    `);
+    
+    // We pass the array twice because we check both source and target? 
+    // Wait, the query is "source IN (...) AND target IN (...)".
+    // This finds edges WHERE BOTH ends are in the set.
+    // This is good for internal consistency of the capsule.
+    
+    const rows = stmt.all(...nodeIds, ...nodeIds) as any[];
     return rows.map(row => ({
       edgeId: row.edge_id,
       sourceId: row.source_id,
