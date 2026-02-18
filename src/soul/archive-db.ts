@@ -26,18 +26,21 @@ export interface NewEventParams {
 export class ArchiveDB {
   private db: Database.Database;
   private archiveDir: string;
+  private inMemory: boolean;
   private fileLineCounts: Map<string, number> = new Map();
+  private memoryPayloads: Map<string, unknown> = new Map();
 
   constructor(baseDir: string) {
     this.archiveDir = baseDir;
+    this.inMemory = baseDir === ':memory:';
     
-    // Ensure archive directory exists
-    if (!fs.existsSync(this.archiveDir)) {
+    // Ensure archive directory exists unless using in-memory mode
+    if (!this.inMemory && !fs.existsSync(this.archiveDir)) {
       fs.mkdirSync(this.archiveDir, { recursive: true });
     }
 
     // Initialize SQLite
-    const dbPath = path.join(this.archiveDir, 'archive.db');
+    const dbPath = this.inMemory ? ':memory:' : path.join(this.archiveDir, 'archive.db');
     this.db = new Database(dbPath);
     this.db.pragma('journal_mode = WAL');
 
@@ -63,6 +66,11 @@ export class ArchiveDB {
   private getLineCount(filename: string): number {
     if (this.fileLineCounts.has(filename)) {
       return this.fileLineCounts.get(filename)!;
+    }
+
+    if (this.inMemory) {
+      this.fileLineCounts.set(filename, 0);
+      return 0;
     }
 
     const filePath = path.join(this.archiveDir, filename);
@@ -133,8 +141,12 @@ export class ArchiveDB {
       payload
     };
 
-    // Append to file
-    fs.appendFileSync(filePath, JSON.stringify(fullRecord) + '\n');
+    if (this.inMemory) {
+      this.memoryPayloads.set(`${filename}:${payloadLine}`, payload);
+    } else {
+      // Append to file
+      fs.appendFileSync(filePath, JSON.stringify(fullRecord) + '\n');
+    }
     
     // Update cache
     this.fileLineCounts.set(filename, payloadLine);
@@ -224,6 +236,14 @@ export class ArchiveDB {
   }
 
   private hydrateEvent(row: RawArchiveEvent): HydratedArchiveEvent {
+    if (this.inMemory) {
+      const key = `${row.payloadFile}:${row.payloadLine}`;
+      return {
+        ...row,
+        payload: this.memoryPayloads.get(key) ?? null,
+      };
+    }
+
     const filePath = path.join(this.archiveDir, row.payloadFile);
     
     try {

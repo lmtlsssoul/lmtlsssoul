@@ -1,6 +1,6 @@
 
-import { GraphDB } from './graph-db';
-import { ArchiveDB, HydratedArchiveEvent } from './archive-db';
+import { GraphDB } from './graph-db.js';
+import { ArchiveDB, type HydratedArchiveEvent } from './archive-db.js';
 
 export class SoulBootstrap {
   // Threshold for considering the index "sparse"
