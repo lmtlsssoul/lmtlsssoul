@@ -44,6 +44,8 @@ export type {
   Task as DecomposedTask,
 } from './agents/goals.ts';
 export { Orchestrator } from './agents/orchestrator.ts';
+export { Scraper } from './agents/scraper.ts';
+export { Reflection } from './agents/reflection.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
