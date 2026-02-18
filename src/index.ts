@@ -48,6 +48,18 @@ export { Orchestrator } from './agents/orchestrator.ts';
 export { Scraper } from './agents/scraper.ts';
 export { Reflection } from './agents/reflection.ts';
 export { Interface } from './agents/interface.ts';
+export {
+  DialogueProtocol,
+  DIALOGUE_CHANNEL,
+  DIALOGUE_PROTOCOL,
+} from './agents/dialogue.ts';
+export type {
+  DialogueKind,
+  DialoguePayload,
+  DialoguePriority,
+  DialogueRecord,
+  SendDialogueParams,
+} from './agents/dialogue.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
