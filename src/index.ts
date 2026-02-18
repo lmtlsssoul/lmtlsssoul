@@ -13,6 +13,12 @@ export { IdentityDigest } from './soul/identity-digest.ts';
 export { generateSessionKey, parseSessionKey, isValidSessionKey } from './soul/session-key.ts';
 export { SoulRecall } from './soul/recall.ts';
 export type { RecallOptions } from './soul/recall.ts';
+export {
+  extractProposalBlocks,
+  parseProposalJson,
+  parseAllProposals,
+  parseFirstProposal,
+} from './soul/proposal-parser.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
