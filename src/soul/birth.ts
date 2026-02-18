@@ -8,9 +8,10 @@ import { GraphDB } from './graph-db.ts';
 import { ArchiveDB } from './archive-db.ts';
 import { SoulCompiler } from './compiler.ts';
 import { writeCheckpointBackup } from './backup.ts';
+import { DEFAULT_SOUL_LATTICE_SEED, getLatticeStats } from './soul-lattice-seed.ts';
 
 export class SoulBirthPortal {
-  private config: Record<string, any> = {};
+  private config: Record<string, unknown> = {};
 
   constructor() {
     log('\nBirth Portal\n');
@@ -42,12 +43,12 @@ export class SoulBirthPortal {
     const birthLocation = await this.prompt('Enter birth location to encode');
 
     const createdAt = new Date().toISOString();
-    this.config.birthday = {
+    this.config['birthday'] = {
       date: birthDate,
       time: birthTime,
       location: birthLocation,
     };
-    this.config.coreMemories = [
+    this.config['coreMemories'] = [
       {
         key: 'birthday',
         nodeType: 'identity',
@@ -65,11 +66,11 @@ export class SoulBirthPortal {
     log('\n---\n');
   }
 
-  public async startGenesis(): Promise<Record<string, any>> {
+  public async startGenesis(): Promise<Record<string, unknown>> {
     await this.initializeCoreMemories();
 
     log('Step 1/8: Substrate Connection & Authentication');
-    this.config.substrateConfig = await this.prompt(
+    this.config['substrateConfig'] = await this.prompt(
       'Enter substrate connection config (JSON, optional)',
       '{}'
     );
@@ -77,7 +78,7 @@ export class SoulBirthPortal {
     log('\n---\n');
 
     log('Step 2/8: Tool Keys (Optional)');
-    this.config.toolKeys = await this.prompt(
+    this.config['toolKeys'] = await this.prompt(
       'Enter tool key config (JSON, optional)',
       '{}'
     );
@@ -88,35 +89,42 @@ export class SoulBirthPortal {
     log('Scanning authenticated substrates...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
-    this.config.discoveredModels = discovered.map((model) => `${model.substrate}:${model.modelId}`);
+    this.config['discoveredModels'] = discovered.map((model) => `${model.substrate}:${model.modelId}`);
     success(`Discovered ${discovered.length} callable model(s).`);
+    if (discovered.length === 0) {
+      warn('No models discovered. Is Ollama running? Try: ollama serve');
+      warn('You can assign models manually later: soul models scan');
+    }
     log('\n---\n');
 
     log('Step 4/8: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
-    const firstAvailable = discovered[0] ? `${discovered[0].substrate}:${discovered[0].modelId}` : '';
+    const firstAvailable = discovered[0] ? `${discovered[0].substrate}:${discovered[0].modelId}` : 'ollama:phi3:mini';
 
     for (const role of AGENT_ROLES) {
       const answer = await this.prompt(
         `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
         firstAvailable
       );
-      if (!answer) {
-        continue;
+      if (!answer) continue;
+      try {
+        await setModelForRole(role, answer, {
+          availableModels: discovered,
+          stateDir: getStateDir(),
+        });
+        roleAssignments[role] = answer;
+      } catch (e) {
+        warn(`Could not validate model "${answer}" for role "${role}" — saving anyway.`);
+        roleAssignments[role] = answer;
       }
-      await setModelForRole(role, answer, {
-        availableModels: discovered,
-        stateDir: getStateDir(),
-      });
-      roleAssignments[role] = answer;
     }
 
-    this.config.roleAssignments = roleAssignments;
+    this.config['roleAssignments'] = roleAssignments;
     success('Agent role assignments stored.');
     log('\n---\n');
 
     log('Step 5/8: Channel Synchronization');
-    this.config.channels = await this.prompt(
+    this.config['channels'] = await this.prompt(
       'Enter channels to sync (comma separated, optional)',
       ''
     );
@@ -124,7 +132,7 @@ export class SoulBirthPortal {
     log('\n---\n');
 
     log('Step 6/8: Treasury & Wallet Policy');
-    this.config.treasuryPolicy = await this.prompt(
+    this.config['treasuryPolicy'] = await this.prompt(
       'Enter treasury policy (JSON, optional)',
       '{}'
     );
@@ -132,9 +140,9 @@ export class SoulBirthPortal {
     log('\n---\n');
 
     log('Step 7/8: Identity, Name & Objective');
-    this.config.soulName = await this.prompt('Name this soul');
-    this.config.soulObjective = await this.prompt('Define the primary objective');
-    success(`Soul named "${this.config.soulName}" with objective "${this.config.soulObjective}".`);
+    this.config['soulName'] = await this.prompt('Name this soul');
+    this.config['soulObjective'] = await this.prompt('Define the primary objective');
+    success(`Soul named "${String(this.config['soulName'])}" with objective "${String(this.config['soulObjective'])}".`);
     log('\n---\n');
 
     log('Step 8/8: Initialization');
@@ -143,8 +151,9 @@ export class SoulBirthPortal {
     log('\n---\n');
 
     success('Birth Portal complete.');
-    log(`Soul "${this.config.soulName}" is initialized.`);
+    log(`Soul "${String(this.config['soulName'])}" is initialized.`);
     log("Run 'soul start' to activate runtime services.");
+    log("Run 'soul chat' for an interactive terminal conversation.");
     return this.config;
   }
 
@@ -154,9 +163,63 @@ export class SoulBirthPortal {
 
     const graph = new GraphDB(stateDir);
     const archive = new ArchiveDB(stateDir);
+    const soulName = String(this.config['soulName'] ?? 'unnamed');
+    const soulObjective = String(this.config['soulObjective'] ?? '');
     const timestamp = new Date().toISOString();
     const sessionKey = `lmtlss:interface:birth-${Date.now()}`;
 
+    // ─── Seed the default soul lattice (innate self-knowledge) ───────────
+    log('Seeding default soul lattice (innate self-knowledge)...');
+    const latticeStats = getLatticeStats();
+    const nodeIds: string[] = [];
+
+    for (const nodeSeed of DEFAULT_SOUL_LATTICE_SEED.nodes) {
+      const nodeId = graph.createNode({
+        premise: nodeSeed.premise,
+        nodeType: nodeSeed.nodeType,
+        weight: nodeSeed.weight,
+        createdBy: nodeSeed.createdBy,
+      });
+      nodeIds.push(nodeId);
+    }
+
+    // Create edges between seeded nodes
+    for (const edgeSeed of DEFAULT_SOUL_LATTICE_SEED.edges) {
+      const sourceId = nodeIds[edgeSeed.sourceIndex];
+      const targetId = nodeIds[edgeSeed.targetIndex];
+      if (sourceId && targetId) {
+        try {
+          graph.createEdge({
+            sourceId,
+            targetId,
+            relation: edgeSeed.relation,
+            strength: edgeSeed.strength,
+          });
+        } catch { /* ignore duplicate edges */ }
+      }
+    }
+    success(`Default lattice seeded: ${latticeStats.nodes} nodes, ${latticeStats.edges} edges.`);
+
+    // ─── Author-provided birthday node ──────────────────────────────────
+    const birthday = this.config['birthday'] as { date?: string; time?: string; location?: string } | undefined;
+    if (birthday?.date) {
+      graph.createNode({
+        premise: `My birthday is ${birthday.date} at ${birthday.time ?? ''} in ${birthday.location ?? ''}.`,
+        nodeType: 'identity',
+        weight: { salience: 1.0, commitment: 0.99, valence: 0.9, uncertainty: 0.01, resonance: 0.9, arousal: 0.2 },
+        createdBy: 'birth',
+      });
+    }
+
+    // ─── Author-given identity node ──────────────────────────────────────
+    graph.createNode({
+      premise: `I am ${soulName}. Objective: ${soulObjective}.`,
+      nodeType: 'identity',
+      weight: { salience: 1.0, commitment: 0.9, uncertainty: 0.2 },
+      createdBy: 'birth',
+    });
+
+    // ─── Birth event in archive ──────────────────────────────────────────
     const birthEvent = archive.appendEvent({
       parentHash: null,
       timestamp,
@@ -166,37 +229,21 @@ export class SoulBirthPortal {
       channel: 'birth',
       payload: {
         protocol: 'birth.v1',
-        soulName: this.config.soulName,
-        soulObjective: this.config.soulObjective,
-        birthday: this.config.birthday,
+        soulName,
+        soulObjective,
+        birthday: this.config['birthday'],
+        latticeSeeded: { nodes: latticeStats.nodes, edges: latticeStats.edges },
       },
     });
 
-    graph.createNode({
-      premise: `I am ${this.config.soulName}. Objective: ${this.config.soulObjective}.`,
-      nodeType: 'identity',
-      createdBy: 'birth',
-      weight: {
-        salience: 1.0,
-        commitment: 0.9,
-        uncertainty: 0.2,
-      },
-    });
-
+    // ─── Generate and persist Soul Capsule ───────────────────────────────
     const compiler = new SoulCompiler(graph);
     const capsulePath = path.join(stateDir, 'SOUL.md');
     const capsuleContent = compiler.regenerateCapsule(capsulePath);
-    const checkpoint = graph.createCheckpoint({
-      capsuleContent,
-      createdBy: 'birth',
-    });
+    const checkpoint = graph.createCheckpoint({ capsuleContent, createdBy: 'birth' });
     graph.checkpoint();
     archive.checkpoint();
-    writeCheckpointBackup({
-      stateDir,
-      checkpoint,
-      createdBy: 'birth',
-    });
+    writeCheckpointBackup({ stateDir, checkpoint, createdBy: 'birth' });
 
     const birthConfigPath = path.join(stateDir, 'birth-config.json');
     fs.writeFileSync(
@@ -214,5 +261,8 @@ export class SoulBirthPortal {
       ),
       'utf-8'
     );
+
+    success(`Soul Capsule generated at ${capsulePath}`);
+    success(`Birth config saved to ${birthConfigPath}`);
   }
 }

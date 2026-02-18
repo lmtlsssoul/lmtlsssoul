@@ -4,16 +4,27 @@ import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.ts';
 import { GatewayServer } from '../gateway/server.ts';
 import { registerTreasuryCommands } from './treasury.ts';
-import { getStateDir } from '../soul/types.ts';
+import { getStateDir, DEFAULT_CONFIG } from '../soul/types.ts';
 import { GraphDB } from '../soul/graph-db.ts';
 import { ArchiveDB } from '../soul/archive-db.ts';
+import { SoulRecall } from '../soul/recall.ts';
+import { SoulCompiler } from '../soul/compiler.ts';
+import { IdentityDigest } from '../soul/identity-digest.ts';
+import { SoulCirculation } from '../soul/circulation.ts';
+import { getRoleAssignments } from '../substrate/assignment.ts';
+import { OllamaAdapter } from '../substrate/ollama.ts';
+import { OpenaiAdapter } from '../substrate/openai.ts';
+import { AnthropicAdapter } from '../substrate/anthropic.ts';
+import { XaiAdapter } from '../substrate/xai.ts';
 import { deriveGrownupCapabilities, readGrownupMode, setGrownupMode } from '../soul/modes.ts';
 import { Reflection } from '../agents/reflection.ts';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import type { SubstrateAdapter } from '../substrate/types.ts';
 
 type DaemonState = {
   pid: number;
@@ -283,6 +294,14 @@ export async function main() {
       console.log(JSON.stringify(result, null, 2));
     });
 
+  program.command('chat')
+    .description('Open an interactive terminal conversation with the soul')
+    .option('--peer <name>', 'Your name (peer identity)', 'author')
+    .option('--channel <channel>', 'Channel label', 'terminal')
+    .action(async (options: { peer: string; channel: string }) => {
+      await runInteractiveChat(options.peer, options.channel);
+    });
+
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
@@ -297,6 +316,118 @@ export async function main() {
       error('An unknown fatal error occurred.', err);
       throw err;
     }
+  }
+}
+
+// ── Interactive Chat ──────────────────────────────────────────────────────────
+
+async function runInteractiveChat(peer: string, channel: string): Promise<void> {
+  const stateDir = getStateDir();
+
+  if (!fs.existsSync(path.join(stateDir, 'birth-config.json'))) {
+    error('Soul not yet born. Run "soul birth" first.');
+    process.exit(1);
+  }
+
+  const graph = new GraphDB(stateDir);
+  const archive = new ArchiveDB(stateDir);
+  const recall = new SoulRecall(archive, graph);
+  const compiler = new SoulCompiler(graph);
+
+  // Load soul name from birth config
+  let soulName = 'soul';
+  let soulObjective = 'be present';
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(stateDir, 'birth-config.json'), 'utf-8')) as {
+      soulName?: string;
+      soulObjective?: string;
+    };
+    if (cfg.soulName) soulName = cfg.soulName;
+    if (cfg.soulObjective) soulObjective = cfg.soulObjective;
+  } catch { /* use defaults */ }
+
+  const identity = new IdentityDigest({
+    ...DEFAULT_CONFIG,
+    stateDir,
+    name: soulName,
+    objective: soulObjective,
+  });
+  const circulation = new SoulCirculation(archive, graph, recall, compiler, identity);
+
+  // Resolve model for interface role
+  const assignments = getRoleAssignments(stateDir);
+  const interfaceRef = assignments.interface;
+  const adapter = resolveChatAdapter(interfaceRef);
+  const modelId = interfaceRef.split(':').slice(1).join(':');
+
+  log('\n' + getBanner());
+  log(`\nConversation with ${soulName} | model: ${interfaceRef}`);
+  log('Type "exit" or press Ctrl+C to end the session.\n');
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const ask = (prompt: string): Promise<string> =>
+    new Promise((resolve) => rl.question(prompt, resolve));
+
+  const GREEN = '\x1b[38;2;74;246;38m';
+  const DIM = '\x1b[2m';
+  const RESET = '\x1b[0m';
+  const BOLD = '\x1b[1m';
+
+  process.stdout.write(`${DIM}─────────────────────────────────────────${RESET}\n`);
+
+  while (true) {
+    let input: string;
+    try {
+      input = await ask(`${GREEN}${BOLD}Author${RESET} ${DIM}>${RESET} `);
+    } catch {
+      break;
+    }
+
+    input = input.trim();
+    if (!input) continue;
+    if (input.toLowerCase() === 'exit' || input.toLowerCase() === 'quit') break;
+
+    process.stdout.write(`\n${DIM}◉ thinking...${RESET}\n`);
+
+    try {
+      const mind = async (prompt: string): Promise<string> => {
+        const result = await adapter.invoke({ model: modelId, prompt, role: 'interface' });
+        return result.outputText;
+      };
+
+      const result = await circulation.run(input, {
+        agentId: 'interface',
+        channel,
+        peer,
+        model: interfaceRef,
+      }, mind);
+
+      const reply = result.reply.replace(/<index_update>[\s\S]*?<\/index_update>/g, '').trim();
+      process.stdout.write(`\n${GREEN}${BOLD}${soulName}${RESET}\n${reply}\n\n`);
+      process.stdout.write(`${DIM}─────────────────────────────────────────${RESET}\n`);
+    } catch (err) {
+      error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      warn('Is Ollama running? Try: ollama serve');
+    }
+  }
+
+  rl.close();
+  success('\nSession ended. Presence persists.');
+}
+
+function resolveChatAdapter(modelRef: string): SubstrateAdapter {
+  const colon = modelRef.indexOf(':');
+  const substrate = colon > 0 ? modelRef.slice(0, colon) : 'ollama';
+  switch (substrate) {
+    case 'anthropic': return new AnthropicAdapter();
+    case 'openai': return new OpenaiAdapter();
+    case 'xai': return new XaiAdapter();
+    case 'ollama':
+    default: return new OllamaAdapter();
   }
 }
 
