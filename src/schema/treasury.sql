@@ -33,3 +33,20 @@ CREATE TABLE IF NOT EXISTS budget_policies (
   updated_at               TEXT NOT NULL
 );
 
+-- Escalation Proposals
+CREATE TABLE IF NOT EXISTS escalation_proposals (
+  proposal_id                TEXT PRIMARY KEY,             -- ULID
+  reason                     TEXT NOT NULL,
+  requested_cost_usd         REAL NOT NULL,
+  current_budget_remaining   REAL NOT NULL,
+  substrate                  TEXT NOT NULL,
+  model_id                   TEXT NOT NULL,
+  task_description           TEXT NOT NULL,
+  expected_value             TEXT NOT NULL,
+  status                     TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at                 TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_escalation_status ON escalation_proposals(status);
+
+
