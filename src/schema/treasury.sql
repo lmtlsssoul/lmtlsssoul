@@ -85,6 +85,23 @@ CREATE TABLE IF NOT EXISTS wallets (
   updated_at         TEXT NOT NULL
 );
 
+-- Lightning Invoices
+CREATE TABLE IF NOT EXISTS lightning_invoices (
+  invoice_id         TEXT PRIMARY KEY,                     -- ULID
+  payment_hash       TEXT NOT NULL UNIQUE,
+  payment_request    TEXT NOT NULL,
+  amount_sats        INTEGER NOT NULL,
+  description        TEXT,
+  status             TEXT NOT NULL CHECK (status IN ('pending', 'paid', 'expired')),
+  created_at         TEXT NOT NULL,
+  expires_at         TEXT NOT NULL,
+  settled_at         TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_lightning_status ON lightning_invoices(status);
+CREATE INDEX IF NOT EXISTS idx_lightning_expiry ON lightning_invoices(expires_at);
+
+
 
 
 

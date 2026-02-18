@@ -76,3 +76,16 @@ export type IncomeRecord = {
   goalId?: string;
   txid?: string;
 };
+
+/** A Lightning Network invoice. */
+export type LightningInvoice = {
+  invoiceId: string;
+  paymentHash: string;
+  paymentRequest: string;
+  amountSats: number;
+  description: string;
+  status: 'pending' | 'paid' | 'expired';
+  createdAt: string;
+  expiresAt: string;
+  settledAt?: string;
+};
