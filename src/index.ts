@@ -28,6 +28,7 @@ export type {
   CirculationResult,
   MindFunction,
 } from './soul/circulation.ts';
+export { SoulBootstrap } from './soul/bootstrap.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
