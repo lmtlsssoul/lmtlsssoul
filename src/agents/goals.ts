@@ -3,7 +3,7 @@
  * @author Gemini
  */
 
-import { AgentRole } from '../substrate/assignment.js';
+import type { AgentRole } from '../substrate/assignment.ts';
 
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'blocked';
 

@@ -38,6 +38,12 @@ export {
   capsulePromotion,
   updateResonance,
 } from './soul/weights.ts';
+export { GoalDecompositionEngine } from './agents/goals.ts';
+export type {
+  Goal as DecomposedGoal,
+  Task as DecomposedTask,
+} from './agents/goals.ts';
+export { Orchestrator } from './agents/orchestrator.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 

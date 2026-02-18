@@ -3,7 +3,12 @@
  * @author Gemini
  */
 
-import { GoalDecompositionEngine, Goal, Task, TaskStatus } from './goals.js';
+import {
+  GoalDecompositionEngine,
+  type Goal,
+  type Task,
+  type TaskStatus,
+} from './goals.ts';
 
 /**
  * The Orchestrator agent is responsible for decomposing high-level goals
