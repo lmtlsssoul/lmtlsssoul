@@ -31,6 +31,7 @@
   "scripts": {
     "build": "tsdown src/index.ts",
     "dev": "node --import tsx src/cli/index.ts",
+    "backup:pass": "bash scripts/backup-pass.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

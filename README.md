@@ -42,6 +42,18 @@ pnpm soul start
 pnpm soul status
 ```
 
+## Backup Policy
+
+- `origin` is a private backup remote for continuous development snapshots.
+- `release` is reserved for final public publish once the project is fully shippable.
+- After each green pass, run:
+
+```bash
+pnpm run backup:pass -- 3.06
+```
+
+Replace `3.06` with the current milestone step.
+
 ## CLI Commands
 
 | Command | Description |
