@@ -61,6 +61,36 @@ export type {
   SendDialogueParams,
 } from './agents/dialogue.ts';
 
+export {
+  VerifyBeforeCommit,
+  VerifyError,
+  buildArtifact,
+  computeContentHash,
+  VERIFY_CHANNEL,
+  VERIFY_PROTOCOL,
+} from './agents/verify.ts';
+export type {
+  ArtifactType,
+  CheckKind,
+  CheckOutcome,
+  CheckResult,
+  TaskArtifact,
+  VerificationCheck,
+  VerificationResult,
+  VerificationSet,
+} from './agents/verify.ts';
+export {
+  ConsequenceMeasurement,
+  CONSEQUENCE_CHANNEL,
+  CONSEQUENCE_PROTOCOL,
+} from './agents/consequence.ts';
+export type {
+  ConsequenceAnalysis,
+  ConsequenceMeasurementInput,
+  ConsequenceMeasurementResult,
+  ConsequenceOutcome,
+} from './agents/consequence.ts';
+
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
 export * from './soul/types.ts';
