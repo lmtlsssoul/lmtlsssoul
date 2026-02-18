@@ -1,4 +1,3 @@
-
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,11 +15,14 @@ export class GraphDB {
   constructor(baseDir: string) {
     this.dbDir = baseDir;
 
-    if (!fs.existsSync(this.dbDir)) {
-      fs.mkdirSync(this.dbDir, { recursive: true });
+    if (baseDir !== ':memory:') {
+        if (!fs.existsSync(this.dbDir)) {
+            fs.mkdirSync(this.dbDir, { recursive: true });
+        }
     }
 
-    const dbPath = path.join(this.dbDir, 'soul.db');
+
+    const dbPath = baseDir === ':memory:' ? ':memory:' : path.join(this.dbDir, 'soul.db');
     this.db = new Database(dbPath);
     this.db.pragma('journal_mode = WAL');
 
@@ -146,7 +148,10 @@ export class GraphDB {
       ORDER BY rank
     `;
     
-    const rows = this.db.prepare(sql).all(query) as any[];
+    const sanitizedQuery = query.replace(/[^\w\s]/gi, ' ').trim();
+    if (!sanitizedQuery) return [];
+
+    const rows = this.db.prepare(sql).all(sanitizedQuery) as any[];
     return rows.map(row => this.mapNode(row));
   }
 
