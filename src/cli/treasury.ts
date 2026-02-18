@@ -14,7 +14,7 @@ import { IncomeManager } from '../treasury/income.ts';
 export function registerTreasuryCommands(program: Command) {
   const stateDir = getStateDir();
   const ledger = new TreasuryLedger(stateDir);
-  const budget = new BudgetManager(stateDir, ledger);
+  const budget = new BudgetManager(stateDir);
   const wallet = new WalletManager(stateDir);
   const approval = new SpendApprovalManager(stateDir);
   const escalation = new EscalationManager(stateDir);

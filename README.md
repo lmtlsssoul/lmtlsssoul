@@ -49,10 +49,10 @@ pnpm soul gateway status
 - After each green pass, run:
 
 ```bash
-pnpm run backup:pass -- 3.06
+pnpm run backup:pass -- 4.09
 ```
 
-Replace `3.06` with the current milestone step.
+Replace `4.09` with the current milestone step.
 
 ## Release Rail
 
@@ -76,6 +76,9 @@ RELEASE_ACK=I_UNDERSTAND_RELEASE_IS_FINAL pnpm run release:ready -- --publish
 | `soul models set <role> <modelId>` | Assign model to an agent role |
 | `soul gateway start [-p|--port] [-H|--host]` | Start gateway server in foreground |
 | `soul gateway status [-p|--port] [-H|--host]` | Check gateway health endpoint |
+| `soul treasury status` | Show treasury totals, budget caps, category spend, pending escalations |
+| `soul wallet status` | Show registered watch-only wallet balances |
+| `soul approve <approvalId> <signature> <approverId>` | Approve a pending spend request |
 
 ## Architecture
 

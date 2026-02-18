@@ -3,18 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { BudgetPolicy } from './types.js';
-import { TreasuryLedger } from './ledger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class BudgetManager {
   private db: Database.Database;
-  private ledger: TreasuryLedger;
 
-  constructor(baseDirOrDb: string | Database.Database, ledger: TreasuryLedger) {
-    this.ledger = ledger;
-    
+  constructor(baseDirOrDb: string | Database.Database) {
     if (typeof baseDirOrDb === 'string') {
       const baseDir = baseDirOrDb;
       if (baseDir !== ':memory:') {

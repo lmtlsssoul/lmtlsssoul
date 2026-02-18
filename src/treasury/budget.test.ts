@@ -8,7 +8,7 @@ describe('BudgetManager', () => {
 
   beforeEach(() => {
     ledger = new TreasuryLedger(':memory:');
-    budget = new BudgetManager(ledger.getDb(), ledger);
+    budget = new BudgetManager(ledger.getDb());
   });
 
   it('should set and get policy', () => {
