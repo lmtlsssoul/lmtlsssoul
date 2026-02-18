@@ -137,6 +137,28 @@ export class GraphDB {
     this.db.prepare(sql).run(...params);
   }
 
+  public updateNodeStatus(nodeId: string, status: NodeStatus): void {
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      UPDATE soul_nodes 
+      SET status = ?, updated_at = ?, version = version + 1
+      WHERE node_id = ?
+    `);
+    stmt.run(status, now, nodeId);
+  }
+
+  public getProvisionalNodes(limit: number = 100): SoulNode[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM soul_nodes 
+      WHERE status = 'provisional' 
+      ORDER BY salience DESC 
+      LIMIT ?
+    `);
+    
+    const rows = stmt.all(limit) as any[];
+    return rows.map(row => this.mapNode(row));
+  }
+
   public searchNodes(query: string): SoulNode[] {
     // FTS search on premise
     // We join with the main table to get full node details
