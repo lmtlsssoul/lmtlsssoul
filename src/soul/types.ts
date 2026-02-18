@@ -74,6 +74,17 @@ export type SoulEdge = {
 
 export type EvidenceLinkType = 'supports' | 'contradicts' | 'origin';
 
+/**
+ * Returns the soul state directory (~/.lmtlss/ by default).
+ */
+export function getStateDir(): string {
+  if (process.env.LMTLSS_STATE_DIR) {
+    return process.env.LMTLSS_STATE_DIR;
+  }
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  return `${home}/.lmtlss`;
+}
+
 /** Connects a Soul Graph node to a specific Raw Archive event. */
 export type EvidenceLink = {
   linkId: string;

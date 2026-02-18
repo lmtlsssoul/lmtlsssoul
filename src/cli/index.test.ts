@@ -50,9 +50,22 @@ describe('CLI entrypoint', () => {
     expect(warn).toHaveBeenCalledWith('Daemon stop not implemented yet.');
   });
 
-  it('should log success for status command', async () => {
-    process.argv.push('status');
-    await main();
-    expect(success).toHaveBeenCalledWith('System operational (stub).');
+    it('should log success for status command', async () => {
+      process.argv.push('status');
+      await main();
+      expect(success).toHaveBeenCalledWith('System operational (stub).');
+    });
+  
+    it('should execute treasury status command', async () => {
+      process.argv.push('treasury', 'status');
+      await main();
+      expect(log).toHaveBeenCalledWith('--- Treasury Status ---');
+    });
+  
+    it('should execute wallet status command', async () => {
+      process.argv.push('wallet', 'status');
+      await main();
+      expect(log).toHaveBeenCalledWith('--- Wallet Status ---');
+    });
   });
-});
+  

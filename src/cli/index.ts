@@ -3,6 +3,7 @@ import { getBanner, log, error, success, warn } from '../soul/branding.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.js';
 import { GatewayServer } from '../gateway/server.ts';
+import { registerTreasuryCommands } from './treasury.ts';
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 
@@ -24,6 +25,8 @@ export async function main() {
       if(vargs.includes(thisCommand.args[0])) return;
       console.log(getBanner());
     });
+
+  registerTreasuryCommands(program);
 
   program.command('birth')
     .description('Start the soul Birth Portal')
