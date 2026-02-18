@@ -2,6 +2,8 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { log, error, success, warn } from './branding.ts';
+import { GraphDB } from './graph-db.ts';
+import { ArchiveDB } from './archive-db.ts';
 
 /**
  * SyncResult represents the outcome of a sync operation.
@@ -64,6 +66,16 @@ export class SyncManager {
    */
   public push(message: string = `Soul Checkpoint: ${new Date().toISOString()}`): SyncResult {
     try {
+      // Flush any active SQLite databases if they exist in the state dir
+      if (fs.existsSync(path.join(this.stateDir, 'soul.db'))) {
+        const gdb = new GraphDB(this.stateDir);
+        gdb.checkpoint();
+      }
+      if (fs.existsSync(path.join(this.stateDir, 'archive.db'))) {
+        const adb = new ArchiveDB(this.stateDir);
+        adb.checkpoint();
+      }
+
       this.runGit(['add', '.']);
       
       // Check if there are changes to commit
@@ -99,9 +111,19 @@ export class SyncManager {
       }
 
       log('Pulling from remote origin...');
-      // Use rebase to keep history clean as per "append-only" spirit where possible,
-      // though binary SQLite files will just conflict and need resolution.
-      this.runGit(['pull', 'origin', 'main', '--rebase']);
+      
+      // Check if we have a local main branch
+      const branchCheck = spawnSync('git', ['rev-parse', '--verify', 'main'], { cwd: this.stateDir });
+      
+      if (branchCheck.status !== 0) {
+        // No local main yet, just fetch and reset/merge
+        this.runGit(['fetch', 'origin']);
+        this.runGit(['reset', '--hard', 'origin/main']);
+      } else {
+        // Use rebase to keep history clean as per "append-only" spirit where possible,
+        // though binary SQLite files will just conflict and need resolution.
+        this.runGit(['pull', 'origin', 'main', '--rebase']);
+      }
       
       return { ok: true, message: 'State pulled successfully.' };
     } catch (e) {

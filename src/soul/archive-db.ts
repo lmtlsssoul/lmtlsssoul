@@ -280,6 +280,13 @@ export class ArchiveDB {
     this.db.exec('ANALYZE');
   }
 
+  /**
+   * Flushes WAL to the main database file.
+   */
+  public checkpoint(): void {
+    this.db.pragma('wal_checkpoint(FULL)');
+  }
+
   private mapRow(row: any): RawArchiveEvent {
     return {
       eventHash: row.event_hash,

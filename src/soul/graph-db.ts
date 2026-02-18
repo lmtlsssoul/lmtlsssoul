@@ -310,6 +310,13 @@ export class GraphDB {
     this.db.exec('ANALYZE');
   }
 
+  /**
+   * Flushes WAL to the main database file.
+   */
+  public checkpoint(): void {
+    this.db.pragma('wal_checkpoint(FULL)');
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
 
   private mapNode(row: any): SoulNode {
