@@ -97,4 +97,5 @@ export * from './soul/types.ts';
 export * from './substrate/types.ts';
 export * from './queue/types.ts';
 export { TreasuryLedger } from './treasury/ledger.ts';
+export { BudgetManager } from './treasury/budget.ts';
 export * from './treasury/types.ts';

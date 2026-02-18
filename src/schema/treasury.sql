@@ -22,3 +22,14 @@ CREATE INDEX IF NOT EXISTS idx_cost_timestamp ON cost_entries(timestamp);
 CREATE INDEX IF NOT EXISTS idx_cost_category ON cost_entries(category);
 CREATE INDEX IF NOT EXISTS idx_cost_job ON cost_entries(job_id);
 CREATE INDEX IF NOT EXISTS idx_cost_role ON cost_entries(role);
+
+-- Budget Policies
+CREATE TABLE IF NOT EXISTS budget_policies (
+  policy_id                TEXT PRIMARY KEY,               -- 'default' or a specific ID
+  daily_cap_usd            REAL NOT NULL,
+  monthly_cap_usd          REAL NOT NULL,
+  escalation_threshold_usd REAL NOT NULL,
+  require_approval_above   REAL NOT NULL,
+  updated_at               TEXT NOT NULL
+);
+

@@ -36,6 +36,13 @@ export class TreasuryLedger {
   }
 
   /**
+   * Returns the underlying database instance.
+   */
+  public getDb(): Database.Database {
+    return this.db;
+  }
+
+  /**
    * Records a new cost entry in the ledger.
    */
   public recordCost(entry: Omit<CostEntry, 'entryId' | 'timestamp'>): string {
