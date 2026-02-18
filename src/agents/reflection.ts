@@ -1,49 +1,95 @@
-/**
- * @file src/agents/reflection.ts
- * @description Implementation of the reflection agent.
- * @auth lmtlss soul
- */
-
 import { Agent, AgentRole } from './types.ts';
+import { ArchiveDB } from '../soul/archive-db.ts';
+import { GraphDB } from '../soul/graph-db.ts';
+import { getStateDir, type IndexUpdateProposal } from '../soul/types.ts';
 
-/**
- * The Reflection agent is responsible for cron-driven archive scanning and
- * distillation probes. It periodically reviews the raw archive to identify
- * patterns, extract insights, and propose new nodes for the Soul Index.
- */
+type ReflectionContext = {
+  mode?: 'cron' | 'manual';
+  limit?: number;
+};
+
+type ReflectionResult = {
+  message: string;
+  proposals: IndexUpdateProposal[];
+  inspectedEvents: number;
+  generatedAt: string;
+};
+
 export class Reflection implements Agent {
   public readonly role: AgentRole = 'reflection';
+  private readonly archive: ArchiveDB;
+  private readonly graph: GraphDB;
 
-  /**
-   * Creates an instance of the Reflection agent.
-   */
-  constructor() {
-    console.log('Reflection agent initialized.');
+  constructor(archive?: ArchiveDB, graph?: GraphDB) {
+    const stateDir = getStateDir();
+    this.archive = archive ?? new ArchiveDB(stateDir);
+    this.graph = graph ?? new GraphDB(stateDir);
   }
 
-  /**
-   * Executes the reflection process. This involves scanning the archive,
-   * running distillation probes, and generating insights.
-   * @param context - The context for the reflection task, which could
-   * include things like the time window to scan or specific themes to explore.
-   * @returns A promise that resolves with the outcome of the reflection process.
-   */
-  public async execute(context: unknown): Promise<unknown> {
-    console.log('Reflection agent executing with context:', context);
-    // In a real implementation, this would involve:
-    // 1. Querying the Raw Archive DB for recent events.
-    // 2. Identifying interesting patterns, contradictions, or gaps.
-    // 3. Formulating "distillation probes" - questions to ask an LLM.
-    // 4. Invoking an LLM with these probes.
-    // 5. Parsing the LLM's response to generate Index Update Proposals.
-    // 6. Emitting these proposals for the Compiler agent to process.
+  public async execute(context: ReflectionContext = {}): Promise<ReflectionResult> {
+    const limit = context.limit ?? 25;
+    const events = this.archive.getRecentEvents(limit);
+    const proposals = this.buildProposals(events.map((event) => event.payloadText ?? ''));
 
-    const result = {
-      message: 'Reflection complete. No new insights generated in this conceptual implementation.',
-      proposals: [],
+    return {
+      message:
+        proposals.length > 0
+          ? `Reflection generated ${proposals.length} proposal(s).`
+          : 'Reflection complete. No new durable patterns detected.',
+      proposals,
+      inspectedEvents: events.length,
+      generatedAt: new Date().toISOString(),
     };
-
-    console.log('Reflection agent finished execution.');
-    return Promise.resolve(result);
   }
+
+  private buildProposals(snippets: string[]): IndexUpdateProposal[] {
+    const tokens = extractCandidatePhrases(snippets);
+    const proposals: IndexUpdateProposal[] = [];
+
+    for (const phrase of tokens.slice(0, 3)) {
+      if (this.graph.searchNodes(phrase).length > 0) {
+        continue;
+      }
+
+      proposals.push({
+        add: [
+          {
+            premise: `Recurring reflection motif: ${phrase}`,
+            nodeType: 'premise',
+            weight: {
+              salience: 0.35,
+              commitment: 0.25,
+              uncertainty: 0.45,
+            },
+          },
+        ],
+        reinforce: [],
+        contradict: [],
+        edges: [],
+      });
+    }
+
+    return proposals;
+  }
+}
+
+function extractCandidatePhrases(snippets: string[]): string[] {
+  const counts = new Map<string, number>();
+
+  for (const snippet of snippets) {
+    const words = snippet
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter((word) => word.length >= 5);
+
+    for (const word of words) {
+      counts.set(word, (counts.get(word) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .map(([token]) => token);
 }

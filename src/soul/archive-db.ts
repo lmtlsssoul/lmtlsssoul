@@ -218,6 +218,58 @@ export class ArchiveDB {
     return rows.reverse().map(row => this.hydrateEvent(this.mapRow(row)));
   }
 
+  public getEventCount(): number {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM archive_events');
+    const row = stmt.get() as { count: number };
+    return row.count;
+  }
+
+  /**
+   * Verifies per-session parent chaining and hash integrity for all events.
+   */
+  public verifyHashChain(): { ok: boolean; checked: number; errors: string[] } {
+    const rows = this.db.prepare('SELECT * FROM archive_events ORDER BY rowid ASC').all() as any[];
+    const errors: string[] = [];
+    const lastBySession = new Map<string, string>();
+    const seenHashes = new Set<string>();
+
+    for (const row of rows) {
+      const baseEvent = this.mapRow(row);
+      const hydrated = this.hydrateEvent(baseEvent);
+      const expectedParent = lastBySession.get(hydrated.sessionKey) ?? null;
+
+      if (hydrated.parentHash !== expectedParent) {
+        errors.push(
+          `Parent mismatch at ${hydrated.eventHash}: expected ${expectedParent ?? 'null'}, got ${
+            hydrated.parentHash ?? 'null'
+          }`
+        );
+      }
+
+      if (hydrated.parentHash && !seenHashes.has(hydrated.parentHash)) {
+        errors.push(`Missing parent for ${hydrated.eventHash}: ${hydrated.parentHash}`);
+      }
+
+      const payloadStr = JSON.stringify(hydrated.payload);
+      const hashInput =
+        (hydrated.parentHash || '') + hydrated.timestamp + hydrated.eventType + hydrated.agentId + payloadStr;
+      const recomputed = crypto.createHash('sha256').update(hashInput).digest('hex');
+
+      if (recomputed !== hydrated.eventHash) {
+        errors.push(`Hash mismatch at ${hydrated.eventHash}: recomputed ${recomputed}`);
+      }
+
+      seenHashes.add(hydrated.eventHash);
+      lastBySession.set(hydrated.sessionKey, hydrated.eventHash);
+    }
+
+    return {
+      ok: errors.length === 0,
+      checked: rows.length,
+      errors,
+    };
+  }
+
   // ─── Maintenance ────────────────────────────────────────────────
 
   /**

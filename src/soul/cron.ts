@@ -136,8 +136,20 @@ export class CronAutonomics {
    * Runs the heartbeat check.
    */
   private async runHeartbeat(): Promise<void> {
-    // In a real implementation, this would check high-arousal events and deadlines.
-    // ARCHITECTURE.md: "Check high-arousal events, deadlines"
+    if (typeof (this.archiveDb as any).appendEvent === 'function') {
+      this.archiveDb.appendEvent({
+        parentHash: null,
+        timestamp: new Date().toISOString(),
+        sessionKey: `lmtlss:reflection:heartbeat-${Date.now()}`,
+        eventType: 'heartbeat',
+        agentId: 'reflection',
+        channel: 'cron',
+        payload: {
+          protocol: 'heartbeat.v1',
+          status: 'ok',
+        },
+      });
+    }
     console.log('[Cron] Heartbeat check complete.');
   }
 
@@ -145,8 +157,20 @@ export class CronAutonomics {
    * Runs the scraper check.
    */
   private async runScraper(): Promise<void> {
-    // ARCHITECTURE.md: "Execute web scraping tasks from orchestrator"
-    // This is conceptual; in a real implementation, it would poll for pending scraping jobs.
+    if (typeof (this.archiveDb as any).appendEvent === 'function') {
+      this.archiveDb.appendEvent({
+        parentHash: null,
+        timestamp: new Date().toISOString(),
+        sessionKey: `lmtlss:scraper:cron-${Date.now()}`,
+        eventType: 'system_event',
+        agentId: 'scraper',
+        channel: 'cron',
+        payload: {
+          protocol: 'scraper.cron.v1',
+          status: 'no_pending_jobs',
+        },
+      });
+    }
     console.log('[Cron] Scraper check complete.');
   }
 

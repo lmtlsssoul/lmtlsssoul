@@ -132,8 +132,7 @@ export const capsulePromotion = (vector: WeightVector): WeightVector => {
 
 /**
  * Updates the resonance of a node based on its connections.
- * This is a placeholder for a more complex calculation that would likely
- * involve traversing the graph and looking at the salience of connected nodes.
+ * Uses a deterministic lightweight update driven by connected-node salience.
  * @param vector The original weight vector.
  * @param connectedSalience The average salience of connected nodes.
  * @returns A new weight vector with updated resonance.

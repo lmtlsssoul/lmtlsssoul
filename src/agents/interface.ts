@@ -1,52 +1,52 @@
-/**
- * @file src/agents/interface.ts
- * @description Implementation of the interface agent for user-facing conversation.
- * @auth lmtlss soul
- */
-
 import { Agent, AgentRole } from './types.ts';
+import type { IndexUpdateProposal } from '../soul/types.ts';
+import { parseAllProposals } from '../soul/proposal-parser.ts';
 
-/**
- * The Interface agent is responsible for user-facing conversation.
- * It is the primary point of contact for the user, maintaining conversational
- * flow and emitting Index Update Proposals as new information is processed.
- */
+export type InterfaceContext = {
+  message?: string;
+  channel?: string;
+  llmOutput?: string;
+};
+
+export type InterfaceResult = {
+  reply: string;
+  proposals: IndexUpdateProposal[];
+  metadata: {
+    timestamp: string;
+    channel?: string;
+  };
+};
+
 export class Interface implements Agent {
   public readonly role: AgentRole = 'interface';
 
-  /**
-   * Creates an instance of the Interface agent.
-   */
-  constructor() {
-    // Initialization logic if needed
-  }
+  public async execute(context: InterfaceContext): Promise<InterfaceResult> {
+    const timestamp = new Date().toISOString();
+    const proposals = context.llmOutput ? parseAllProposals(context.llmOutput) : [];
 
-  /**
-   * Executes the interface agent's primary task: handling user conversation.
-   * @param context - The context for the interface task, typically including
-   * the user's message, channel info, and any recalled context.
-   * @returns A promise that resolves with the agent's response and any proposed updates.
-   */
-  public async execute(context: unknown): Promise<unknown> {
-    console.log('[Interface] Executing conversation turn.');
+    const reply =
+      context.llmOutput && context.llmOutput.trim().length > 0
+        ? stripIndexUpdateBlocks(context.llmOutput).trim()
+        : buildFallbackReply(context.message);
 
-    // In a full implementation, this role:
-    // 1. Receives input from a channel (Body).
-    // 2. Uses Dual Path Recall to fetch relevant history and Soul nodes.
-    // 3. Injects the Soul Capsule (Identity Digest) into the system prompt.
-    // 4. Invokes the assigned Mind (LLM) to generate a reply.
-    // 5. Captures any <index_update> proposals for the compiler.
-    // 6. Persists the transaction to the Raw Archive.
-
-    const result = {
-      reply: 'Hello! I am your soul interface. This is a conceptual implementation of my logic.',
-      proposals: [],
+    return {
+      reply,
+      proposals,
       metadata: {
-        timestamp: new Date().toISOString(),
-        contextType: typeof context
-      }
+        timestamp,
+        channel: context.channel,
+      },
     };
-
-    return result;
   }
+}
+
+function stripIndexUpdateBlocks(text: string): string {
+  return text.replace(/<index_update>[\s\S]*?<\/index_update>/gi, '').trim();
+}
+
+function buildFallbackReply(message?: string): string {
+  if (!message) {
+    return 'Ready for the next task.';
+  }
+  return `Received: ${message}`;
 }

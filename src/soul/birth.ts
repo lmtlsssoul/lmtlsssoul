@@ -1,17 +1,20 @@
 import enquirer from 'enquirer';
+import fs from 'node:fs';
+import path from 'node:path';
 import { log, success, error, warn } from './branding.ts';
+import { scanForModels, setModelForRole } from './models-scan.ts';
+import { AGENT_ROLES, getStateDir } from './types.ts';
+import { GraphDB } from './graph-db.ts';
+import { ArchiveDB } from './archive-db.ts';
 
-/**
- * The Birth Portal guides the user through the 8-step setup process.
- */
 export class SoulBirthPortal {
   private config: Record<string, any> = {};
 
   constructor() {
     log('\nBirth Portal\n');
-    log('This setup flow initializes your lmtlss soul.');
-    warn('You can press Ctrl+C at any time to abort the process.');
-    log(`\n---\n`);
+    log('This setup flow initializes lmtlss soul.');
+    warn('Press Ctrl+C to cancel the ceremony.');
+    log('\n---\n');
   }
 
   private async prompt(question: string, initial?: string): Promise<string> {
@@ -20,11 +23,11 @@ export class SoulBirthPortal {
         type: 'input',
         name: 'value',
         message: question,
-        initial: initial,
+        initial,
       });
-      log(''); // Newline for better readability
-      return response.value;
-    } catch (e) {
+      log('');
+      return response.value.trim();
+    } catch {
       error('Birth Portal cancelled.');
       throw new Error('Birth Portal cancelled');
     }
@@ -49,7 +52,7 @@ export class SoulBirthPortal {
         premise: `My birthday is ${birthDate} at ${birthTime} in ${birthLocation}.`,
         createdAt,
         metadata: {
-          source: 'user_provided',
+          source: 'author_provided',
           birthDate,
           birthTime,
           birthLocation,
@@ -57,68 +60,144 @@ export class SoulBirthPortal {
       },
     ];
     success('Core memory initialized: birthday.');
-    log(`\n---\n`);
+    log('\n---\n');
   }
 
   public async startGenesis(): Promise<Record<string, any>> {
     await this.initializeCoreMemories();
 
     log('Step 1/8: Substrate Connection & Authentication');
-    this.config.substrateUrl = await this.prompt('Enter your Substrate (LLM) API endpoint (e.g., https://api.openai.com/v1)');
-    this.config.substrateKey = await this.prompt('Enter your Substrate API key (will not be stored in plain text)');
-    success('Substrate configured.');
-    log(`\n---\n`);
+    this.config.substrateConfig = await this.prompt(
+      'Enter substrate connection config (JSON, optional)',
+      '{}'
+    );
+    success('Substrate config captured.');
+    log('\n---\n');
 
     log('Step 2/8: Tool Keys (Optional)');
-    this.config.toolKeys = await this.prompt('Enter any tool API keys (e.g., Google Search API Key, JSON format, optional)', '{}');
-    success('Tool keys configured.');
-    log(`\n---\n`);
+    this.config.toolKeys = await this.prompt(
+      'Enter tool key config (JSON, optional)',
+      '{}'
+    );
+    success('Tool key config captured.');
+    log('\n---\n');
 
     log('Step 3/8: Model Discovery');
-    log('Initiating model discovery scan...');
-    // Placeholder for actual model discovery logic
-    this.config.discoveredModels = ['gpt-4o', 'claude-3-opus-20240229']; // Mock models
-    success(`Discovered ${this.config.discoveredModels.length} models.`);
-    log(`\n---\n`);
+    log('Scanning authenticated substrates...');
+    const modelsBySubstrate = await scanForModels({ persist: true });
+    const discovered = Object.values(modelsBySubstrate).flat();
+    this.config.discoveredModels = discovered.map((model) => `${model.provider}:${model.id}`);
+    success(`Discovered ${discovered.length} callable model(s).`);
+    log('\n---\n');
 
     log('Step 4/8: Agent Role Assignment');
-    log('Assigning models to core agent roles (interface, compiler, orchestrator, scraper, reflection)...');
-    // Placeholder for actual role assignment logic
-    this.config.roleAssignments = {
-      interface: 'gpt-4o',
-      compiler: 'claude-3-opus-20240229',
-      orchestrator: 'gpt-4o',
-      scraper: 'claude-3-opus-20240229',
-      reflection: 'gpt-4o',
-    };
-    success('Agent roles assigned.');
-    log(`\n---\n`);
+    const roleAssignments: Record<string, string> = {};
+    const firstAvailable = discovered[0] ? `${discovered[0].provider}:${discovered[0].id}` : '';
+
+    for (const role of AGENT_ROLES) {
+      const answer = await this.prompt(
+        `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
+        firstAvailable
+      );
+      if (!answer) {
+        continue;
+      }
+
+      if (discovered.length > 0) {
+        await setModelForRole(role, answer, {
+          availableModels: discovered,
+          stateDir: getStateDir(),
+        });
+      }
+      roleAssignments[role] = answer;
+    }
+
+    this.config.roleAssignments = roleAssignments;
+    success('Agent role assignments stored.');
+    log('\n---\n');
 
     log('Step 5/8: Channel Synchronization');
-    this.config.channels = await this.prompt('Enter channels to synchronize (e.g., telegram, discord, comma-separated, optional)', '');
-    success('Channels configured.');
-    log(`\n---\n`);
+    this.config.channels = await this.prompt(
+      'Enter channels to sync (comma separated, optional)',
+      ''
+    );
+    success('Channel config captured.');
+    log('\n---\n');
 
     log('Step 6/8: Treasury & Wallet Policy');
-    this.config.treasuryPolicy = await this.prompt('Define treasury policy (e.g., daily budget, BTC address, JSON format, optional)', '{}');
-    success('Treasury policy set.');
-    log(`\n---\n`);
+    this.config.treasuryPolicy = await this.prompt(
+      'Enter treasury policy (JSON, optional)',
+      '{}'
+    );
+    success('Treasury policy captured.');
+    log('\n---\n');
 
     log('Step 7/8: Identity, Name & Objective');
-    this.config.soulName = await this.prompt('Give your lmtlss soul a name');
-    this.config.soulObjective = await this.prompt('Define the primary objective for your soul');
+    this.config.soulName = await this.prompt('Name this soul');
+    this.config.soulObjective = await this.prompt('Define the primary objective');
     success(`Soul named "${this.config.soulName}" with objective "${this.config.soulObjective}".`);
-    log(`\n---\n`);
+    log('\n---\n');
 
     log('Step 8/8: Initialization');
-    log('Initializing databases, seeding workspace, and performing first checkpoint...');
-    // Placeholder for actual initialization logic
+    await this.initializeState();
     success('Soul initialization complete.');
-    log(`\n---\n`);
+    log('\n---\n');
 
     success('Birth Portal complete.');
     log(`Soul "${this.config.soulName}" is initialized.`);
-    log(`You can now run 'soul start' to begin operation.`);
+    log("Run 'soul start' to activate runtime services.");
     return this.config;
+  }
+
+  private async initializeState(): Promise<void> {
+    const stateDir = getStateDir();
+    fs.mkdirSync(stateDir, { recursive: true });
+
+    const graph = new GraphDB(stateDir);
+    const archive = new ArchiveDB(stateDir);
+    const timestamp = new Date().toISOString();
+    const sessionKey = `lmtlss:interface:birth-${Date.now()}`;
+
+    const birthEvent = archive.appendEvent({
+      parentHash: null,
+      timestamp,
+      sessionKey,
+      eventType: 'system_event',
+      agentId: 'interface',
+      channel: 'birth',
+      payload: {
+        protocol: 'birth.v1',
+        soulName: this.config.soulName,
+        soulObjective: this.config.soulObjective,
+        birthday: this.config.birthday,
+      },
+    });
+
+    graph.createNode({
+      premise: `I am ${this.config.soulName}. Objective: ${this.config.soulObjective}.`,
+      nodeType: 'identity',
+      createdBy: 'birth',
+      weight: {
+        salience: 1.0,
+        commitment: 0.9,
+        uncertainty: 0.2,
+      },
+    });
+
+    const birthConfigPath = path.join(stateDir, 'birth-config.json');
+    fs.writeFileSync(
+      birthConfigPath,
+      JSON.stringify(
+        {
+          ...this.config,
+          initializedAt: timestamp,
+          birthEventHash: birthEvent.eventHash,
+          stateDir,
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
   }
 }

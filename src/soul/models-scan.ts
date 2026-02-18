@@ -1,46 +1,83 @@
+import type { AgentRole } from './types.ts';
+import { AGENT_ROLES } from './types.ts';
+import type { ModelDescriptor, ModelReference, SubstrateId } from '../substrate/types.js';
+import { refreshModelRegistry, loadRegistryState, saveRegistryState } from '../substrate/refresh.js';
+import { parseModelReference, setRoleAssignment } from '../substrate/assignment.js';
 
-import { SubstrateId, ModelDescriptor } from '../substrate/types.js';
+export async function scanForModels(options?: {
+  persist?: boolean;
+  stateDir?: string;
+}): Promise<Record<SubstrateId, ModelDescriptor[]>> {
+  const persist = options?.persist ?? true;
+  const previousState = loadRegistryState(options?.stateDir) ?? undefined;
+  const nextState = await refreshModelRegistry(previousState);
 
-// Mocked data for now, until substrate adapters are implemented in Phase 2
-const MOCK_MODELS: Record<SubstrateId, ModelDescriptor[]> = {
-  openai: [
-    { id: 'gpt-4o', name: 'GPT-4 Omni', provider: 'openai', context_length: 128000 },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', context_length: 128000 },
-  ],
-  anthropic: [
-    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'anthropic', context_length: 200000 },
-    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', provider: 'anthropic', context_length: 200000 },
-  ],
-  xai: [
-    { id: 'grok-1.5', name: 'Grok 1.5', provider: 'xai', context_length: 128000 },
-  ],
-  ollama: [
-    { id: 'llama3:latest', name: 'Llama 3 (local)', provider: 'ollama', context_length: 8000 },
-    { id: 'mistral:latest', name: 'Mistral (local)', provider: 'ollama', context_length: 8000 },
-  ],
-};
+  if (persist) {
+    saveRegistryState(nextState, options?.stateDir);
+  }
 
-/**
- * Scans for available models from all substrates.
- * In the future, this will call the discoverModels() method on each substrate adapter.
- * For now, it returns mocked data.
- * @returns A promise that resolves to a map of substrate IDs to their available models.
- */
-export async function scanForModels(): Promise<Record<SubstrateId, ModelDescriptor[]>> {
-  // Simulate async operation
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return MOCK_MODELS;
+  const grouped: Record<SubstrateId, ModelDescriptor[]> = {
+    openai: [],
+    anthropic: [],
+    xai: [],
+    ollama: [],
+  };
+
+  for (const model of nextState.models) {
+    grouped[model.provider].push(model);
+  }
+
+  return grouped;
 }
 
-/**
- * Sets the model for a given role.
- * For now, this is a placeholder and does not persist the setting.
- * @param role The role to set the model for.
- * @param modelId The ID of the model to assign to the role.
- * @returns A promise that resolves when the operation is complete.
- */
-export async function setModelForRole(role: string, modelId: string): Promise<void> {
-  console.log(`Setting model for role "${role}" to "${modelId}"`);
-  // In the future, this will update the configuration.
-  await new Promise(resolve => setTimeout(resolve, 100));
+export async function setModelForRole(
+  role: string,
+  modelReferenceOrId: string,
+  options?: {
+    stateDir?: string;
+    availableModels?: ModelDescriptor[];
+  }
+): Promise<void> {
+  if (!isAgentRole(role)) {
+    throw new Error(`Invalid role "${role}". Expected one of: ${AGENT_ROLES.join(', ')}`);
+  }
+
+  const availableModels =
+    options?.availableModels ?? Object.values(await scanForModels({ stateDir: options?.stateDir })).flat();
+  const resolvedReference = normalizeModelReference(modelReferenceOrId, availableModels);
+
+  setRoleAssignment(role, resolvedReference, {
+    stateDir: options?.stateDir,
+    availableModels,
+  });
+}
+
+function normalizeModelReference(
+  modelReferenceOrId: string,
+  availableModels: ModelDescriptor[]
+): ModelReference {
+  const parsed = parseModelReference(modelReferenceOrId);
+  if (parsed) {
+    return modelReferenceOrId as ModelReference;
+  }
+
+  // Backward-compatible shorthand: plain model id. Must resolve uniquely.
+  const matches = availableModels.filter((model) => model.id === modelReferenceOrId && !model.stale);
+  if (matches.length === 1) {
+    return `${matches[0].provider}:${matches[0].id}`;
+  }
+
+  if (matches.length === 0) {
+    throw new Error(
+      `Model "${modelReferenceOrId}" is not available in discovered registry state. Use "<substrate>:<modelId>".`
+    );
+  }
+
+  throw new Error(
+    `Model ID "${modelReferenceOrId}" is ambiguous across substrates. Use "<substrate>:<modelId>".`
+  );
+}
+
+function isAgentRole(value: string): value is AgentRole {
+  return (AGENT_ROLES as readonly string[]).includes(value);
 }

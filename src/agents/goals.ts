@@ -35,54 +35,80 @@ export type Goal = {
  * Manages the creation and decomposition of goals into task trees.
  */
 export class GoalDecompositionEngine {
-  /**
-   * Decomposes a high-level objective into a task tree (Goal).
-   * This is a conceptual implementation and returns a hardcoded goal.
-   * @param objective - The high-level objective to decompose.
-   * @returns A promise that resolves to the created Goal.
-   */
   public async decomposeObjective(objective: string): Promise<Goal> {
     const now = new Date().toISOString();
     const goalId = `goal-${Date.now()}`;
+    const taskPhrases = splitObjectiveIntoTasks(objective);
+    const tasks: Record<string, Task> = {};
 
-    const goal: Goal = {
+    for (let i = 0; i < taskPhrases.length; i += 1) {
+      const id = `task-${i + 1}`;
+      const phrase = taskPhrases[i];
+      tasks[id] = {
+        id,
+        description: phrase,
+        status: 'pending',
+        dependencies: i === 0 ? [] : [`task-${i}`],
+        assignedAgent: routeTaskToAgent(phrase),
+        timeout: defaultTimeoutSecondsForTask(phrase),
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+
+    return {
       id: goalId,
       objective,
       createdAt: now,
-      tasks: {
-        'task-1': {
-          id: 'task-1',
-          description: 'Research the topic and gather information.',
-          status: 'pending',
-          dependencies: [],
-          assignedAgent: 'scraper',
-          timeout: 3600,
-          createdAt: now,
-          updatedAt: now,
-        },
-        'task-2': {
-          id: 'task-2',
-          description: 'Write a summary of the research findings.',
-          status: 'pending',
-          dependencies: ['task-1'],
-          assignedAgent: 'interface',
-          timeout: 1800,
-          createdAt: now,
-          updatedAt: now,
-        },
-        'task-3': {
-          id: 'task-3',
-          description: 'Verify the accuracy of the summary.',
-          status: 'pending',
-          dependencies: ['task-2'],
-          assignedAgent: 'compiler',
-          timeout: 900,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
+      tasks,
     };
-
-    return goal;
   }
+}
+
+function splitObjectiveIntoTasks(objective: string): string[] {
+  const normalized = objective.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return ['Clarify objective and produce an executable plan.'];
+  }
+
+  const segments = normalized
+    .split(/(?:\.\s+|;\s+|\n+|\s+then\s+|\s+and\s+)/i)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length === 0) {
+    return [normalized];
+  }
+
+  return segments.map((segment, idx) =>
+    segment.length > 4 ? segment : `Execute objective step ${idx + 1}: ${segment}`
+  );
+}
+
+function routeTaskToAgent(description: string): AgentRole {
+  const text = description.toLowerCase();
+  if (/(research|scrape|collect|fetch|crawl|gather)/.test(text)) {
+    return 'scraper';
+  }
+  if (/(verify|test|validate|check|audit)/.test(text)) {
+    return 'compiler';
+  }
+  if (/(reflect|retrospective|distill|review trends)/.test(text)) {
+    return 'reflection';
+  }
+  if (/(orchestrate|coordinate|plan dependencies|schedule)/.test(text)) {
+    return 'orchestrator';
+  }
+  return 'interface';
+}
+
+function defaultTimeoutSecondsForTask(description: string): number {
+  const text = description.toLowerCase();
+  if (/(research|scrape|crawl|fetch)/.test(text)) {
+    return 3600;
+  }
+  if (/(verify|test|validate)/.test(text)) {
+    return 900;
+  }
+  return 1800;
 }

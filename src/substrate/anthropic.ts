@@ -1,6 +1,6 @@
 /**
  * @file Implements the SubstrateAdapter for the Anthropic API.
- * @author Gemini
+ * @author Gemini + Codex
  */
 
 import {
@@ -9,78 +9,140 @@ import {
   ModelDescriptor,
   InvokeParams,
   InvokeResult,
+  normalizeModelDescriptor,
 } from './types.js';
+import { errMessage, requestJson } from './http.js';
 
-/**
- * A mock implementation of the SubstrateAdapter for the Anthropic API.
- * This class is intended for testing and development purposes and does not
- * make actual API calls to Anthropic.
- */
 export class AnthropicAdapter implements SubstrateAdapter {
   public readonly id: SubstrateId = 'anthropic';
+  private readonly baseUrl: string;
+  private readonly apiKey?: string;
+  private readonly apiVersion: string;
 
-  /**
-   * Checks the health of the Anthropic API.
-   * For this mock implementation, it always returns a healthy status.
-   * @returns A promise that resolves to an object indicating the health status.
-   */
+  constructor(baseUrl: string = process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com/v1') {
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    this.apiKey = process.env.ANTHROPIC_API_KEY;
+    this.apiVersion = process.env.ANTHROPIC_API_VERSION ?? '2023-06-01';
+  }
+
   public async health(): Promise<{ ok: boolean; detail?: string; lastCheckedAt: string }> {
-    return {
-      ok: true,
-      detail: 'Mock health check successful.',
-      lastCheckedAt: new Date().toISOString(),
-    };
-  }
-
-  /**
-   * Discovers the models available from the Anthropic API.
-   * For this mock implementation, it returns a static list of models.
-   * @returns A promise that resolves to an array of model descriptors.
-   */
-  public async discoverModels(): Promise<ModelDescriptor[]> {
-    const now = new Date().toISOString();
-    return [
-      {
-        id: 'claude-3-opus-20240229',
-        name: 'Claude 3 Opus',
-        provider: 'anthropic',
-        context_length: 200000,
-        lastCheckedAt: now,
-      },
-      {
-        id: 'claude-3-sonnet-20240229',
-        name: 'Claude 3 Sonnet',
-        provider: 'anthropic',
-        context_length: 200000,
-        lastCheckedAt: now,
-      },
-    ];
-  }
-
-  /**
-   * Invokes a model on the Anthropic API.
-   * For this mock implementation, it returns a static response.
-   * @param params - The parameters for the invocation.
-   * @returns A promise that resolves to the result of the invocation.
-   */
-  public async invoke(params: InvokeParams): Promise<InvokeResult> {
-    const { model, prompt } = params;
-
-    if (!model || !prompt) {
-      throw new Error('Model and prompt are required for invocation.');
+    const lastCheckedAt = new Date().toISOString();
+    if (!this.apiKey) {
+      return {
+        ok: false,
+        detail: 'ANTHROPIC_API_KEY is not configured.',
+        lastCheckedAt,
+      };
     }
 
-    const prompt_tokens = Math.ceil(prompt.length / 4);
-    const completion_tokens = 50; // A static value for mock completion
+    try {
+      await this.listModels();
+      return {
+        ok: true,
+        detail: 'Anthropic models endpoint reachable.',
+        lastCheckedAt,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        detail: errMessage(err),
+        lastCheckedAt,
+      };
+    }
+  }
+
+  public async discoverModels(): Promise<ModelDescriptor[]> {
+    if (!this.apiKey) {
+      return [];
+    }
+
+    const data = await this.listModels();
+    const now = new Date().toISOString();
+
+    return data.map((model) =>
+      normalizeModelDescriptor({
+        substrate: 'anthropic',
+        modelId: model.id,
+        displayName: model.display_name ?? model.id,
+        contextTokens: 0,
+        lastSeenAt: now,
+        created: model.created_at ? Math.floor(new Date(model.created_at).getTime() / 1000) : undefined,
+      })
+    );
+  }
+
+  public async invoke(params: InvokeParams): Promise<InvokeResult> {
+    const { model, prompt, temperature, max_tokens, stop } = params;
+
+    if (!this.apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured.');
+    }
+    if (!model || !prompt) {
+      throw new Error('Model and prompt are required for Anthropic invocation.');
+    }
+
+    type AnthropicResponse = {
+      model?: string;
+      content?: Array<{ type?: string; text?: string }>;
+      usage?: {
+        input_tokens?: number;
+        output_tokens?: number;
+      };
+    };
+
+    const response = await requestJson<AnthropicResponse>(
+      `${this.baseUrl}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': this.apiKey,
+          'anthropic-version': this.apiVersion,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: max_tokens ?? 1024,
+          temperature,
+          stop_sequences: stop,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      }
+    );
+
+    const content = (response.content ?? [])
+      .filter((entry) => entry.type === 'text' && typeof entry.text === 'string')
+      .map((entry) => entry.text ?? '')
+      .join('');
+    const promptTokens = response.usage?.input_tokens ?? Math.ceil(prompt.length / 4);
+    const completionTokens = response.usage?.output_tokens ?? Math.ceil(content.length / 4);
 
     return {
-      content: `Mock response from ${model}: The prompt was "${prompt}"`,
-      model: model,
+      content,
+      model: response.model ?? model,
       usage: {
-        prompt_tokens: prompt_tokens,
-        completion_tokens: completion_tokens,
-        total_tokens: prompt_tokens + completion_tokens,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: promptTokens + completionTokens,
       },
     };
+  }
+
+  private async listModels(): Promise<Array<{ id: string; display_name?: string; created_at?: string }>> {
+    if (!this.apiKey) {
+      return [];
+    }
+
+    const response = await requestJson<{ data?: Array<{ id: string; display_name?: string; created_at?: string }> }>(
+      `${this.baseUrl}/models`,
+      {
+        method: 'GET',
+        headers: {
+          'x-api-key': this.apiKey,
+          'anthropic-version': this.apiVersion,
+        },
+      }
+    );
+
+    return response.data ?? [];
   }
 }

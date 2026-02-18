@@ -1,5 +1,5 @@
 import { IndexUpdateProposal, ProposedNode, NodeType } from './types.js';
-import { parseFirstProposal } from './proposal-parser.js';
+import { parseFirstProposal } from './proposal-parser.ts';
 
 export type ProbeType = 'identity' | 'goals' | 'values';
 

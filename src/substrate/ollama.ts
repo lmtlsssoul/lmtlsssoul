@@ -1,6 +1,6 @@
 /**
  * @file Implements the SubstrateAdapter for the Ollama API.
- * @author Gemini
+ * @author Gemini + Codex
  */
 
 import {
@@ -9,78 +9,107 @@ import {
   ModelDescriptor,
   InvokeParams,
   InvokeResult,
+  normalizeModelDescriptor,
 } from './types.js';
+import { errMessage, requestJson } from './http.js';
 
-/**
- * A mock implementation of the SubstrateAdapter for the Ollama API.
- * This class is intended for testing and development purposes and does not
- * make actual API calls to Ollama.
- */
 export class OllamaAdapter implements SubstrateAdapter {
   public readonly id: SubstrateId = 'ollama';
+  private readonly baseUrl: string;
 
-  /**
-   * Checks the health of the Ollama API.
-   * For this mock implementation, it always returns a healthy status.
-   * @returns A promise that resolves to an object indicating the health status.
-   */
+  constructor(baseUrl: string = process.env.OLLAMA_BASE_URL ?? 'http://127.0.0.1:11434') {
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
+  }
+
   public async health(): Promise<{ ok: boolean; detail?: string; lastCheckedAt: string }> {
-    return {
-      ok: true,
-      detail: 'Mock health check successful.',
-      lastCheckedAt: new Date().toISOString(),
-    };
+    const lastCheckedAt = new Date().toISOString();
+    try {
+      await this.listModels();
+      return {
+        ok: true,
+        detail: 'Ollama endpoint reachable.',
+        lastCheckedAt,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        detail: errMessage(err),
+        lastCheckedAt,
+      };
+    }
   }
 
-  /**
-   * Discovers the models available from the Ollama API.
-   * For this mock implementation, it returns a static list of models.
-   * @returns A promise that resolves to an array of model descriptors.
-   */
   public async discoverModels(): Promise<ModelDescriptor[]> {
+    const models = await this.listModels();
     const now = new Date().toISOString();
-    return [
-      {
-        id: 'llama3:latest',
-        name: 'Llama 3 (local)',
-        provider: 'ollama',
-        context_length: 8000,
-        lastCheckedAt: now,
-      },
-      {
-        id: 'mistral:latest',
-        name: 'Mistral (local)',
-        provider: 'ollama',
-        context_length: 8000,
-        lastCheckedAt: now,
-      },
-    ];
+
+    return models.map((model) =>
+      normalizeModelDescriptor({
+        substrate: 'ollama',
+        modelId: model.name,
+        displayName: model.name,
+        contextTokens: 0,
+        lastSeenAt: now,
+      })
+    );
   }
 
-  /**
-   * Invokes a model on the Ollama API.
-   * For this mock implementation, it returns a static response.
-   * @param params - The parameters for the invocation.
-   * @returns A promise that resolves to the result of the invocation.
-   */
   public async invoke(params: InvokeParams): Promise<InvokeResult> {
-    const { model, prompt } = params;
+    const { model, prompt, temperature, max_tokens, stop } = params;
 
     if (!model || !prompt) {
-      throw new Error('Model and prompt are required for invocation.');
+      throw new Error('Model and prompt are required for Ollama invocation.');
     }
 
-    const prompt_tokens = Math.ceil(prompt.length / 4);
-    const completion_tokens = 50; // A static value for mock completion
+    type OllamaGenerateResponse = {
+      model?: string;
+      response?: string;
+      prompt_eval_count?: number;
+      eval_count?: number;
+    };
+
+    const response = await requestJson<OllamaGenerateResponse>(
+      `${this.baseUrl}/api/generate`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          prompt,
+          stream: false,
+          options: {
+            temperature,
+            num_predict: max_tokens,
+            stop,
+          },
+        }),
+      }
+    );
+
+    const content = response.response ?? '';
+    const promptTokens = response.prompt_eval_count ?? Math.ceil(prompt.length / 4);
+    const completionTokens = response.eval_count ?? Math.ceil(content.length / 4);
 
     return {
-      content: `Mock response from ${model}: The prompt was "${prompt}"`,
-      model: model,
+      content,
+      model: response.model ?? model,
       usage: {
-        prompt_tokens: prompt_tokens,
-        completion_tokens: completion_tokens,
-        total_tokens: prompt_tokens + completion_tokens,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: promptTokens + completionTokens,
       },
     };
+  }
+
+  private async listModels(): Promise<Array<{ name: string }>> {
+    const response = await requestJson<{ models?: Array<{ name: string }> }>(
+      `${this.baseUrl}/api/tags`,
+      {
+        method: 'GET',
+      }
+    );
+    return response.models ?? [];
   }
 }

@@ -39,6 +39,14 @@ export {
   capsulePromotion,
   updateResonance,
 } from './soul/weights.ts';
+export { GraphTraversal } from './soul/traversal.ts';
+export type { TraversalDirection, TraversalOptions, TraversalResult } from './soul/traversal.ts';
+export { TensionDetector } from './soul/tension.ts';
+export type { Tension, TensionType } from './soul/tension.ts';
+export { DistillationEngine } from './soul/distillation.ts';
+export type { DistillationOptions, ProbeResult, ProbeType } from './soul/distillation.ts';
+export { ConvergenceAnalyzer } from './soul/convergence.ts';
+export type { ConvergenceResult } from './soul/convergence.ts';
 export { GoalDecompositionEngine } from './agents/goals.ts';
 export type {
   Goal as DecomposedGoal,

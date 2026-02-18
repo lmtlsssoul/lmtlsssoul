@@ -4,8 +4,22 @@ import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.js';
 import { GatewayServer } from '../gateway/server.ts';
 import { registerTreasuryCommands } from './treasury.ts';
+import { getStateDir } from '../soul/types.ts';
+import { GraphDB } from '../soul/graph-db.ts';
+import { ArchiveDB } from '../soul/archive-db.ts';
+import { Reflection } from '../agents/reflection.ts';
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+
+type DaemonState = {
+  pid: number;
+  host: string;
+  port: number;
+  startedAt: string;
+};
 
 /**
  * Main entry point for the soul CLI.
@@ -37,23 +51,80 @@ export async function main() {
 
   program.command('start')
     .description('Start the soul daemon')
-    .action(async () => {
-      log('Summoning daemon...');
-      warn('Daemon start not implemented yet.');
+    .option('-p, --port <port>', 'Gateway port', '3000')
+    .option('-H, --host <host>', 'Gateway host', '127.0.0.1')
+    .action(async (options: { port: string; host: string }) => {
+      const state = readDaemonState();
+      if (state && isProcessAlive(state.pid)) {
+        warn(`Daemon already running (pid=${state.pid}) on ${state.host}:${state.port}.`);
+        return;
+      }
+
+      const host = options?.host ?? '127.0.0.1';
+      const port = Number.parseInt(options?.port ?? '3000', 10);
+      const entrypoint = path.resolve(process.cwd(), 'soul.mjs');
+
+      log(`Summoning daemon on ${host}:${port}...`);
+      const child = spawn(process.execPath, [entrypoint, 'gateway', 'start', '--host', host, '--port', String(port)], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+
+      if (!child.pid) {
+        throw new Error('Failed to start daemon process.');
+      }
+
+      writeDaemonState({
+        pid: child.pid,
+        host,
+        port,
+        startedAt: new Date().toISOString(),
+      });
+      success(`Daemon started (pid=${child.pid}).`);
     });
 
   program.command('stop')
     .description('Stop the soul daemon')
     .action(async () => {
-      log('Banishing daemon...');
-      warn('Daemon stop not implemented yet.');
+      const state = readDaemonState();
+      if (!state) {
+        warn('No daemon state file found.');
+        return;
+      }
+
+      if (isProcessAlive(state.pid)) {
+        process.kill(state.pid, 'SIGTERM');
+        success(`Daemon process ${state.pid} stopped.`);
+      } else {
+        warn(`Daemon process ${state.pid} was not running.`);
+      }
+
+      removeDaemonState();
     });
 
   program.command('status')
     .description('Show soul status')
     .action(async () => {
-      log('Consulting the oracle...');
-      success('System operational (stub).');
+      const stateDir = getStateDir();
+      const state = readDaemonState();
+      const daemonRunning = state ? isProcessAlive(state.pid) : false;
+      const gatewayHealth = state
+        ? await getGatewayHealth(state.host, state.port)
+        : { ok: false, detail: 'Daemon not started.' };
+
+      const graph = new GraphDB(stateDir);
+      const archive = new ArchiveDB(stateDir);
+
+      log('--- Soul Status ---');
+      console.log(`State Dir: ${stateDir}`);
+      console.log(`Daemon: ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
+      console.log(`Gateway: ${gatewayHealth.ok ? 'healthy' : 'unreachable'}`);
+      if (gatewayHealth.detail) {
+        console.log(`Gateway Detail: ${gatewayHealth.detail}`);
+      }
+      console.log(`Graph Nodes: ${graph.getNodeCount()}`);
+      console.log(`Archive Events: ${archive.getEventCount()}`);
     });
 
   const modelsCommand = program.command('models')
@@ -74,7 +145,7 @@ export async function main() {
   modelsCommand.command('set')
     .description('Set the model for a given role')
     .argument('<role>', 'The role to set the model for (e.g., interface, compiler)')
-    .argument('<modelId>', 'The ID of the model to assign to the role')
+    .argument('<modelRef>', 'The model reference (<substrate>:<modelId> or unique <modelId>)')
     .action(async (role, modelId) => {
       log(`Assigning model to role...`);
       await setModelForRole(role, modelId);
@@ -159,6 +230,34 @@ export async function main() {
       }
     });
 
+  const archiveCommand = program.command('archive')
+    .description('Archive integrity commands');
+
+  archiveCommand.command('verify')
+    .description('Verify archive hash-chain integrity')
+    .action(() => {
+      const archive = new ArchiveDB(getStateDir());
+      const result = archive.verifyHashChain();
+      if (result.ok) {
+        success(`Archive hash-chain verified (${result.checked} events checked).`);
+      } else {
+        error(`Archive verification failed with ${result.errors.length} issue(s).`);
+        for (const issue of result.errors) {
+          console.error(`- ${issue}`);
+        }
+        process.exitCode = 1;
+      }
+    });
+
+  program.command('reflect')
+    .description('Trigger immediate reflection pass')
+    .action(async () => {
+      const reflection = new Reflection();
+      const result = await reflection.execute({ mode: 'manual' });
+      success('Reflection pass complete.');
+      console.log(JSON.stringify(result, null, 2));
+    });
+
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
@@ -188,5 +287,81 @@ function isCliEntry(): boolean {
 if (isCliEntry()) {
   void main().catch(() => {
     process.exit(1);
+  });
+}
+
+function daemonStatePath(): string {
+  return path.join(getStateDir(), 'daemon.json');
+}
+
+function readDaemonState(): DaemonState | null {
+  const statePath = daemonStatePath();
+  if (!fs.existsSync(statePath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(statePath, 'utf-8')) as DaemonState;
+  } catch {
+    return null;
+  }
+}
+
+function writeDaemonState(state: DaemonState): void {
+  const statePath = daemonStatePath();
+  fs.mkdirSync(path.dirname(statePath), { recursive: true });
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
+}
+
+function removeDaemonState(): void {
+  const statePath = daemonStatePath();
+  if (fs.existsSync(statePath)) {
+    fs.rmSync(statePath);
+  }
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function getGatewayHealth(
+  host: string,
+  port: number
+): Promise<{ ok: boolean; detail?: string }> {
+  return new Promise((resolve) => {
+    const req = http.get(
+      {
+        host,
+        port,
+        path: '/health',
+        timeout: 1500,
+      },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            resolve({ ok: true });
+            return;
+          }
+          resolve({ ok: false, detail: `HTTP ${res.statusCode ?? 0}: ${body}` });
+        });
+      }
+    );
+
+    req.on('error', (err) => {
+      resolve({ ok: false, detail: err.message });
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ ok: false, detail: 'Timed out' });
+    });
   });
 }

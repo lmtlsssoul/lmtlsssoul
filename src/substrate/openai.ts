@@ -1,6 +1,6 @@
 /**
  * @file Implements the SubstrateAdapter for the OpenAI API.
- * @author Gemini
+ * @author Gemini + Codex
  */
 
 import {
@@ -9,78 +9,142 @@ import {
   ModelDescriptor,
   InvokeParams,
   InvokeResult,
+  normalizeModelDescriptor,
 } from './types.js';
+import { errMessage, requestJson } from './http.js';
 
-/**
- * A mock implementation of the SubstrateAdapter for the OpenAI API.
- * This class is intended for testing and development purposes and does not
- * make actual API calls to OpenAI.
- */
 export class OpenaiAdapter implements SubstrateAdapter {
   public readonly id: SubstrateId = 'openai';
+  private readonly baseUrl: string;
+  private readonly apiKey?: string;
 
-  /**
-   * Checks the health of the OpenAI API.
-   * For this mock implementation, it always returns a healthy status.
-   * @returns A promise that resolves to an object indicating the health status.
-   */
+  constructor(baseUrl: string = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1') {
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    this.apiKey = process.env.OPENAI_API_KEY;
+  }
+
   public async health(): Promise<{ ok: boolean; detail?: string; lastCheckedAt: string }> {
-    return {
-      ok: true,
-      detail: 'Mock health check successful.',
-      lastCheckedAt: new Date().toISOString(),
-    };
-  }
-
-  /**
-   * Discovers the models available from the OpenAI API.
-   * For this mock implementation, it returns a static list of models.
-   * @returns A promise that resolves to an array of model descriptors.
-   */
-  public async discoverModels(): Promise<ModelDescriptor[]> {
-    const now = new Date().toISOString();
-    return [
-      {
-        id: 'gpt-4o',
-        name: 'GPT-4 Omni',
-        provider: 'openai',
-        context_length: 128000,
-        lastCheckedAt: now,
-      },
-      {
-        id: 'gpt-4-turbo',
-        name: 'GPT-4 Turbo',
-        provider: 'openai',
-        context_length: 128000,
-        lastCheckedAt: now,
-      },
-    ];
-  }
-
-  /**
-   * Invokes a model on the OpenAI API.
-   * For this mock implementation, it returns a static response.
-   * @param params - The parameters for the invocation.
-   * @returns A promise that resolves to the result of the invocation.
-   */
-  public async invoke(params: InvokeParams): Promise<InvokeResult> {
-    const { model, prompt } = params;
-
-    if (!model || !prompt) {
-      throw new Error('Model and prompt are required for invocation.');
+    const lastCheckedAt = new Date().toISOString();
+    if (!this.apiKey) {
+      return {
+        ok: false,
+        detail: 'OPENAI_API_KEY is not configured.',
+        lastCheckedAt,
+      };
     }
 
-    const prompt_tokens = Math.ceil(prompt.length / 4);
-    const completion_tokens = 50; // A static value for mock completion
+    try {
+      await this.listModels();
+      return {
+        ok: true,
+        detail: 'OpenAI models endpoint reachable.',
+        lastCheckedAt,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        detail: errMessage(err),
+        lastCheckedAt,
+      };
+    }
+  }
+
+  public async discoverModels(): Promise<ModelDescriptor[]> {
+    if (!this.apiKey) {
+      return [];
+    }
+
+    const data = await this.listModels();
+    const now = new Date().toISOString();
+
+    return data.map((model) =>
+      normalizeModelDescriptor({
+        substrate: 'openai',
+        modelId: model.id,
+        displayName: model.id,
+        contextTokens: 0,
+        lastSeenAt: now,
+        author: model.owned_by,
+        created: model.created,
+      })
+    );
+  }
+
+  public async invoke(params: InvokeParams): Promise<InvokeResult> {
+    const { model, prompt, temperature, max_tokens, stop } = params;
+
+    if (!this.apiKey) {
+      throw new Error('OPENAI_API_KEY is not configured.');
+    }
+    if (!model || !prompt) {
+      throw new Error('Model and prompt are required for OpenAI invocation.');
+    }
+
+    type OpenAICompletionResponse = {
+      model: string;
+      choices?: Array<{ message?: { content?: string | Array<{ text?: string }> } }>;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
+    };
+
+    const response = await requestJson<OpenAICompletionResponse>(
+      `${this.baseUrl}/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature,
+          max_tokens,
+          stop,
+        }),
+      }
+    );
+
+    const rawContent = response.choices?.[0]?.message?.content;
+    const content =
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+        ? rawContent.map((part) => part.text ?? '').join('')
+        : '';
+
+    const promptTokens = response.usage?.prompt_tokens ?? Math.ceil(prompt.length / 4);
+    const completionTokens = response.usage?.completion_tokens ?? Math.ceil(content.length / 4);
 
     return {
-      content: `Mock response from ${model}: The prompt was "${prompt}"`,
-      model: model,
+      content,
+      model: response.model ?? model,
       usage: {
-        prompt_tokens: prompt_tokens,
-        completion_tokens: completion_tokens,
-        total_tokens: prompt_tokens + completion_tokens,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: response.usage?.total_tokens ?? promptTokens + completionTokens,
       },
     };
+  }
+
+  private async listModels(): Promise<Array<{ id: string; created?: number; owned_by?: string }>> {
+    if (!this.apiKey) {
+      return [];
+    }
+
+    const response = await requestJson<{ data?: Array<{ id: string; created?: number; owned_by?: string }> }>(
+      `${this.baseUrl}/models`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+      }
+    );
+
+    return response.data ?? [];
   }
 }

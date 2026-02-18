@@ -18,13 +18,8 @@ export class ModelRegistry {
   /**
    * Initializes the registry with all available substrate adapters.
    */
-  constructor() {
-    this.adapters = [
-      new OpenaiAdapter(),
-      new AnthropicAdapter(),
-      new XaiAdapter(),
-      new OllamaAdapter(),
-    ];
+  constructor(adapters?: SubstrateAdapter[]) {
+    this.adapters = adapters ?? [new OpenaiAdapter(), new AnthropicAdapter(), new XaiAdapter(), new OllamaAdapter()];
   }
 
   /**
@@ -33,18 +28,31 @@ export class ModelRegistry {
    * @returns A promise that resolves to an array of unique model descriptors.
    */
   public async discoverAllModels(): Promise<ModelDescriptor[]> {
-    const allModelsPromises = this.adapters.map(adapter => adapter.discoverModels());
+    const allModelsPromises = this.adapters.map(async (adapter) => {
+      try {
+        return await adapter.discoverModels();
+      } catch (err) {
+        console.warn(`[Registry] Failed to discover models from ${adapter.id}:`, err);
+        return [] as ModelDescriptor[];
+      }
+    });
+
     const allModelsArrays = await Promise.all(allModelsPromises);
     const allModels = allModelsArrays.flat();
 
-    // Deduplicate models based on their unique ID
+    // Deduplicate models by substrate+id to preserve strict routing semantics.
     const modelMap = new Map<string, ModelDescriptor>();
     for (const model of allModels) {
-      if (!modelMap.has(model.id)) {
-        modelMap.set(model.id, model);
+      const key = `${model.provider}:${model.id}`;
+      if (!modelMap.has(key)) {
+        modelMap.set(key, model);
       }
     }
 
     return Array.from(modelMap.values());
+  }
+
+  public getAdapters(): readonly SubstrateAdapter[] {
+    return this.adapters;
   }
 }

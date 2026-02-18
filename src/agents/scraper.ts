@@ -1,79 +1,111 @@
-/**
- * @file src/agents/scraper.ts
- * @description The scraper agent for web scraping and data collection.
- * @auth lmtlss soul
- */
-
 import { Agent, AgentRole } from './types.ts';
 
-/**
- * Represents the context required for a scraping task.
- */
 interface ScrapeContext {
   url: string;
-  targetSelector?: string; // Optional CSS selector to target specific content
+  targetSelector?: string;
+  timeoutMs?: number;
 }
 
-/**
- * Represents the result of a scraping task.
- */
 interface ScrapeResult {
   url: string;
-  content: string; // The scraped content, e.g., raw HTML or extracted text
+  content: string;
   scrapedAt: string;
 }
 
-/**
- * The Scraper agent is responsible for fetching and extracting data from web pages.
- * It is designed to be a cost-effective way to gather information for research
- * and other tasks.
- */
 export class Scraper implements Agent {
   public readonly role: AgentRole = 'scraper';
 
-  /**
-   * Executes a scraping task based on the provided context.
-   * @param context - The context containing the URL to scrape and optional selectors.
-   * @returns A promise that resolves with the scraped content.
-   */
   public async execute(context: ScrapeContext): Promise<ScrapeResult> {
-    console.log(`[Scraper] Received task to scrape: ${context.url}`);
+    const target = validateUrl(context.url);
+    const timeoutMs = context.timeoutMs ?? 15000;
+    const html = await fetchHtml(target, timeoutMs);
+    const content = this.parseContent(html, context.targetSelector);
 
-    try {
-      // In a real implementation, this would use a library like fetch, axios,
-      // puppeteer, or similar to get the web content.
-      // For this conceptual implementation, we'll return a mock result.
-
-      const mockContent = `<html><head><title>Mock Page</title></head><body><h1>Hello from ${context.url}</h1></body></html>`;
-
-      const result: ScrapeResult = {
-        url: context.url,
-        content: this.parseContent(mockContent, context.targetSelector),
-        scrapedAt: new Date().toISOString(),
-      };
-
-      console.log(`[Scraper] Successfully scraped: ${context.url}`);
-      return result;
-    } catch (error) {
-      console.error(`[Scraper] Failed to scrape ${context.url}:`, error);
-      throw new Error(`Failed to scrape ${context.url}`);
-    }
+    return {
+      url: target,
+      content,
+      scrapedAt: new Date().toISOString(),
+    };
   }
 
-  /**
-   * Parses the raw HTML content to extract the desired information.
-   * @param html - The raw HTML content of the page.
-   * @param selector - An optional CSS selector to target specific content.
-   * @returns The extracted content.
-   */
   private parseContent(html: string, selector?: string): string {
-    // This is a placeholder for a more sophisticated parsing logic.
-    // A real implementation might use a library like Cheerio or JSDOM
-    // to parse the HTML and extract content based on the selector.
     if (selector) {
-      return `(Content matching selector '${selector}' from the HTML would be here.)`;
+      const selected = extractBySelector(html, selector);
+      if (selected) {
+        return normalizeWhitespace(stripHtml(selected));
+      }
     }
 
-    return html; // Return the full HTML if no selector is provided.
+    const withoutScripts = html
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, ' ');
+    return normalizeWhitespace(stripHtml(withoutScripts)).slice(0, 20000);
   }
+}
+
+function validateUrl(value: string): string {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('Only http/https URLs are supported.');
+    }
+    return parsed.toString();
+  } catch {
+    throw new Error(`Invalid URL: ${value}`);
+  }
+}
+
+async function fetchHtml(url: string, timeoutMs: number): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'lmtlss-soul-scraper/1.0',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} while scraping ${url}`);
+    }
+    return await response.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function extractBySelector(html: string, selector: string): string | null {
+  if (!selector) return null;
+
+  if (selector.startsWith('#')) {
+    const id = escapeRegex(selector.slice(1));
+    const match = new RegExp(`<([a-z0-9]+)[^>]*id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/\\1>`, 'i').exec(html);
+    return match?.[2] ?? null;
+  }
+
+  if (selector.startsWith('.')) {
+    const className = escapeRegex(selector.slice(1));
+    const match = new RegExp(
+      `<([a-z0-9]+)[^>]*class=["'][^"']*\\b${className}\\b[^"']*["'][^>]*>([\\s\\S]*?)<\\/\\1>`,
+      'i'
+    ).exec(html);
+    return match?.[2] ?? null;
+  }
+
+  const tag = selector.toLowerCase();
+  const tagMatch = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(html);
+  return tagMatch?.[1] ?? null;
+}
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]+>/g, ' ');
+}
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

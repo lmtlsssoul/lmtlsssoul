@@ -49,10 +49,10 @@ pnpm soul gateway status
 - After each green pass, run:
 
 ```bash
-pnpm run backup:pass -- 4.09
+pnpm run backup:pass -- 5.05
 ```
 
-Replace `4.09` with the current milestone step.
+Replace `5.05` with the current milestone step.
 
 ## Release Rail
 
@@ -71,11 +71,13 @@ RELEASE_ACK=I_UNDERSTAND_RELEASE_IS_FINAL pnpm run release:ready -- --publish
 | Command | Description |
 |---------|-------------|
 | `soul birth` | Launch Birth Portal setup (captures birthday core memory first) |
-| `soul start` / `soul stop` / `soul status` | Daemon lifecycle placeholders (stubs for upcoming milestones) |
+| `soul start` / `soul stop` / `soul status` | Start, stop, and inspect daemon lifecycle + runtime stats |
 | `soul models scan` | Discover available models from all substrates |
-| `soul models set <role> <modelId>` | Assign model to an agent role |
+| `soul models set <role> <modelRef>` | Assign model to an agent role (`<substrate>:<modelId>`) |
 | `soul gateway start [-p|--port] [-H|--host]` | Start gateway server in foreground |
 | `soul gateway status [-p|--port] [-H|--host]` | Check gateway health endpoint |
+| `soul archive verify` | Verify archive hash-chain integrity |
+| `soul reflect` | Trigger immediate reflection pass |
 | `soul treasury status` | Show treasury totals, budget caps, category spend, pending escalations |
 | `soul wallet status` | Show registered watch-only wallet balances |
 | `soul approve <approvalId> <signature> <approverId>` | Approve a pending spend request |

@@ -24,10 +24,8 @@ export class GatewayServer {
   constructor(config: Partial<GatewayServerConfig> = {}) {
     this.config = { ...DEFAULT_GATEWAY_CONFIG, ...config };
     this.server = http.createServer(this.handleRequest.bind(this));
-    // Placeholder for WebSocket server upgrade logic
+    // WebSocket upgrades are intentionally declined until a WS transport is wired.
     this.server.on('upgrade', (req, socket, head) => {
-      // NOTE: A WebSocket library (e.g., 'ws') would be needed here.
-      // This is a placeholder to fulfill the milestone requirement.
       console.log('WebSocket upgrade request received. No handler configured.');
       socket.destroy();
     });
