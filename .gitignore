@@ -6,6 +6,8 @@ dist/
 
 # Soul data (runtime, not committed to repo)
 ~/.lmtlss/
+:memory:/
+.lmtlss/
 
 # OS
 .DS_Store

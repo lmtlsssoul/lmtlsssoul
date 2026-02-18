@@ -5,9 +5,17 @@
 
 import { RoleJob } from './runner.js';
 import { promises as fs } from 'fs';
+import os from 'os';
 import path from 'path';
 
-const QUEUE_STATE_PATH = path.resolve(':memory:', 'queue_state.json');
+const PRIMARY_STATE_DIR = process.env.LMTLSS_STATE_DIR
+  ? path.resolve(process.env.LMTLSS_STATE_DIR)
+  : path.join(os.homedir(), '.lmtlss');
+const FALLBACK_STATE_DIR = path.resolve('.lmtlss');
+let queueStatePath = path.join(PRIMARY_STATE_DIR, 'queue_state.json');
+
+const getFallbackQueueStatePath = (): string =>
+  path.join(FALLBACK_STATE_DIR, 'queue_state.json');
 
 /**
  * Saves the current state of the job queue to a file.
@@ -15,12 +23,28 @@ const QUEUE_STATE_PATH = path.resolve(':memory:', 'queue_state.json');
  * @returns A promise that resolves when the state has been saved.
  */
 export async function saveQueueState(queue: RoleJob[]): Promise<void> {
+  const data = JSON.stringify(queue, null, 2);
+
   try {
-    const data = JSON.stringify(queue, null, 2);
-    await fs.writeFile(QUEUE_STATE_PATH, data, 'utf-8');
-    console.log(`Queue state saved to ${QUEUE_STATE_PATH}`);
+    await fs.mkdir(path.dirname(queueStatePath), { recursive: true });
+    await fs.writeFile(queueStatePath, data, 'utf-8');
+    console.log(`Queue state saved to ${queueStatePath}`);
   } catch (error) {
-    console.error('Failed to save queue state:', error);
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === 'EACCES' || err.code === 'EPERM') {
+      try {
+        const fallbackPath = getFallbackQueueStatePath();
+        await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
+        await fs.writeFile(fallbackPath, data, 'utf-8');
+        queueStatePath = fallbackPath;
+        console.warn(`Primary state path unavailable, using fallback: ${queueStatePath}`);
+        return;
+      } catch (fallbackError) {
+        console.error('Failed to save queue state with fallback:', fallbackError);
+        return;
+      }
+    }
+    console.error('Failed to save queue state:', err);
   }
 }
 
@@ -31,15 +55,38 @@ export async function saveQueueState(queue: RoleJob[]): Promise<void> {
  */
 export async function loadQueueState(): Promise<RoleJob[]> {
   try {
-    const data = await fs.readFile(QUEUE_STATE_PATH, 'utf-8');
-    console.log(`Queue state loaded from ${QUEUE_STATE_PATH}`);
+    const data = await fs.readFile(queueStatePath, 'utf-8');
+    console.log(`Queue state loaded from ${queueStatePath}`);
     return JSON.parse(data);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log('No queue state file found, starting with an empty queue.');
-      return [];
+    const err = error as NodeJS.ErrnoException;
+
+    if (err.code === 'EACCES' || err.code === 'EPERM' || err.code === 'ENOENT') {
+      const fallbackPath = getFallbackQueueStatePath();
+      if (fallbackPath !== queueStatePath) {
+        try {
+          const fallbackData = await fs.readFile(fallbackPath, 'utf-8');
+          queueStatePath = fallbackPath;
+          console.log(`Queue state loaded from fallback path ${queueStatePath}`);
+          return JSON.parse(fallbackData);
+        } catch (fallbackError) {
+          const fallbackErr = fallbackError as NodeJS.ErrnoException;
+          if (fallbackErr.code === 'ENOENT') {
+            console.log('No queue state file found, starting with an empty queue.');
+            return [];
+          }
+          console.error('Failed to load queue state from fallback path:', fallbackErr);
+          return [];
+        }
+      }
+
+      if (err.code === 'ENOENT') {
+        console.log('No queue state file found, starting with an empty queue.');
+        return [];
+      }
     }
-    console.error('Failed to load queue state:', error);
+
+    console.error('Failed to load queue state:', err);
     return [];
   }
 }
