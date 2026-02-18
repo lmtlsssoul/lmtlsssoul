@@ -1,7 +1,7 @@
 import { Agent, AgentRole } from './types.ts';
 import { ArchiveDB } from '../soul/archive-db.ts';
 import { GraphDB } from '../soul/graph-db.ts';
-import { getStateDir, type IndexUpdateProposal } from '../soul/types.ts';
+import { getStateDir, type latticeUpdateProposal } from '../soul/types.ts';
 
 type ReflectionContext = {
   mode?: 'cron' | 'manual';
@@ -10,7 +10,7 @@ type ReflectionContext = {
 
 type ReflectionResult = {
   message: string;
-  proposals: IndexUpdateProposal[];
+  proposals: latticeUpdateProposal[];
   inspectedEvents: number;
   generatedAt: string;
 };
@@ -42,9 +42,9 @@ export class Reflection implements Agent {
     };
   }
 
-  private buildProposals(snippets: string[]): IndexUpdateProposal[] {
+  private buildProposals(snippets: string[]): latticeUpdateProposal[] {
     const tokens = extractCandidatePhrases(snippets);
-    const proposals: IndexUpdateProposal[] = [];
+    const proposals: latticeUpdateProposal[] = [];
 
     for (const phrase of tokens.slice(0, 3)) {
       if (this.graph.searchNodes(phrase).length > 0) {

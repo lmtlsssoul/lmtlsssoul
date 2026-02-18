@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { GraphDB } from './graph-db.js';
 import { SoulCapsule } from './capsule.ts';
-import { IndexUpdateProposal, WeightVector, NodeType, EdgeRelation } from './types.js';
+import { latticeUpdateProposal, WeightVector, NodeType, EdgeRelation } from './types.js';
 
 export class SoulCompiler {
   private graph: GraphDB;
@@ -17,7 +17,7 @@ export class SoulCompiler {
    * Validates a proposal without applying it.
    * Returns an array of error messages. Empty array means valid.
    */
-  public validateProposal(proposal: IndexUpdateProposal): string[] {
+  public validateProposal(proposal: latticeUpdateProposal): string[] {
     const errors: string[] = [];
 
     if (!proposal) {
@@ -96,7 +96,7 @@ export class SoulCompiler {
    * Applies the proposal to the Soul Graph.
    * Throws if validation fails.
    */
-  public compile(proposal: IndexUpdateProposal, agentId: string): void {
+  public compile(proposal: latticeUpdateProposal, agentId: string): void {
     const errors = this.validateProposal(proposal);
     if (errors.length > 0) {
       throw new Error(`Compiler validation failed: ${errors.join('; ')}`);

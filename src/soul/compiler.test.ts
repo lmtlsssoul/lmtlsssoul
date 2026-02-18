@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GraphDB } from './graph-db.js';
 import { SoulCompiler } from './compiler.js';
-import { IndexUpdateProposal } from './types.js';
+import { latticeUpdateProposal } from './types.js';
 
 describe('SoulCompiler', () => {
   let tmpDir: string;
@@ -22,7 +22,7 @@ describe('SoulCompiler', () => {
   });
 
   it('should validate a valid proposal', () => {
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [
         { premise: 'Test premise', nodeType: 'premise', weight: { salience: 0.8 } }
       ],
@@ -36,7 +36,7 @@ describe('SoulCompiler', () => {
   });
 
   it('should reject invalid node types', () => {
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [
         { premise: 'Test', nodeType: 'invalid_type' as any, weight: {} }
       ],
@@ -51,7 +51,7 @@ describe('SoulCompiler', () => {
   });
 
   it('should compile additions correctly', () => {
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [
         { premise: 'Sky is blue', nodeType: 'premise', weight: { salience: 0.9 } }
       ],
@@ -78,7 +78,7 @@ describe('SoulCompiler', () => {
       createdBy: 'setup'
     });
 
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [],
       reinforce: [nodeId],
       contradict: [],
@@ -104,7 +104,7 @@ describe('SoulCompiler', () => {
       createdBy: 'setup'
     });
 
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [],
       reinforce: [],
       contradict: [nodeId],
@@ -125,7 +125,7 @@ describe('SoulCompiler', () => {
     const sourceId = graph.createNode({ premise: 'Source', nodeType: 'premise', createdBy: 'setup' });
     const targetId = graph.createNode({ premise: 'Target', nodeType: 'premise', createdBy: 'setup' });
 
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [],
       reinforce: [],
       contradict: [],

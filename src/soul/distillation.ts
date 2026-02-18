@@ -1,11 +1,11 @@
-import { IndexUpdateProposal, ProposedNode, NodeType } from './types.js';
+import { latticeUpdateProposal, ProposedNode, NodeType } from './types.js';
 import { parseFirstProposal } from './proposal-parser.ts';
 
 export type ProbeType = 'identity' | 'goals' | 'values';
 
 export type ProbeResult = {
   type: ProbeType;
-  proposal: IndexUpdateProposal;
+  proposal: latticeUpdateProposal;
   rawResponse: string;
 };
 
@@ -54,7 +54,7 @@ export class DistillationEngine {
   /**
    * Contraction Phase: Extract intersection from multiple probe results.
    */
-  public contract(probeResults: ProbeResult[]): IndexUpdateProposal {
+  public contract(probeResults: ProbeResult[]): latticeUpdateProposal {
     const allProposedNodes: ProposedNode[] = probeResults.flatMap(r => r.proposal.add);
     const commonNodes: ProposedNode[] = this.extractIntersection(allProposedNodes);
 

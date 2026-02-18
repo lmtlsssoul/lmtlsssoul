@@ -8,7 +8,7 @@ import { ArchiveDB } from '../soul/archive-db.ts';
 import { GraphDB } from '../soul/graph-db.ts';
 import { SoulCompiler } from '../soul/compiler.ts';
 import { generateSessionKey } from '../soul/session-key.ts';
-import type { IndexUpdateProposal } from '../soul/types.ts';
+import type { latticeUpdateProposal } from '../soul/types.ts';
 import type { AgentRole } from './types.ts';
 import type { VerificationResult } from './verify.ts';
 
@@ -46,7 +46,7 @@ export type ConsequenceMeasurementResult = {
   measuredAt: string;
   sessionKey: string;
   analysis: ConsequenceAnalysis;
-  proposal: IndexUpdateProposal;
+  proposal: latticeUpdateProposal;
   archiveEventHash: string;
 };
 
@@ -157,14 +157,14 @@ export class ConsequenceMeasurement {
     goalId: string,
     taskId: string,
     analysis: ConsequenceAnalysis
-  ): IndexUpdateProposal {
+  ): latticeUpdateProposal {
     const candidateNodeIds = this.selectCandidateValueNodes(goalId, taskId);
 
     const reinforce = analysis.outcome === 'positive' ? candidateNodeIds : [];
     const contradict = analysis.outcome === 'negative' ? candidateNodeIds : [];
 
     const premise = `Consequence ${goalId}/${taskId}: ${analysis.outcome} outcome (${analysis.passedChecks}/${analysis.checkCount} checks passed).`;
-    const proposal: IndexUpdateProposal = {
+    const proposal: latticeUpdateProposal = {
       add: [
         {
           premise,

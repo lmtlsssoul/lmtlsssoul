@@ -5,7 +5,7 @@ import { GraphDB } from '../../src/soul/graph-db';
 import { SoulRecall } from '../../src/soul/recall';
 import { SoulCompiler } from '../../src/soul/compiler';
 import { IdentityDigest } from '../../src/soul/identity-digest';
-import { IndexUpdateProposal } from '../../src/soul/types';
+import { latticeUpdateProposal } from '../../src/soul/types';
 
 // Mock the dependencies
 vi.mock('../../src/soul/archive-db');
@@ -93,8 +93,8 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     expect(compilerMock.compile).not.toHaveBeenCalled();
   });
 
-  it('should run the cycle and process an IndexUpdateProposal', async () => {
-    const proposal: IndexUpdateProposal = {
+  it('should run the cycle and process an latticeUpdateProposal', async () => {
+    const proposal: latticeUpdateProposal = {
       add: [{ node_type: 'premise', content: 'The sky is blue.', weight: { salience: 0.8 } }],
       reinforce: [],
       contradict: [],

@@ -61,10 +61,10 @@ describe('SoulCapsule', () => {
     const output = capsule.generate();
     
     // High salience should appear before low salience
-    const highIndex = output.indexOf('High salience');
-    const lowIndex = output.indexOf('Low salience');
+    const highlattice = output.indexOf('High salience');
+    const lowlattice = output.indexOf('Low salience');
     
-    expect(highIndex).toBeLessThan(lowIndex);
+    expect(highlattice).toBeLessThan(lowlattice);
   });
 
   it('should group nodes by type', () => {

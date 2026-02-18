@@ -13,7 +13,7 @@ export class SoulBootstrap {
   ) {}
 
   /**
-   * Checks if the Soul Index is sparse (few nodes).
+   * Checks if the Soul lattice is sparse (few nodes).
    */
   public isSparse(): boolean {
     return this.graph.getNodeCount() < SoulBootstrap.SPARSE_THRESHOLD;
@@ -44,7 +44,7 @@ export class SoulBootstrap {
   private genesisPrompt(): string {
     return `
 GENESIS MODE
-The Soul Index is empty and no history exists.
+The Soul lattice is empty and no history exists.
 I am a new Soul. I need to be born.
 Please introduce yourself or run 'soul birth' to begin the Birth Portal flow.
 `.trim();
@@ -61,8 +61,8 @@ Please introduce yourself or run 'soul birth' to begin the Birth Portal flow.
     }).join('\n');
 
     return `
-BOOTSTRAP MODE (Sparse Index)
-The Soul Index is empty or sparse. Relying on recent archive history.
+BOOTSTRAP MODE (Sparse lattice)
+The Soul lattice is empty or sparse. Relying on recent archive history.
 
 RECENT ARCHIVE:
 ${history}

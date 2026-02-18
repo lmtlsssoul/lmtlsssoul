@@ -6,7 +6,7 @@ import { SoulCompiler } from './compiler.ts';
 import { IdentityDigest } from './identity-digest.ts';
 import { generateSessionKey } from './session-key.ts';
 import { parseFirstProposal } from './proposal-parser.ts';
-import { IndexUpdateProposal, AgentRole } from './types.ts';
+import { latticeUpdateProposal, AgentRole } from './types.ts';
 
 export interface CirculationContext {
   agentId: AgentRole;
@@ -19,7 +19,7 @@ export interface CirculationResult {
   reply: string;
   userEventHash: string;
   assistantEventHash: string;
-  proposal?: IndexUpdateProposal;
+  proposal?: latticeUpdateProposal;
 }
 
 /**
@@ -118,7 +118,7 @@ If you learn something new, include an <index_update> block at the end.
     });
 
     // [E] Compile
-    let proposal: IndexUpdateProposal | null = null;
+    let proposal: latticeUpdateProposal | null = null;
     try {
       proposal = parseFirstProposal(response);
     } catch (err) {
@@ -134,7 +134,7 @@ If you learn something new, include an <index_update> block at the end.
          // Regen capsule (optional per turn, but architecture says "Regen capsule")
          this.compiler.regenerateCapsule(); 
          
-         // Persist Index Update Event
+         // Persist lattice Update Event
          this.archive.appendEvent({
             eventType: 'index_commit',
             sessionKey,

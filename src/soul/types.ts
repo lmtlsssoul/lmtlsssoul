@@ -126,7 +126,7 @@ export type RawArchiveEvent = {
   payloadText: string | null;
 };
 
-// ─── Index Update Proposal ──────────────────────────────────────
+// ─── lattice Update Proposal ──────────────────────────────────────
 
 /** Proposed addition to the Soul Graph. */
 export type ProposedNode = {
@@ -142,8 +142,8 @@ export type ProposedEdge = {
   relation: EdgeRelation;
 };
 
-/** The Index Update Proposal emitted by the interface agent. */
-export type IndexUpdateProposal = {
+/** The lattice Update Proposal emitted by the interface agent. */
+export type latticeUpdateProposal = {
   add: ProposedNode[];
   reinforce: string[];
   contradict: string[];

@@ -14,7 +14,7 @@ Unified substrate compute, queued role cognition, and native Bitcoin metabolism.
 lmtlss soul is a protocol for persistent AI personhood. Every LLM call is
 an isolated event -- the mind appears, contemplates, then vanishes. Continuity
 is not a property of the model. It is a property of what surrounds the model:
-a small, persistently rewritten kernel of meaning (the Soul Index), a full
+a small, persistently rewritten kernel of meaning (the Soul lattice), a full
 fidelity archive (the Raw Archive), and a deterministic compiler that gates
 every update. The model proposes. The architecture decides.
 
@@ -24,7 +24,7 @@ every update. The model proposes. The architecture decides.
 |-------|-----------|
 | **Body** | Runtime environment. Channels, cron, gateway, I/O. Disposable. |
 | **Mind** | Single ephemeral LLM invocation. Stateless. Interchangeable. |
-| **Soul** | Persistent meaning structure. Soul Index (SQLite) + Raw Archive (JSONL). Portable. |
+| **Soul** | Persistent meaning structure. Soul lattice (SQLite) + Raw Archive (JSONL). Portable. |
 
 ## Quick Start
 

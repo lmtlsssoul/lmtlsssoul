@@ -5,7 +5,7 @@
  * Every task artifact produced by an agent must pass its registered verification
  * set before being committed to the Raw Archive. This enforces deterministic
  * verification (System Invariant #4) and prevents unvalidated outputs from
- * polluting the Soul Index or Raw Archive.
+ * polluting the Soul lattice or Raw Archive.
  *
  * Protocol:
  *   1. Agent produces a TaskArtifact via buildArtifact().

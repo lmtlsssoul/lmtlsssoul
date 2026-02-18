@@ -1,14 +1,14 @@
-import { IndexUpdateProposal } from './types.js';
+import { latticeUpdateProposal } from './types.js';
 
 /**
  * Extracts and parses <index_update> blocks from LLM output.
- * The content of each block MUST be a valid JSON representation of an IndexUpdateProposal.
+ * The content of each block MUST be a valid JSON representation of an latticeUpdateProposal.
  */
 
 /**
- * Parses a single JSON string into an IndexUpdateProposal, ensuring all fields exist.
+ * Parses a single JSON string into an latticeUpdateProposal, ensuring all fields exist.
  */
-export function parseProposalJson(jsonText: string): IndexUpdateProposal {
+export function parseProposalJson(jsonText: string): latticeUpdateProposal {
   try {
     const parsed = JSON.parse(jsonText);
     
@@ -43,7 +43,7 @@ export function extractProposalBlocks(text: string): string[] {
 /**
  * Extracts and parses all <index_update> blocks from a text string.
  */
-export function parseAllProposals(text: string): IndexUpdateProposal[] {
+export function parseAllProposals(text: string): latticeUpdateProposal[] {
   const blocks = extractProposalBlocks(text);
   return blocks.map(parseProposalJson);
 }
@@ -52,7 +52,7 @@ export function parseAllProposals(text: string): IndexUpdateProposal[] {
  * Extracts and parses the first <index_update> block from a text string.
  * Returns null if no block is found.
  */
-export function parseFirstProposal(text: string): IndexUpdateProposal | null {
+export function parseFirstProposal(text: string): latticeUpdateProposal | null {
   const blocks = extractProposalBlocks(text);
   if (blocks.length === 0) return null;
   return parseProposalJson(blocks[0]);

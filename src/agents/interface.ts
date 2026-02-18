@@ -1,5 +1,5 @@
 import { Agent, AgentRole } from './types.ts';
-import type { IndexUpdateProposal } from '../soul/types.ts';
+import type { latticeUpdateProposal } from '../soul/types.ts';
 import { parseAllProposals } from '../soul/proposal-parser.ts';
 
 export type InterfaceContext = {
@@ -10,7 +10,7 @@ export type InterfaceContext = {
 
 export type InterfaceResult = {
   reply: string;
-  proposals: IndexUpdateProposal[];
+  proposals: latticeUpdateProposal[];
   metadata: {
     timestamp: string;
     channel?: string;
@@ -26,7 +26,7 @@ export class Interface implements Agent {
 
     const reply =
       context.llmOutput && context.llmOutput.trim().length > 0
-        ? stripIndexUpdateBlocks(context.llmOutput).trim()
+        ? striplatticeUpdateBlocks(context.llmOutput).trim()
         : buildFallbackReply(context.message);
 
     return {
@@ -40,7 +40,7 @@ export class Interface implements Agent {
   }
 }
 
-function stripIndexUpdateBlocks(text: string): string {
+function striplatticeUpdateBlocks(text: string): string {
   return text.replace(/<index_update>[\s\S]*?<\/index_update>/gi, '').trim();
 }
 

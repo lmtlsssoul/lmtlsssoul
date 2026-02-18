@@ -55,7 +55,7 @@ export class SoulCapsule {
     // 5. Truncate if necessary (naive truncation for now, can be smarter later)
     if (content.length > this.maxChars) {
         // Find the last newline before the limit to avoid cutting a line
-        const cutOff = content.lastIndexOf('\n', this.maxChars);
+        const cutOff = this.findLastNewline(content, this.maxChars);
         content = content.substring(0, cutOff > 0 ? cutOff : this.maxChars);
         content += '\n... [truncated]';
     }
@@ -114,5 +114,15 @@ export class SoulCapsule {
     }
 
     return line;
+  }
+
+  private findLastNewline(text: string, from: number): number {
+    const start = Math.min(from, text.length - 1);
+    for (let i = start; i >= 0; i -= 1) {
+      if (text[i] === '\n') {
+        return i;
+      }
+    }
+    return -1;
   }
 }
