@@ -1,5 +1,5 @@
 import { Command, CommanderError } from 'commander';
-import { getBanner, log, error, success, warn } from '../soul/branding.ts';
+import { getBanner, printBanner, log, error, success, warn } from '../soul/branding.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.ts';
 import { GatewayServer } from '../gateway/server.ts';
@@ -43,13 +43,12 @@ export async function main() {
     .name('soul')
     .description('lmtlss soul - persistent AI personhood')
     .version('0.1.0')
-    .hook('preAction', (thisCommand) => {
-      // Don't show banner for help command
+    .hook('preAction', async (thisCommand) => {
+      // Don't show banner for help or version
       if (thisCommand.args[0] === 'help') return;
-      // Dont show banner for version command
       const vargs = ['-V', '--version'];
-      if(vargs.includes(thisCommand.args[0])) return;
-      console.log(getBanner());
+      if (vargs.includes(thisCommand.args[0])) return;
+      await printBanner();
     });
 
   registerTreasuryCommands(program);
@@ -360,7 +359,7 @@ async function runInteractiveChat(peer: string, channel: string): Promise<void> 
   const adapter = resolveChatAdapter(interfaceRef);
   const modelId = interfaceRef.split(':').slice(1).join(':');
 
-  log('\n' + getBanner());
+  await printBanner();
   log(`\nConversation with ${soulName} | model: ${interfaceRef}`);
   log('Type "exit" or press Ctrl+C to end the session.\n');
 

@@ -295,7 +295,7 @@ tr:hover td { background: var(--bg3); }
   <!-- ── Header ── -->
   <header class="header">
     <div style="display:flex;align-items:center">
-      <span style="font-size:20px;margin-right:10px">🔮</span>
+      <span style="font-size:14px;margin-right:12px;opacity:0.65;letter-spacing:3px">· ◉ ·</span>
       <span class="header-brand">lmtlss soul</span>
       <span class="header-tagline">presence.</span>
     </div>

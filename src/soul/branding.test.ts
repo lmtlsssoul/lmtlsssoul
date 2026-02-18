@@ -6,7 +6,7 @@ describe('Soul Branding', () => {
     expect(BRAND.name).toBe('lmtlss soul');
     expect(BRAND.color).toBe('#4af626');
     expect(BRAND.background).toBe('#000000');
-    expect(BRAND.icon).toBe('crystal ball');
+    expect(BRAND.icon).toBe('◉');
     expect(BRAND.tagline).toBe('presence.');
   });
 

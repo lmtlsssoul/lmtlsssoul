@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { main } from './index.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
-import { getBanner, log, error, success, warn } from '../soul/branding.ts';
+import { printBanner, log, error, success, warn } from '../soul/branding.ts';
 import { spawn } from 'node:child_process';
 
 vi.mock('node:child_process', () => ({
@@ -20,6 +20,7 @@ vi.mock('node:child_process', () => ({
 
 vi.mock('../soul/branding.ts', () => ({
   getBanner: vi.fn(() => 'Mock Banner'),
+  printBanner: vi.fn(() => Promise.resolve()),
   log: vi.fn(),
   error: vi.fn(),
   success: vi.fn(),
@@ -61,7 +62,7 @@ describe('CLI entrypoint', () => {
     await main();
     expect(SoulBirthPortal).toHaveBeenCalledTimes(1);
     expect(vi.mocked(SoulBirthPortal).mock.results[0].value.startGenesis).toHaveBeenCalledTimes(1);
-    expect(getBanner).toHaveBeenCalled();
+    expect(printBanner).toHaveBeenCalled();
   });
 
   it('starts daemon command and records daemon state', async () => {
