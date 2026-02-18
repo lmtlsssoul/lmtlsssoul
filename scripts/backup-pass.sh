@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
 STEP="${1:-${STEP:-manual}}"
+STEP="${STEP// /_}"
 
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "Working tree is not clean. Commit or stash changes before backup."
