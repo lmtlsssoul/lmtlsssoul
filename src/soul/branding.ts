@@ -9,7 +9,7 @@ export const BRAND = {
   color: '#4af626',
   background: '#000000',
   font: 'Ubuntu Bold',
-  icon: 'crystal ball',
+  icon: '🔮',
   tagline: 'presence.',
 } as const;
 
@@ -99,7 +99,7 @@ ${soulColor(' | |_ __ ___ | |_| |___ ___   ___  ___  _   _| |')}
 ${soulColor(' | | \'_ ` _ \\| __| / __/ __| / __|/ _ \\| | | | |')}
 ${soulColor(' | | | | | | | |_| \\__ \\__ \\ \\__ \\ (_) | |_| | |')}
 ${soulColor(' |_|_| |_| |_|\\__|_|___/___/ |___/\\___/ \\__,_|_|')}
-${dimColor('                                     ' + BRAND.tagline)}
+${dimColor('                                  ' + BRAND.icon + '  ' + BRAND.tagline)}
 `;
 }
 
