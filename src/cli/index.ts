@@ -2,6 +2,8 @@ import { Command, CommanderError } from 'commander';
 import { getBanner, log, error, success, warn } from '../soul/branding.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.js';
+import { GatewayServer } from '../gateway/server.ts';
+import http from 'node:http';
 
 /**
  * Main entry point for the soul CLI.
@@ -73,6 +75,84 @@ export async function main() {
       log(`Assigning model to role...`);
       await setModelForRole(role, modelId);
       success(`Model for role "${role}" set to "${modelId}".`);
+    });
+
+  const gatewayCommand = program.command('gateway')
+    .description('Manage the API gateway server');
+
+  gatewayCommand.command('start')
+    .description('Start the gateway server in the foreground')
+    .option('-p, --port <port>', 'Port to listen on', '3000')
+    .option('-h, --host <host>', 'Host to bind to', '127.0.0.1')
+    .action(async (options) => {
+      log('Starting gateway server...');
+      const port = parseInt(options.port, 10);
+      const server = new GatewayServer({ port, host: options.host });
+      try {
+        await server.start();
+        log('Gateway server started. Press Ctrl+C to stop.');
+        // Keep the process alive
+        process.stdin.resume();
+      } catch (e) {
+        if (e instanceof Error) {
+          error(`Failed to start gateway server: ${e.message}`);
+        } else {
+          error('Failed to start gateway server due to an unknown error.');
+        }
+        process.exit(1);
+      }
+    });
+
+  gatewayCommand.command('status')
+    .description('Check the status of the gateway server')
+    .option('-p, --port <port>', 'Port to check', '3000')
+    .option('-h, --host <host>', 'Host to check', '127.0.0.1')
+    .action(async (options) => {
+      log('Checking gateway server status...');
+      const port = parseInt(options.port, 10);
+      
+      const checkStatus = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          const req = http.get({
+            host: options.host,
+            port: port,
+            path: '/health',
+            timeout: 2000,
+          }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+              if (res.statusCode === 200) {
+                try {
+                  const parsed = JSON.parse(data);
+                  success(`Gateway is running and healthy. Timestamp: ${parsed.timestamp}`);
+                  resolve();
+                } catch (e) {
+                  error('Failed to parse health check response.');
+                  reject(e);
+                }
+              } else {
+                error(`Gateway returned non-200 status: ${res.statusCode}`);
+                reject(new Error(`Status code: ${res.statusCode}`));
+              }
+            });
+          });
+
+          req.on('error', (e) => {
+            error(`Gateway is not reachable: ${e.message}`);
+            reject(e);
+          });
+
+          req.end();
+        });
+      };
+
+      try {
+        await checkStatus();
+      } catch (e) {
+        // Error is already logged in the promise handlers
+        process.exit(1);
+      }
     });
 
   try {
