@@ -85,35 +85,31 @@ export function error(message: string, error?: unknown): void {
   }
 }
 
-// ── Block letter art for "lmtlss soul" ────────────────────────────────────────
-// Each letter width (chars): l=2 m=3 t=3 l=2 s=3 s=3 [2sp] s=3 o=3 u=3 l=2
-// 1 space between consecutive letters, 2 spaces between words.
-// Total width: 37 chars per row.
-//
-// Letters (4 rows each):
-//   l: █ / █ / █ / ██           m: █ █/███/█ █/█ █
-//   t: ███/ █ / █ / █           s: ██ /█  /███/ ██
-//   o: ███/█ █/█ █/███          u: █ █/█ █/█ █/███
-//
+// ── Letter art for "lmtlss soul" ──────────────────────────────────────────────
+// Standard lowercase ASCII outline font — same as the lmtlss soul logo.
+// 6 rows × 50 chars. Characters: _ | / \ ` ' space.
+// This IS the logo letterform. Block pixel fonts look uppercase. Don't change.
 const ART: readonly string[] = [
-  '█  █ █ ███ █  ██  ██   ██  ███ █ █ █ ',
-  '█  ███  █  █  █    █    █   █ █ █ █ █ ',
-  '█  █ █  █  █  ███ ███  ███ █ █ █ █ █ ',
-  '██ █ █  █  ██  ██  ██    ██ ███ ███ ██',
+  "  _           _   _                           _ ",
+  " | |         | | | |                         | |",
+  " | |_ __ ___ | |_| |___ ___   ___  ___  _   _| |",
+  " | | '_ ` _ \\| __| / __/ __| / __|/ _ \\| | | | |",
+  " | | | | | | | |_| \\__ \\__ \\ \\__ \\ (_) | |_| | |",
+  " |_|_| |_| |_|\\__|_|___/___/ |___/\\___/ \\__,_|_|",
 ];
 
-// ── ASCII crystal ball (centered at col 19 over 37-char art) ──────────────────
-// The orb is made of dot-arcs, a reflection glyph ∴ at the top,
-// the soul-eye ◉ at center, and triple-tilde ≋ shimmer at the base.
+// ── ASCII crystal ball (centered at col 26 over 50-char art) ──────────────────
+// Orb: dot-arc outline, ∴ reflection at crown, ◉ soul-eye at center,
+// ≋≋≋≋≋ shimmer at base.
 const BALL: readonly string[] = [
-  "              · ˚ · ˚ ·",
-  "            ·'    ∴    '·",
-  "            ·  ·  ◉  ·  ·",
-  "            ·'  ≋≋≋≋≋  '·",
-  "              · ˚ · ˚ ·",
+  "                    · ˚ · ˚ ·",
+  "                  ·'    ∴    '·",
+  "                  ·  ·  ◉  ·  ·",
+  "                  ·'  ≋≋≋≋≋  '·",
+  "                    · ˚ · ˚ ·",
 ];
 
-const TAGLINE = '              presence.';
+const TAGLINE = '                    presence.';
 
 /**
  * Returns a static snapshot of the banner (fully lit).
@@ -197,8 +193,8 @@ export async function printBanner(): Promise<void> {
     [...row].map((ch, i) => colorChar(ch, i - wavePos)).join('');
 
   // Total printed lines per frame:
-  // blank + 5 ball + 4 art + blank + presence + blank = 13
-  const TOTAL = 13;
+  // blank + 5 ball + 6 art + blank + presence + blank = 15
+  const TOTAL = 15;
 
   const printFrame = (ball: string[], wavePos: number): void => {
     let out = '\n';
@@ -225,7 +221,7 @@ export async function printBanner(): Promise<void> {
   await sleep(90);
 
   // Phase 2 — wave sweeps left to right across the block letters
-  for (let wavePos = -3; wavePos <= 40; wavePos++) {
+  for (let wavePos = -3; wavePos <= 53; wavePos++) {
     redraw(ballLit, wavePos);
     await sleep(21);
   }
