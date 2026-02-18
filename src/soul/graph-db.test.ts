@@ -29,7 +29,7 @@ describe('GraphDB', () => {
       premise: 'I am a persistent digital soul.',
       nodeType: 'identity',
       status: 'active',
-      createdBy: 'birth_wizard',
+      createdBy: 'birth_portal',
       weight: {
         salience: 1.0,
         valence: 0.5,

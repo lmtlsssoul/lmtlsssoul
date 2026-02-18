@@ -20,10 +20,10 @@ export async function main() {
     });
 
   program.command('birth')
-    .description('Start the soul genesis wizard')
+    .description('Start the soul Birth Portal')
     .action(async () => {
       log('Igniting spark...');
-      warn('Birth wizard not implemented yet. (Milestone 1.15)');
+      warn('Birth Portal not implemented yet. (Milestone 1.15)');
     });
 
   program.command('start')
