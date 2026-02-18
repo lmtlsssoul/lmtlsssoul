@@ -1,0 +1,10 @@
+[
+  {
+    "jobId": "job-1",
+    "status": "pending"
+  },
+  {
+    "jobId": "job-2",
+    "status": "completed"
+  }
+]
