@@ -96,4 +96,5 @@ export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 export * from './soul/types.ts';
 export * from './substrate/types.ts';
 export * from './queue/types.ts';
+export { TreasuryLedger } from './treasury/ledger.ts';
 export * from './treasury/types.ts';
