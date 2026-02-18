@@ -113,6 +113,7 @@ export type {
 } from './agents/consequence.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
+export { main as cliMain } from './cli/index.ts';
 
 export * from './soul/types.ts';
 export * from './substrate/types.ts';

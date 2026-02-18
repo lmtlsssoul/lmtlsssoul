@@ -1,7 +1,7 @@
 import { Command, CommanderError } from 'commander';
 import { getBanner, log, error, success, warn } from '../soul/branding.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
-import { scanForModels, setModelForRole } from '../soul/models-scan.js';
+import { scanForModels, setModelForRole } from '../soul/models-scan.ts';
 import { GatewayServer } from '../gateway/server.ts';
 import { registerTreasuryCommands } from './treasury.ts';
 import { getStateDir } from '../soul/types.ts';
@@ -13,7 +13,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 type DaemonState = {
   pid: number;
@@ -63,7 +63,7 @@ export async function main() {
 
       const host = options?.host ?? '127.0.0.1';
       const port = Number.parseInt(options?.port ?? '3000', 10);
-      const entrypoint = path.resolve(process.cwd(), 'soul.mjs');
+      const entrypoint = resolveDaemonEntrypoint();
 
       log(`Summoning daemon on ${host}:${port}...`);
       const child = spawn(process.execPath, [entrypoint, 'gateway', 'start', '--host', host, '--port', String(port)], {
@@ -397,6 +397,26 @@ function normalizeGrownupState(value: string | undefined): 'on' | 'off' | 'statu
     return normalized;
   }
   return null;
+}
+
+function resolveDaemonEntrypoint(): string {
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    // Source layout: src/cli/index.ts -> ../../soul.mjs
+    path.resolve(moduleDir, '../../soul.mjs'),
+    // Bundled layout: dist/index.js -> ../soul.mjs
+    path.resolve(moduleDir, '../soul.mjs'),
+    // Local fallback for direct repository execution.
+    path.resolve(process.cwd(), 'soul.mjs'),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Unable to resolve daemon entrypoint (soul.mjs).');
 }
 
 function printGrownupModeStatus(): void {

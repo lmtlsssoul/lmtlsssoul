@@ -65,11 +65,24 @@ describe('CLI entrypoint', () => {
   });
 
   it('starts daemon command and records daemon state', async () => {
-    process.argv.push('start', '--port', '3011', '--host', '127.0.0.1');
-    await main();
+    const originalCwd = process.cwd();
+    const unrelatedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lmtlss-cli-cwd-'));
+    try {
+      process.chdir(unrelatedDir);
+      process.argv.push('start', '--port', '3011', '--host', '127.0.0.1');
+      await main();
 
-    expect(spawn).toHaveBeenCalled();
-    expect(success).toHaveBeenCalledWith(expect.stringContaining('Daemon started'));
+      expect(spawn).toHaveBeenCalled();
+      const spawnedArgs = vi.mocked(spawn).mock.calls[0]?.[1];
+      expect(Array.isArray(spawnedArgs)).toBe(true);
+      const entrypoint = (spawnedArgs as string[])[0];
+      expect(path.basename(entrypoint)).toBe('soul.mjs');
+      expect(fs.existsSync(entrypoint)).toBe(true);
+      expect(success).toHaveBeenCalledWith(expect.stringContaining('Daemon started'));
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(unrelatedDir, { recursive: true, force: true });
+    }
   });
 
   it('stops daemon command when state exists', async () => {
