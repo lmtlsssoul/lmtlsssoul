@@ -1,0 +1,19 @@
+/**
+ * Public package entrypoint.
+ * Keep this file stable so builds remain valid as milestones are completed.
+ */
+
+export { ArchiveDB } from './soul/archive-db.ts';
+export type { HydratedArchiveEvent, NewEventParams } from './soul/archive-db.ts';
+
+export { GraphDB } from './soul/graph-db.ts';
+
+export { SoulCapsule } from './soul/capsule.ts';
+export { IdentityDigest } from './soul/identity-digest.ts';
+
+export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
+
+export * from './soul/types.ts';
+export * from './substrate/types.ts';
+export * from './queue/types.ts';
+export * from './treasury/types.ts';

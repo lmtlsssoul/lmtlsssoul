@@ -21,10 +21,9 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "build": "tsdown",
-    "dev": "node --import tsx src/cli/index.ts",
-    "test": "vitest run",
+      "scripts": {
+      "build": "tsdown src/index.ts",
+      "dev": "node --import tsx src/cli/index.ts",    "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
