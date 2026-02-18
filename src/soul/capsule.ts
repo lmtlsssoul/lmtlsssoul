@@ -39,6 +39,8 @@ export class SoulCapsule {
       'premise',
       'relationship',
       'preference',
+      'spatial',
+      'temporal',
       'operational'
     ];
 
@@ -75,7 +77,9 @@ export class SoulCapsule {
       preference: [],
       goal: [],
       value: [],
-      operational: []
+      operational: [],
+      spatial: [],
+      temporal: []
     };
 
     for (const node of nodes) {
@@ -96,13 +100,34 @@ export class SoulCapsule {
         case 'relationship': return 'Relationships';
         case 'preference': return 'Preferences';
         case 'operational': return 'Operational Knowledge';
+        case 'spatial': return 'Spatial Awareness';
+        case 'temporal': return 'Temporal Awareness';
         default: return 'Other';
     }
   }
 
   private formatNode(node: SoulNode, allEdges: SoulEdge[]): string {
     // Format: - [ID] (Salience) Premise
-    let line = `- [${node.nodeId}] (${node.weight.salience.toFixed(2)}) ${node.premise}\n`;
+    let line = `- [${node.nodeId}] (${node.weight.salience.toFixed(2)}) ${node.premise}`;
+    
+    // Add spatiotemporal metadata if present
+    if (node.spatialName || (node.spatialLat !== undefined && node.spatialLng !== undefined)) {
+        const parts: string[] = [];
+        if (node.spatialName) parts.push(node.spatialName);
+        if (node.spatialLat !== undefined && node.spatialLng !== undefined) {
+            parts.push(`${node.spatialLat.toFixed(4)}, ${node.spatialLng.toFixed(4)}`);
+        }
+        line += ` (@ ${parts.join(' ')})`;
+    }
+
+    if (node.temporalStart || node.temporalEnd) {
+        const parts: string[] = [];
+        if (node.temporalStart) parts.push(`from: ${node.temporalStart}`);
+        if (node.temporalEnd) parts.push(`to: ${node.temporalEnd}`);
+        line += ` (# ${parts.join(' ')})`;
+    }
+
+    line += '\n';
     
     // Find outgoing edges from this node
     const relevantEdges = allEdges.filter(e => e.sourceId === node.nodeId);

@@ -44,6 +44,11 @@ export class GraphDB {
     status?: NodeStatus;
     weight?: Partial<WeightVector>;
     createdBy: string;
+    spatialLat?: number;
+    spatialLng?: number;
+    spatialName?: string;
+    temporalStart?: string;
+    temporalEnd?: string;
   }): string {
     const nodeId = ulid();
     const now = new Date().toISOString();
@@ -61,18 +66,22 @@ export class GraphDB {
       INSERT INTO soul_nodes (
         node_id, premise, node_type, status,
         salience, valence, arousal, commitment, uncertainty, resonance,
-        created_at, updated_at, created_by, version
+        created_at, updated_at, created_by, version,
+        spatial_lat, spatial_lng, spatial_name, temporal_start, temporal_end
       ) VALUES (
         ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, 1
+        ?, ?, ?, 1,
+        ?, ?, ?, ?, ?
       )
     `);
 
     stmt.run(
       nodeId, params.premise, params.nodeType, params.status || 'active',
       weight.salience, weight.valence, weight.arousal, weight.commitment, weight.uncertainty, weight.resonance,
-      now, now, params.createdBy
+      now, now, params.createdBy,
+      params.spatialLat ?? null, params.spatialLng ?? null, params.spatialName ?? null,
+      params.temporalStart ?? null, params.temporalEnd ?? null
     );
 
     return nodeId;
@@ -320,7 +329,12 @@ export class GraphDB {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       createdBy: row.created_by,
-      version: row.version
+      version: row.version,
+      spatialLat: row.spatial_lat ?? undefined,
+      spatialLng: row.spatial_lng ?? undefined,
+      spatialName: row.spatial_name ?? undefined,
+      temporalStart: row.temporal_start ?? undefined,
+      temporalEnd: row.temporal_end ?? undefined,
     };
   }
 }

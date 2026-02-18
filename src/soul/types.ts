@@ -33,7 +33,9 @@ export type NodeType =
   | 'preference'
   | 'goal'
   | 'value'
-  | 'operational';
+  | 'operational'
+  | 'spatial'
+  | 'temporal';
 
 export type NodeStatus = 'active' | 'provisional' | 'archived';
 
@@ -48,6 +50,13 @@ export type SoulNode = {
   updatedAt: string;
   createdBy: string;
   version: number;
+  // Spatial metadata
+  spatialLat?: number;
+  spatialLng?: number;
+  spatialName?: string;
+  // Temporal metadata
+  temporalStart?: string;
+  temporalEnd?: string;
 };
 
 // ─── Soul Edge ──────────────────────────────────────────────────
@@ -133,6 +142,11 @@ export type ProposedNode = {
   premise: string;
   nodeType: NodeType;
   weight: Partial<WeightVector>;
+  spatialLat?: number;
+  spatialLng?: number;
+  spatialName?: string;
+  temporalStart?: string;
+  temporalEnd?: string;
 };
 
 /** Proposed edge between nodes. */

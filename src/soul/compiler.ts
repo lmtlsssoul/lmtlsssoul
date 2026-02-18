@@ -129,7 +129,12 @@ export class SoulCompiler {
           premise: add.premise,
           nodeType: add.nodeType,
           weight: add.weight,
-          createdBy: agentId
+          createdBy: agentId,
+          spatialLat: add.spatialLat,
+          spatialLng: add.spatialLng,
+          spatialName: add.spatialName,
+          temporalStart: add.temporalStart,
+          temporalEnd: add.temporalEnd
         });
       }
     }
@@ -192,7 +197,7 @@ export class SoulCompiler {
 
   private isValidNodeType(type: string): type is NodeType {
     const validTypes: NodeType[] = [
-      'identity', 'premise', 'relationship', 'preference', 'goal', 'value', 'operational'
+      'identity', 'premise', 'relationship', 'preference', 'goal', 'value', 'operational', 'spatial', 'temporal'
     ];
     return validTypes.includes(type as NodeType);
   }

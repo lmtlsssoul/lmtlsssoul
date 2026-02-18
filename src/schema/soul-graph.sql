@@ -9,11 +9,18 @@ CREATE TABLE IF NOT EXISTS soul_nodes (
   premise       TEXT NOT NULL,                             -- The distilled belief/fact/identity statement
   node_type     TEXT NOT NULL CHECK (node_type IN (
     'identity', 'premise', 'relationship', 'preference',
-    'goal', 'value', 'operational'
+    'goal', 'value', 'operational', 'spatial', 'temporal'
   )),
   status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN (
     'active', 'provisional', 'archived'
   )),
+
+  -- Spatial/Temporal Metadata (optional)
+  spatial_lat   REAL,                                      -- Latitude
+  spatial_lng   REAL,                                      -- Longitude
+  spatial_name  TEXT,                                      -- Location name (e.g., "Berlin", "Office")
+  temporal_start TEXT,                                     -- ISO 8601 UTC
+  temporal_end   TEXT,                                     -- ISO 8601 UTC
 
   -- Six-dimensional weight vector
   salience      REAL NOT NULL DEFAULT 0.5 CHECK (salience >= 0.0 AND salience <= 1.0),
