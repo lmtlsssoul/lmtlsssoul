@@ -109,10 +109,14 @@ describe('SoulCirculation', () => {
         // Invalid JSON in proposal
         return 'Ok. <index_update>{ invalid json </index_update>';
       };
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   
       // Should not throw, and should return result with no proposal
       const result = await circulation.run('Break it', context, mockMind);
       expect(result.reply).toContain('Ok.');
       expect(result.proposal).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
   });
 });

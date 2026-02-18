@@ -20,6 +20,14 @@ export {
   parseFirstProposal,
 } from './soul/proposal-parser.ts';
 export { SoulCompiler } from './soul/compiler.ts';
+export {
+  SoulCirculation,
+} from './soul/circulation.ts';
+export type {
+  CirculationContext,
+  CirculationResult,
+  MindFunction,
+} from './soul/circulation.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 

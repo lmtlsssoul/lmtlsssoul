@@ -1,12 +1,12 @@
 
-import { ArchiveDB } from './archive-db.js';
-import { GraphDB } from './graph-db.js';
-import { SoulRecall } from './recall.js';
-import { SoulCompiler } from './compiler.js';
-import { IdentityDigest } from './identity-digest.js';
-import { generateSessionKey } from './session-key.js';
-import { parseFirstProposal } from './proposal-parser.js';
-import { IndexUpdateProposal, AgentRole } from './types.js';
+import { ArchiveDB } from './archive-db.ts';
+import { GraphDB } from './graph-db.ts';
+import { SoulRecall } from './recall.ts';
+import { SoulCompiler } from './compiler.ts';
+import { IdentityDigest } from './identity-digest.ts';
+import { generateSessionKey } from './session-key.ts';
+import { parseFirstProposal } from './proposal-parser.ts';
+import { IndexUpdateProposal, AgentRole } from './types.ts';
 
 export interface CirculationContext {
   agentId: string; // Should be AgentRole
