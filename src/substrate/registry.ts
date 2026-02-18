@@ -3,11 +3,11 @@
  * @author Gemini
  */
 
-import { SubstrateAdapter, ModelDescriptor } from './types.js';
-import { OpenaiAdapter } from './openai.js';
-import { AnthropicAdapter } from './anthropic.js';
-import { XaiAdapter } from './xai.js';
-import { OllamaAdapter } from './ollama.js';
+import type { SubstrateAdapter, ModelDescriptor } from './types.ts';
+import { OpenaiAdapter } from './openai.ts';
+import { AnthropicAdapter } from './anthropic.ts';
+import { XaiAdapter } from './xai.ts';
+import { OllamaAdapter } from './ollama.ts';
 
 /**
  * Manages the discovery and aggregation of models from multiple substrates.
@@ -43,7 +43,7 @@ export class ModelRegistry {
     // Deduplicate models by substrate+id to preserve strict routing semantics.
     const modelMap = new Map<string, ModelDescriptor>();
     for (const model of allModels) {
-      const key = `${model.provider}:${model.id}`;
+      const key = `${model.substrate}:${model.modelId}`;
       if (!modelMap.has(key)) {
         modelMap.set(key, model);
       }

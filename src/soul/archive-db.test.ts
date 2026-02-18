@@ -1,6 +1,5 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -33,7 +32,7 @@ describe('ArchiveDB', () => {
 
   it('should append an event and retrieve it', () => {
     const payload = { content: 'Hello, world!' };
-    const eventType: EventType = 'user_message';
+    const eventType: EventType = 'author_message';
     const agentId = 'interface';
 
     const event = archiveDB.appendEvent({
@@ -44,7 +43,7 @@ describe('ArchiveDB', () => {
       agentId,
       model: 'gpt-4o',
       channel: 'cli',
-      peer: 'user',
+      peer: 'author',
       payload,
     });
 
@@ -63,7 +62,7 @@ describe('ArchiveDB', () => {
       parentHash: null,
       timestamp: new Date().toISOString(),
       sessionKey: 'lmtlss:interface:123',
-      eventType: 'user_message',
+      eventType: 'author_message',
       agentId: 'interface',
       payload: { msg: 1 },
     });
@@ -89,7 +88,7 @@ describe('ArchiveDB', () => {
       parentHash: null,
       timestamp: new Date().toISOString(),
       sessionKey,
-      eventType: 'user_message',
+      eventType: 'author_message',
       agentId: 'interface',
       payload: { msg: 1 },
     });
@@ -107,6 +106,29 @@ describe('ArchiveDB', () => {
     expect(events).toHaveLength(2);
     expect(events[0].payload).toEqual({ msg: 1 });
     expect(events[1].payload).toEqual({ msg: 2 });
+  });
+
+  it('supports chronological retrieval filtered by agent', () => {
+    archiveDB.appendEvent({
+      parentHash: null,
+      timestamp: new Date(Date.now() - 5000).toISOString(),
+      sessionKey: 'lmtlss:author:a',
+      eventType: 'author_message',
+      agentId: 'author',
+      payload: { text: 'A' },
+    });
+    archiveDB.appendEvent({
+      parentHash: null,
+      timestamp: new Date(Date.now() - 4000).toISOString(),
+      sessionKey: 'lmtlss:interface:b',
+      eventType: 'assistant_message',
+      agentId: 'interface',
+      payload: { text: 'B' },
+    });
+
+    const authorEvents = archiveDB.getRecentEvents('author', 5);
+    expect(authorEvents).toHaveLength(1);
+    expect(authorEvents[0].agentId).toBe('author');
   });
   
   it('should retrieve events by time range', () => {
@@ -139,5 +161,44 @@ describe('ArchiveDB', () => {
       
       expect(rangeEvents).toHaveLength(1);
       expect(rangeEvents[0].payload).toEqual({ t: 'past' });
+  });
+
+  it('normalizes legacy event types to canonical lattice protocol names', () => {
+    const event = archiveDB.appendEvent({
+      parentHash: null,
+      timestamp: new Date().toISOString(),
+      sessionKey: 'lmtlss:interface:legacy',
+      eventType: 'user_message',
+      agentId: 'author',
+      payload: { text: 'legacy write' },
+    });
+
+    expect(event.eventType).toBe('author_message');
+  });
+
+  it('requires explicit approval payload for world_action events', () => {
+    expect(() =>
+      archiveDB.appendEvent({
+        parentHash: null,
+        timestamp: new Date().toISOString(),
+        sessionKey: 'lmtlss:interface:world-action',
+        eventType: 'world_action',
+        agentId: 'interface',
+        payload: { action: 'deploy' },
+      })
+    ).toThrow('world_action events require explicit policy gating payload');
+  });
+
+  it('accepts policy-gated world_action events', () => {
+    const event = archiveDB.appendEvent({
+      parentHash: null,
+      timestamp: new Date().toISOString(),
+      sessionKey: 'lmtlss:interface:world-action-ok',
+      eventType: 'world_action',
+      agentId: 'interface',
+      payload: { action: 'deploy', approvalId: 'appr_123', approved: true },
+    });
+
+    expect(event.eventType).toBe('world_action');
   });
 });

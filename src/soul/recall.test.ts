@@ -25,13 +25,13 @@ describe('SoulRecall', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  const createEvent = (timestamp: string, content: string, type: any = 'user_message') => {
+  const createEvent = (timestamp: string, content: string, type: any = 'author_message') => {
     return archiveDB.appendEvent({
       parentHash: null,
       timestamp,
       sessionKey: 'test-session',
       eventType: type,
-      agentId: 'user',
+      agentId: 'author',
       payload: { content }
     });
   };
@@ -54,7 +54,7 @@ describe('SoulRecall', () => {
   it('should recall semantically relevant events', () => {
     // 1. Create a node about "cats"
     const nodeId = graphDB.createNode({
-      premise: 'User loves cats',
+      premise: 'Author loves cats',
       nodeType: 'preference',
       createdBy: 'test'
     });
@@ -74,10 +74,10 @@ describe('SoulRecall', () => {
     createEvent(new Date().toISOString(), 'The weather is nice');
 
     // 5. Search for "cats"
-    // Since we use FTS, we need to make sure the index is updated. 
+    // Since we use FTS, we need to make sure the lattice search table is updated.
     // better-sqlite3 handles this automatically usually.
     
-    // Using a query that matches the premise "User loves cats"
+    // Using a query that matches the premise "Author loves cats"
     const results = recall.recall('cats', { recentCount: 0, semanticCount: 5 });
 
     expect(results).toHaveLength(1);
@@ -91,7 +91,7 @@ describe('SoulRecall', () => {
     const oldEvent = createEvent(oldDate, 'My secret code is 1234');
     
     const nodeId = graphDB.createNode({
-      premise: 'User secret code',
+      premise: 'Author secret code',
       nodeType: 'preference',
       createdBy: 'test'
     });
@@ -127,7 +127,7 @@ describe('SoulRecall', () => {
     const event = createEvent(timestamp, 'I am learning TypeScript');
     
     const nodeId = graphDB.createNode({
-      premise: 'User learning TypeScript',
+      premise: 'Author learning TypeScript',
       nodeType: 'preference',
       createdBy: 'test'
     });

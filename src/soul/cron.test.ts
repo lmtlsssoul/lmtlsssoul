@@ -37,6 +37,7 @@ describe('CronAutonomics', () => {
 
     graphDb = {
       optimize: vi.fn(),
+      getBaseDir: vi.fn(() => ':memory:'),
     } as unknown as GraphDB;
 
     compiler = {

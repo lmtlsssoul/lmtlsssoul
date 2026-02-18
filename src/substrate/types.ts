@@ -32,7 +32,7 @@ export type ModelDescriptor = {
   id: string;
 
   /**
-   * The human-readable name of the model.
+   * Display name of the model.
    * e.g., 'GPT-4 Omni'
    */
   name: string;
@@ -48,7 +48,7 @@ export type ModelDescriptor = {
   context_length: number;
 
   /**
-   * The author or creator of the model.
+   * Upstream creator label provided by the substrate API.
    * e.g., 'openai'
    */
   owned_by?: string;
@@ -79,8 +79,30 @@ export type ModelReference = `${SubstrateId}:${string}`;
  * Parameters for invoking an LLM on a substrate.
  */
 export type InvokeParams = {
-  model: string;
-  prompt: string;
+  /**
+   * Backward-compatible model selector.
+   */
+  model?: string;
+  /**
+   * Canonical whitepaper selector.
+   */
+  modelId?: string;
+  /**
+   * Optional role context for adapter-side telemetry/routing.
+   */
+  role?: string;
+  /**
+   * Backward-compatible prompt payload.
+   */
+  prompt?: string;
+  /**
+   * Canonical whitepaper prompt envelope.
+   */
+  promptEnvelope?: unknown;
+  /**
+   * Canonical whitepaper tool envelope.
+   */
+  toolEnvelope?: unknown;
   temperature?: number;
   max_tokens?: number;
   stop?: string[];
@@ -90,6 +112,17 @@ export type InvokeParams = {
  * The result of an LLM invocation on a substrate.
  */
 export type InvokeResult = {
+  /**
+   * Canonical whitepaper output field.
+   */
+  outputText: string;
+  /**
+   * Adapter call trace payload for auditability.
+   */
+  trace: Record<string, unknown>;
+  /**
+   * Backward-compatible output field.
+   */
   content: string;
   model: string;
   usage: {
@@ -127,6 +160,30 @@ export interface SubstrateAdapter {
    * @returns A promise that resolves to the result of the invocation.
    */
   invoke(params: InvokeParams): Promise<InvokeResult>;
+}
+
+export function resolveInvokeModel(params: InvokeParams): string {
+  return (params.model ?? params.modelId ?? '').trim();
+}
+
+export function resolveInvokePrompt(params: InvokeParams): string {
+  if (typeof params.prompt === 'string' && params.prompt.trim().length > 0) {
+    return params.prompt;
+  }
+
+  const envelope = params.promptEnvelope;
+  if (typeof envelope === 'string' && envelope.trim().length > 0) {
+    return envelope;
+  }
+
+  if (envelope && typeof envelope === 'object') {
+    const text = (envelope as Record<string, unknown>).text;
+    if (typeof text === 'string' && text.trim().length > 0) {
+      return text;
+    }
+  }
+
+  return '';
 }
 
 /**

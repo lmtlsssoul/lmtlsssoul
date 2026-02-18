@@ -3,9 +3,9 @@ import { GraphDB } from './graph-db.js';
 import { ArchiveDB, type HydratedArchiveEvent } from './archive-db.js';
 
 export class SoulBootstrap {
-  // Threshold for considering the index "sparse"
+  // Threshold for considering the lattice "sparse"
   // If fewer than this many nodes exist, we assume the soul is cold/new/wiped.
-  private static readonly SPARSE_THRESHOLD = 5;
+  private static readonly SPARSE_THRESHOLD = 10;
 
   constructor(
     private graph: GraphDB,
@@ -20,8 +20,8 @@ export class SoulBootstrap {
   }
 
   /**
-   * Returns a bootstrapped context string if the index is sparse.
-   * If the index is healthy (not sparse), returns null.
+   * Returns a bootstrapped context string if the lattice is sparse.
+   * If the lattice is healthy (not sparse), returns null.
    * 
    * This is used to provide context when semantic recall fails due to lack of nodes.
    * 
@@ -53,8 +53,7 @@ Please introduce yourself or run 'soul birth' to begin the Birth Portal flow.
   private formatHistory(events: HydratedArchiveEvent[]): string {
     const history = events.map(e => {
         const payload = e.payload as any;
-        // Try to get text content, or fallback to JSON
-        // We handle user/assistant messages specifically if needed, 
+        // Try to get text content, or fallback to JSON.
         // but generally payload.text is the convention for messages.
         const text = payload?.text || JSON.stringify(payload);
         return `[${e.timestamp}] ${e.agentId}: ${text}`;

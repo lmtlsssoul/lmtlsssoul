@@ -4,14 +4,16 @@
  */
 
 import {
-  SubstrateAdapter,
-  SubstrateId,
-  ModelDescriptor,
-  InvokeParams,
-  InvokeResult,
+  type SubstrateAdapter,
+  type SubstrateId,
+  type ModelDescriptor,
+  type InvokeParams,
+  type InvokeResult,
   normalizeModelDescriptor,
-} from './types.js';
-import { errMessage, requestJson } from './http.js';
+  resolveInvokeModel,
+  resolveInvokePrompt,
+} from './types.ts';
+import { errMessage, requestJson } from './http.ts';
 
 export class AnthropicAdapter implements SubstrateAdapter {
   public readonly id: SubstrateId = 'anthropic';
@@ -72,7 +74,9 @@ export class AnthropicAdapter implements SubstrateAdapter {
   }
 
   public async invoke(params: InvokeParams): Promise<InvokeResult> {
-    const { model, prompt, temperature, max_tokens, stop } = params;
+    const { temperature, max_tokens, stop } = params;
+    const model = resolveInvokeModel(params);
+    const prompt = resolveInvokePrompt(params);
 
     if (!this.apiKey) {
       throw new Error('ANTHROPIC_API_KEY is not configured.');
@@ -117,6 +121,12 @@ export class AnthropicAdapter implements SubstrateAdapter {
     const completionTokens = response.usage?.output_tokens ?? Math.ceil(content.length / 4);
 
     return {
+      outputText: content,
+      trace: {
+        substrate: this.id,
+        role: params.role ?? null,
+        toolEnvelope: params.toolEnvelope ?? null,
+      },
       content,
       model: response.model ?? model,
       usage: {

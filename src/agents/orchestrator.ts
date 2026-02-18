@@ -119,7 +119,7 @@ export class Orchestrator {
   /**
    * Handles a failed task by logging an escalation message.
    * In a real system, this could involve retries, re-assigning the task,
-   * or notifying a human operator.
+   * or notifying the Author.
    * @param task - The failed task.
    * @param goal - The goal the task belongs to.
    */

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ModelRegistry } from './registry.js';
-import { ModelDescriptor } from './types.js';
+import { ModelRegistry } from './registry.ts';
+import type { ModelDescriptor } from './types.ts';
 import { getStateDir } from '../soul/types.ts';
 
 export type RegistryState = {
@@ -16,7 +16,7 @@ export async function refreshModelRegistry(currentState?: RegistryState): Promis
 
   const discoveredByKey = new Map<string, ModelDescriptor>();
   for (const model of discoveredModels) {
-    const key = `${model.provider}:${model.id}`;
+    const key = `${model.substrate}:${model.modelId}`;
     discoveredByKey.set(key, {
       ...model,
       stale: false,
@@ -29,11 +29,12 @@ export async function refreshModelRegistry(currentState?: RegistryState): Promis
   const staleModels: ModelDescriptor[] = [];
 
   for (const previous of previousModels) {
-    const key = `${previous.provider}:${previous.id}`;
+    const key = `${previous.substrate}:${previous.modelId}`;
     if (!discoveredByKey.has(key)) {
       staleModels.push({
         ...previous,
         stale: true,
+        lastCheckedAt: now,
       });
     }
   }

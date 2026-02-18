@@ -17,7 +17,7 @@ export type SyncResult = {
 /**
  * SyncManager handles multi-device synchronization of the Soul state.
  * It uses Git as the underlying transport and versioning layer for the
- * Soul Index (SQLite) and Raw Archive (JSONL).
+ * Soul lattice (SQLite) and Raw Archive (JSONL).
  *
  * Derived from whitepaper.pdf Section 2, 7, 14.
  */
@@ -46,7 +46,7 @@ export class SyncManager {
 
       this.ensureGitIgnore();
 
-      // Configure local git user if not set
+      // Configure local git author identity if not set
       this.runGit(['config', 'user.name', 'lmtlss soul']);
       this.runGit(['config', 'user.email', 'soul@lmtlss.org']);
 
@@ -116,9 +116,9 @@ export class SyncManager {
       const branchCheck = spawnSync('git', ['rev-parse', '--verify', 'main'], { cwd: this.stateDir });
       
       if (branchCheck.status !== 0) {
-        // No local main yet, just fetch and reset/merge
-        this.runGit(['fetch', 'origin']);
-        this.runGit(['reset', '--hard', 'origin/main']);
+        // No local main yet: bootstrap from remote and force-align working tree.
+        this.runGit(['fetch', 'origin', 'main']);
+        this.runGit(['checkout', '-B', 'main', 'origin/main', '--force']);
       } else {
         // Use rebase to keep history clean as per "append-only" spirit where possible,
         // though binary SQLite files will just conflict and need resolution.

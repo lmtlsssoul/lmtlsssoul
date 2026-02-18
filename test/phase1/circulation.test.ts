@@ -58,7 +58,7 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     const context = {
       agentId: 'interface',
       channel: 'test',
-      peer: 'user1',
+      peer: 'author1',
       model: 'test-model',
     };
 
@@ -78,12 +78,12 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     expect(mind).toHaveBeenCalledOnce();
     const prompt = mind.mock.calls[0][0];
     expect(prompt).toContain('SYSTEM PROMPT');
-    expect(prompt).toContain('USER:\nHi there');
+    expect(prompt).toContain('AUTHOR:\nHi there');
 
     // [D] Persist checks
     expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(2);
     expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ eventType: 'user_message' })
+      expect.objectContaining({ eventType: 'author_message' })
     );
     expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'assistant_message' })
@@ -95,17 +95,17 @@ describe('SoulCirculation - Phase 1 Integration', () => {
 
   it('should run the cycle and process an latticeUpdateProposal', async () => {
     const proposal: latticeUpdateProposal = {
-      add: [{ node_type: 'premise', content: 'The sky is blue.', weight: { salience: 0.8 } }],
+      add: [{ nodeType: 'premise', premise: 'The sky is blue.', weight: { salience: 0.8 } }],
       reinforce: [],
       contradict: [],
       edges: [],
     };
-    const responseWithProposal = `The sky is indeed blue.\n\n<index_update>${JSON.stringify(proposal)}</index_update>`;
+    const responseWithProposal = `The sky is indeed blue.\n\n<lattice_update>${JSON.stringify(proposal)}</lattice_update>`;
     const mind = vi.fn().mockResolvedValue(responseWithProposal);
     const context = {
       agentId: 'interface',
       channel: 'test',
-      peer: 'user1',
+      peer: 'author1',
       model: 'test-model',
     };
 
@@ -114,15 +114,18 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     expect(result.reply).toBe(responseWithProposal);
     expect(result.proposal).toEqual(proposal);
 
-    // [D] Persist checks (3 events: user, assistant, index_commit)
-    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(3);
+    // [D] Persist checks (4 events: author, assistant, lattice_update_proposal, lattice_commit)
+    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(4);
     expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
-        expect.objectContaining({ eventType: 'index_commit' })
+        expect.objectContaining({ eventType: 'lattice_update_proposal' })
+    );
+    expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ eventType: 'lattice_commit' })
     );
 
     // [E] Compile check
     expect(compilerMock.compile).toHaveBeenCalledWith(proposal, 'interface');
-    // It should regenerate the capsule again after compiling
-    expect(compilerMock.regenerateCapsule).toHaveBeenCalledTimes(2);
+    // Capsule generation is called once at cold boot.
+    expect(compilerMock.regenerateCapsule).toHaveBeenCalledTimes(1);
   });
 });

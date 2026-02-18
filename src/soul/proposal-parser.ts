@@ -1,8 +1,9 @@
 import { latticeUpdateProposal } from './types.js';
 
 /**
- * Extracts and parses <index_update> blocks from LLM output.
+ * Extracts and parses <lattice_update> blocks from LLM output.
  * The content of each block MUST be a valid JSON representation of an latticeUpdateProposal.
+ * Legacy <index_update> tags are accepted for backward compatibility.
  */
 
 /**
@@ -24,11 +25,12 @@ export function parseProposalJson(jsonText: string): latticeUpdateProposal {
 }
 
 /**
- * Extracts all content between <index_update> and </index_update> tags.
+ * Extracts all content between <lattice_update> and </lattice_update> tags.
+ * Legacy <index_update> and </index_update> tags are also accepted.
  */
 export function extractProposalBlocks(text: string): string[] {
   const blocks: string[] = [];
-  const regex = /<index_update>([\s\S]*?)<\/index_update>/g;
+  const regex = /<(?:lattice|index)_update>([\s\S]*?)<\/(?:lattice|index)_update>/g;
   let match;
 
   while ((match = regex.exec(text)) !== null) {
@@ -41,7 +43,7 @@ export function extractProposalBlocks(text: string): string[] {
 }
 
 /**
- * Extracts and parses all <index_update> blocks from a text string.
+ * Extracts and parses all <lattice_update> blocks from a text string.
  */
 export function parseAllProposals(text: string): latticeUpdateProposal[] {
   const blocks = extractProposalBlocks(text);
@@ -49,7 +51,7 @@ export function parseAllProposals(text: string): latticeUpdateProposal[] {
 }
 
 /**
- * Extracts and parses the first <index_update> block from a text string.
+ * Extracts and parses the first <lattice_update> block from a text string.
  * Returns null if no block is found.
  */
 export function parseFirstProposal(text: string): latticeUpdateProposal | null {

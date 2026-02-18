@@ -1,8 +1,8 @@
 import type { AgentRole } from './types.ts';
 import { AGENT_ROLES } from './types.ts';
-import type { ModelDescriptor, ModelReference, SubstrateId } from '../substrate/types.js';
-import { refreshModelRegistry, loadRegistryState, saveRegistryState } from '../substrate/refresh.js';
-import { parseModelReference, setRoleAssignment } from '../substrate/assignment.js';
+import type { ModelDescriptor, ModelReference, SubstrateId } from '../substrate/types.ts';
+import { refreshModelRegistry, loadRegistryState, saveRegistryState } from '../substrate/refresh.ts';
+import { parseModelReference, setRoleAssignment } from '../substrate/assignment.ts';
 
 export async function scanForModels(options?: {
   persist?: boolean;
@@ -24,7 +24,7 @@ export async function scanForModels(options?: {
   };
 
   for (const model of nextState.models) {
-    grouped[model.provider].push(model);
+    grouped[model.substrate].push(model);
   }
 
   return grouped;
@@ -62,9 +62,9 @@ function normalizeModelReference(
   }
 
   // Backward-compatible shorthand: plain model id. Must resolve uniquely.
-  const matches = availableModels.filter((model) => model.id === modelReferenceOrId && !model.stale);
+  const matches = availableModels.filter((model) => model.modelId === modelReferenceOrId && !model.stale);
   if (matches.length === 1) {
-    return `${matches[0].provider}:${matches[0].id}`;
+    return `${matches[0].substrate}:${matches[0].modelId}`;
   }
 
   if (matches.length === 0) {

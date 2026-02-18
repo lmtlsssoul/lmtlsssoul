@@ -30,6 +30,7 @@ export type {
   MindFunction,
 } from './soul/circulation.ts';
 export { SoulBootstrap } from './soul/bootstrap.ts';
+export { writeCheckpointBackup } from './soul/backup.ts';
 export {
   WEIGHT_RANGES,
   clampVector,
@@ -111,6 +112,8 @@ export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 export * from './soul/types.ts';
 export * from './substrate/types.ts';
 export * from './queue/types.ts';
+export { JobQueue, createResumedJobQueue } from './queue/runner.ts';
+export { loadQueueState, saveQueueState } from './queue/resume.ts';
 export { TreasuryLedger } from './treasury/ledger.ts';
 export { BudgetManager } from './treasury/budget.ts';
 export { EscalationManager } from './treasury/escalation.ts';

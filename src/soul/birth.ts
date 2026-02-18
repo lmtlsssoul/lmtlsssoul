@@ -6,6 +6,8 @@ import { scanForModels, setModelForRole } from './models-scan.ts';
 import { AGENT_ROLES, getStateDir } from './types.ts';
 import { GraphDB } from './graph-db.ts';
 import { ArchiveDB } from './archive-db.ts';
+import { SoulCompiler } from './compiler.ts';
+import { writeCheckpointBackup } from './backup.ts';
 
 export class SoulBirthPortal {
   private config: Record<string, any> = {};
@@ -86,13 +88,13 @@ export class SoulBirthPortal {
     log('Scanning authenticated substrates...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
-    this.config.discoveredModels = discovered.map((model) => `${model.provider}:${model.id}`);
+    this.config.discoveredModels = discovered.map((model) => `${model.substrate}:${model.modelId}`);
     success(`Discovered ${discovered.length} callable model(s).`);
     log('\n---\n');
 
     log('Step 4/8: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
-    const firstAvailable = discovered[0] ? `${discovered[0].provider}:${discovered[0].id}` : '';
+    const firstAvailable = discovered[0] ? `${discovered[0].substrate}:${discovered[0].modelId}` : '';
 
     for (const role of AGENT_ROLES) {
       const answer = await this.prompt(
@@ -102,13 +104,10 @@ export class SoulBirthPortal {
       if (!answer) {
         continue;
       }
-
-      if (discovered.length > 0) {
-        await setModelForRole(role, answer, {
-          availableModels: discovered,
-          stateDir: getStateDir(),
-        });
-      }
+      await setModelForRole(role, answer, {
+        availableModels: discovered,
+        stateDir: getStateDir(),
+      });
       roleAssignments[role] = answer;
     }
 
@@ -184,6 +183,21 @@ export class SoulBirthPortal {
       },
     });
 
+    const compiler = new SoulCompiler(graph);
+    const capsulePath = path.join(stateDir, 'SOUL.md');
+    const capsuleContent = compiler.regenerateCapsule(capsulePath);
+    const checkpoint = graph.createCheckpoint({
+      capsuleContent,
+      createdBy: 'birth',
+    });
+    graph.checkpoint();
+    archive.checkpoint();
+    writeCheckpointBackup({
+      stateDir,
+      checkpoint,
+      createdBy: 'birth',
+    });
+
     const birthConfigPath = path.join(stateDir, 'birth-config.json');
     fs.writeFileSync(
       birthConfigPath,
@@ -192,6 +206,7 @@ export class SoulBirthPortal {
           ...this.config,
           initializedAt: timestamp,
           birthEventHash: birthEvent.eventHash,
+          checkpointId: checkpoint.checkpointId,
           stateDir,
         },
         null,

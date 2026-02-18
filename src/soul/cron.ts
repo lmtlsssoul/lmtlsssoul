@@ -10,6 +10,7 @@ import { Orchestrator } from '../agents/orchestrator.ts';
 import { ArchiveDB } from './archive-db.ts';
 import { GraphDB } from './graph-db.ts';
 import { SoulCompiler } from './compiler.ts';
+import { loadRegistryState, refreshModelRegistry, saveRegistryState } from '../substrate/refresh.ts';
 
 /**
  * CronAutonomics manages the periodic tasks required for soul persistence
@@ -187,13 +188,24 @@ export class CronAutonomics {
   private async runMaintenance(): Promise<void> {
     console.log('[Cron] Performing maintenance...');
     
-    // ARCHITECTURE.md: "Archive compaction, index optimization, capsule regen"
+    // ARCHITECTURE.md: "Archive compaction, lattice optimization, capsule regen"
     try {
         this.graphDb.optimize();
         this.archiveDb.optimize();
         console.log('[Cron] Database optimization complete.');
     } catch (e) {
         console.warn('[Cron] Database optimization failed:', e);
+    }
+
+    try {
+      const stateDir = this.graphDb.getBaseDir();
+      if (stateDir !== ':memory:') {
+        const current = loadRegistryState(stateDir) ?? undefined;
+        const next = await refreshModelRegistry(current);
+        saveRegistryState(next, stateDir);
+      }
+    } catch (e) {
+      console.warn('[Cron] Registry refresh failed during maintenance:', e);
     }
     
     this.compiler.regenerateCapsule(this.capsulePath); 

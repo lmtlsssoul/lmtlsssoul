@@ -10,7 +10,7 @@ import {
   resolveModelForRole,
   DEFAULT_ROLE_ASSIGNMENTS,
 } from '../../src/substrate/assignment.js';
-import { JobQueue } from '../../src/queue/runner.js';
+import { JobQueue, createResumedJobQueue } from '../../src/queue/runner.js';
 import { saveQueueState, loadQueueState } from '../../src/queue/resume.js';
 import { promises as fs } from 'fs';
 import { normalizeModelDescriptor } from '../../src/substrate/types.js';
@@ -59,7 +59,7 @@ describe('Phase 2: Substrate Layer + Registry', () => {
     const models = await registry.discoverAllModels();
     expect(models).toHaveLength(1);
 
-    const uniqueKeys = new Set(models.map((m) => `${m.provider}:${m.id}`));
+    const uniqueKeys = new Set(models.map((m) => `${m.substrate}:${m.modelId}`));
     expect(uniqueKeys.size).toBe(models.length);
   });
 
@@ -105,8 +105,8 @@ describe('Phase 2: Substrate Layer + Registry', () => {
 
     const interfaceModel = resolveModelForRole('interface', availableModels);
     expect(interfaceModel).toBeDefined();
-    expect(interfaceModel?.provider).toBe('anthropic');
-    expect(`${interfaceModel?.provider}:${interfaceModel?.id}`).toBe(DEFAULT_ROLE_ASSIGNMENTS.interface);
+    expect(interfaceModel?.substrate).toBe('anthropic');
+    expect(`${interfaceModel?.substrate}:${interfaceModel?.modelId}`).toBe(DEFAULT_ROLE_ASSIGNMENTS.interface);
   });
 
   it('JobQueue should process a job with verify/checkpoint flow', async () => {
@@ -171,5 +171,53 @@ describe('Phase 2: Substrate Layer + Registry', () => {
     const loadedQueue = await loadQueueState();
     expect(readFileSpy).toHaveBeenCalledWith(expect.any(String), 'utf-8');
     expect(loadedQueue).toEqual(mockQueue);
+  });
+
+  it('createResumedJobQueue should reload queued work and process it', async () => {
+    const persistedQueue = [
+      {
+        jobId: 'job-resume-1',
+        role: 'interface',
+        substrate: 'openai',
+        modelId: 'gpt-4o',
+        inputs: {
+          kernelSnapshotRef: 'kernel',
+          memorySlicesRef: [],
+          taskRef: 'task',
+          toolPolicyRef: 'policy',
+        },
+        outputs: {
+          artifactPaths: [],
+          archiveAppendRef: 'archive',
+        },
+        verify: {
+          commands: ['echo "verify"'],
+        },
+        status: 'running',
+        createdAt: new Date().toISOString(),
+        startedAt: new Date().toISOString(),
+      },
+    ];
+
+    vi.spyOn(fs, 'readFile').mockResolvedValue(JSON.stringify(persistedQueue));
+
+    const queue = await createResumedJobQueue({
+      executor: async () => {},
+      verifyRunner: async (command) => ({
+        command,
+        ok: true,
+        exitCode: 0,
+        stdout: '',
+        stderr: '',
+      }),
+      checkpoint: async () => {},
+    });
+
+    const drained = await queue.waitForIdle(2000);
+    expect(drained).toBe(true);
+    const processed = queue.getProcessedJobs();
+    expect(processed).toHaveLength(1);
+    expect(processed[0].status).toBe('completed');
+    expect(processed[0].startedAt).toBeDefined();
   });
 });

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { RoleJob } from './types.ts';
-import { saveQueueState } from './resume.ts';
+import { loadQueueState, saveQueueState } from './resume.ts';
 
 type RunnerJob = RoleJob & { status: 'queued' | 'running' | 'completed' | 'failed' };
 
@@ -20,6 +20,12 @@ export type QueueSnapshot = {
 
 type JobExecutor = (job: RunnerJob) => Promise<void>;
 type VerifyRunner = (command: string) => Promise<VerificationOutcome>;
+type JobQueueOptions = {
+  executor?: JobExecutor;
+  verifyRunner?: VerifyRunner;
+  checkpoint?: (jobs: RunnerJob[]) => Promise<void>;
+  onStateChange?: (snapshot: QueueSnapshot) => void;
+};
 
 export class JobQueue {
   private queue: RunnerJob[] = [];
@@ -27,14 +33,7 @@ export class JobQueue {
   private active: RunnerJob | null = null;
   private isProcessing = false;
 
-  constructor(
-    private readonly options?: {
-      executor?: JobExecutor;
-      verifyRunner?: VerifyRunner;
-      checkpoint?: (jobs: RunnerJob[]) => Promise<void>;
-      onStateChange?: (snapshot: QueueSnapshot) => void;
-    }
-  ) {}
+  constructor(private readonly options?: JobQueueOptions) {}
 
   public addJob(job: Omit<RunnerJob, 'status'>): void {
     this.queue.push({ ...job, status: 'queued' });
@@ -48,6 +47,30 @@ export class JobQueue {
     }
     void this.persistState();
     void this.processQueue();
+  }
+
+  public loadResumableJobs(jobs: RoleJob[]): void {
+    if (jobs.length === 0) {
+      return;
+    }
+
+    const normalized: RunnerJob[] = jobs.map((job) => ({
+      ...job,
+      status: 'queued',
+      startedAt: undefined,
+      completedAt: undefined,
+      error: undefined,
+    }));
+
+    this.queue.push(...normalized);
+    void this.persistState();
+    void this.processQueue();
+  }
+
+  public async resumeFromDisk(): Promise<number> {
+    const jobs = await loadQueueState();
+    this.loadResumableJobs(jobs);
+    return jobs.length;
   }
 
   public getPendingJobs(): RunnerJob[] {
@@ -210,4 +233,10 @@ async function defaultVerifyRunner(command: string): Promise<VerificationOutcome
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function createResumedJobQueue(options?: JobQueueOptions): Promise<JobQueue> {
+  const queue = new JobQueue(options);
+  await queue.resumeFromDisk();
+  return queue;
 }

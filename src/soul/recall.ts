@@ -4,6 +4,8 @@ import type { GraphDB } from './graph-db.js';
 export interface RecallOptions {
   /** Number of recent messages to fetch from ArchiveDB (Chronological). Default: 10. */
   recentCount?: number;
+  /** Optional agent ID filter for chronological recall. */
+  agentId?: string;
   /** Max number of semantic matches (events) to fetch from GraphDB (Semantic). Default: 10. */
   semanticCount?: number;
   /** Number of top nodes to consider for semantic search. Default: 5. */
@@ -41,7 +43,10 @@ export class SoulRecall {
         options.timeRange.end
       );
     } else {
-      chronoEvents = this.archive.getRecentEvents(recentCount);
+      chronoEvents =
+        options.agentId && options.agentId.trim().length > 0
+          ? this.archive.getRecentEvents(options.agentId, recentCount)
+          : this.archive.getRecentEvents(recentCount);
     }
 
     // 2. Semantic Path

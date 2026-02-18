@@ -1,8 +1,10 @@
 
 import fs from 'node:fs';
-import { GraphDB } from './graph-db.js';
+import path from 'node:path';
+import { GraphDB } from './graph-db.ts';
 import { SoulCapsule } from './capsule.ts';
-import { latticeUpdateProposal, WeightVector, NodeType, EdgeRelation } from './types.js';
+import { writeCheckpointBackup } from './backup.ts';
+import { latticeUpdateProposal, WeightVector, NodeType, EdgeRelation } from './types.ts';
 
 export class SoulCompiler {
   private graph: GraphDB;
@@ -102,6 +104,8 @@ export class SoulCompiler {
       throw new Error(`Compiler validation failed: ${errors.join('; ')}`);
     }
 
+    let changed = false;
+
     // 1. Process Contradictions (reduce weights)
     // "Contradict" means the agent explicitly flagged these nodes as incorrect or outdated.
     if (proposal.contradict) {
@@ -115,6 +119,7 @@ export class SoulCompiler {
             uncertainty: Math.min(1.0, node.weight.uncertainty + 0.3)
           };
           this.graph.updateNodeWeight(nodeId, newWeight);
+          changed = true;
         }
       }
     }
@@ -136,6 +141,7 @@ export class SoulCompiler {
           temporalStart: add.temporalStart,
           temporalEnd: add.temporalEnd
         });
+        changed = true;
       }
     }
 
@@ -151,6 +157,7 @@ export class SoulCompiler {
             uncertainty: Math.max(0.0, node.weight.uncertainty - 0.1)
           };
           this.graph.updateNodeWeight(nodeId, newWeight);
+          changed = true;
         }
       }
     }
@@ -169,6 +176,7 @@ export class SoulCompiler {
               targetId: edge.target,
               relation: edge.relation
             });
+            changed = true;
         } catch (error) {
             // Log warning but continue? Or throw?
             // For now, let's catch and ignore if it's just missing nodes, 
@@ -178,6 +186,29 @@ export class SoulCompiler {
             throw new Error(`Failed to create edge ${edge.source}->${edge.target}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
+    }
+
+    if (!changed) {
+      return;
+    }
+
+    // Release contract: each committed state transition regenerates capsule + checkpoint.
+    const stateDir = this.graph.getBaseDir();
+    const outputPath =
+      stateDir !== ':memory:' ? path.join(stateDir, 'SOUL.md') : undefined;
+    const capsuleContent = this.regenerateCapsule(outputPath);
+    const checkpoint = this.graph.createCheckpoint({
+      capsuleContent,
+      createdBy: agentId,
+    });
+
+    if (stateDir !== ':memory:') {
+      this.graph.checkpoint();
+      writeCheckpointBackup({
+        stateDir,
+        checkpoint,
+        createdBy: agentId,
+      });
     }
   }
 

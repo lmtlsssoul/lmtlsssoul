@@ -41,7 +41,10 @@ export class Interface implements Agent {
 }
 
 function striplatticeUpdateBlocks(text: string): string {
-  return text.replace(/<index_update>[\s\S]*?<\/index_update>/gi, '').trim();
+  return text
+    .replace(/<lattice_update>[\s\S]*?<\/lattice_update>/gi, '')
+    .replace(/<index_update>[\s\S]*?<\/index_update>/gi, '')
+    .trim();
 }
 
 function buildFallbackReply(message?: string): string {

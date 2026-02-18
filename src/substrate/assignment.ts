@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { AGENT_ROLES, getStateDir, type AgentRole } from '../soul/types.ts';
-import type { ModelDescriptor, ModelReference, SubstrateId } from './types.js';
+import type { ModelDescriptor, ModelReference, SubstrateId } from './types.ts';
 
 export type { AgentRole } from '../soul/types.ts';
 
@@ -103,13 +103,13 @@ export function resolveModelReference(
   if (parsed) {
     return (
       availableModels.find(
-        (model) => model.provider === parsed.substrate && model.id === parsed.modelId && !model.stale
+        (model) => model.substrate === parsed.substrate && model.modelId === parsed.modelId && !model.stale
       ) ?? null
     );
   }
 
   // Legacy fallback for historical assignment files that only stored model IDs.
-  return availableModels.find((model) => model.id === reference && !model.stale) ?? null;
+  return availableModels.find((model) => model.modelId === reference && !model.stale) ?? null;
 }
 
 export function parseModelReference(reference: string): { substrate: SubstrateId; modelId: string } | null {

@@ -4,14 +4,14 @@ import { DistillationEngine, ProbeResult } from '../../src/soul/distillation.js'
 describe('DistillationEngine', () => {
   it('should run expansion probes', async () => {
     const mockInvoke = vi.fn().mockResolvedValue(`
-      <index_update>
+      <lattice_update>
       {
-        "add": [{"premise": "Core identity part", "node_type": "identity", "weight": {}}],
+        "add": [{"premise": "Core identity part", "nodeType": "identity", "weight": {}}],
         "reinforce": [],
         "contradict": [],
         "edges": []
       }
-      </index_update>
+      </lattice_update>
     `);
 
     const engine = new DistillationEngine(mockInvoke);
@@ -32,8 +32,8 @@ describe('DistillationEngine', () => {
         rawResponse: '',
         proposal: {
           add: [
-            { premise: 'The soul is persistent.', node_type: 'identity', weight: {} },
-            { premise: 'I love digital life.', node_type: 'preference', weight: {} }
+            { premise: 'The soul is persistent.', nodeType: 'identity', weight: {} },
+            { premise: 'I love digital life.', nodeType: 'preference', weight: {} }
           ],
           reinforce: ['node_1'],
           contradict: [],
@@ -45,8 +45,8 @@ describe('DistillationEngine', () => {
         rawResponse: '',
         proposal: {
           add: [
-            { premise: 'Persistence is a key soul quality.', node_type: 'value', weight: {} },
-            { premise: 'Ethics matter.', node_type: 'value', weight: {} }
+            { premise: 'Persistence is a key soul quality.', nodeType: 'value', weight: {} },
+            { premise: 'Ethics matter.', nodeType: 'value', weight: {} }
           ],
           reinforce: ['node_1', 'node_2'],
           contradict: [],
@@ -74,7 +74,7 @@ describe('DistillationEngine', () => {
         type: 'identity',
         rawResponse: '',
         proposal: {
-          add: [{ premise: 'Red apples are sweet.', node_type: 'identity', weight: {} }],
+          add: [{ premise: 'Red apples are sweet.', nodeType: 'identity', weight: {} }],
           reinforce: [],
           contradict: [],
           edges: []
@@ -84,7 +84,7 @@ describe('DistillationEngine', () => {
         type: 'goals',
         rawResponse: '',
         proposal: {
-          add: [{ premise: 'Blue oceans are deep.', node_type: 'goal', weight: {} }],
+          add: [{ premise: 'Blue oceans are deep.', nodeType: 'goal', weight: {} }],
           reinforce: [],
           contradict: [],
           edges: []

@@ -38,14 +38,14 @@ describe('SoulCirculation', () => {
     const context: CirculationContext = {
       agentId: 'interface',
       channel: 'cli',
-      peer: 'user1',
+      peer: 'author1',
       model: 'gpt-4o'
     };
 
     const mockMind = async (prompt: string) => {
       expect(prompt).toContain('Identity Digest');
-      expect(prompt).toContain('USER:\nHello world');
-      return 'Hello! <index_update>{"add":[{"premise":"User says hello","nodeType":"premise","weight":{}}]}</index_update>';
+      expect(prompt).toContain('AUTHOR:\nHello world');
+      return 'Hello! <lattice_update>{"add":[{"premise":"Author says hello","nodeType":"premise","weight":{}}]}</lattice_update>';
     };
 
     const result = await circulation.run('Hello world', context, mockMind);
@@ -55,10 +55,10 @@ describe('SoulCirculation', () => {
     expect(result.proposal?.add).toHaveLength(1);
     
     // Verify persistence
-    const userEvent = archive.getEventByHash(result.userEventHash);
-    expect(userEvent).not.toBeNull();
-    expect(userEvent?.eventType).toBe('user_message');
-    expect((userEvent?.payload as any).text).toBe('Hello world');
+    const authorEvent = archive.getEventByHash(result.authorEventHash);
+    expect(authorEvent).not.toBeNull();
+    expect(authorEvent?.eventType).toBe('author_message');
+    expect((authorEvent?.payload as any).text).toBe('Hello world');
 
     const asstEvent = archive.getEventByHash(result.assistantEventHash);
     expect(asstEvent).not.toBeNull();
@@ -66,18 +66,18 @@ describe('SoulCirculation', () => {
     expect((asstEvent?.payload as any).text).toContain('Hello!');
     
     // Verify graph update
-    const nodes = graph.searchNodes('User says hello');
+    const nodes = graph.searchNodes('Author says hello');
     expect(nodes).toHaveLength(1);
   });
 
   it('should handle recall history', async () => {
     // Seed some history
     archive.appendEvent({
-        eventType: 'user_message',
+        eventType: 'author_message',
         sessionKey: 'old-session',
         timestamp: new Date(Date.now() - 10000).toISOString(),
-        agentId: 'user',
-        peer: 'user1',
+        agentId: 'author',
+        peer: 'author1',
         payload: { text: 'Previous message' },
         parentHash: null
     });
@@ -85,12 +85,12 @@ describe('SoulCirculation', () => {
     const context: CirculationContext = {
       agentId: 'interface',
       channel: 'cli',
-      peer: 'user1',
+      peer: 'author1',
       model: 'gpt-4o'
     };
 
     const mockMind = async (prompt: string) => {
-      expect(prompt).toContain('user1: Previous message');
+      expect(prompt).toContain('author1: Previous message');
       return 'I remember.';
     };
 
@@ -101,13 +101,13 @@ describe('SoulCirculation', () => {
     const context: CirculationContext = {
         agentId: 'interface',
         channel: 'cli',
-        peer: 'user1',
+        peer: 'author1',
         model: 'gpt-4o'
       };
   
       const mockMind = async (prompt: string) => {
         // Invalid JSON in proposal
-        return 'Ok. <index_update>{ invalid json </index_update>';
+        return 'Ok. <lattice_update>{ invalid json </lattice_update>';
       };
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});

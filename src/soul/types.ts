@@ -106,19 +106,25 @@ export type EvidenceLink = {
 // ─── Raw Archive Event ──────────────────────────────────────────
 
 export type EventType =
-  | 'user_message'
+  | 'author_message'
   | 'assistant_message'
   | 'tool_call'
   | 'tool_result'
   | 'world_action'
   | 'heartbeat'
-  | 'index_update_proposal'
-  | 'index_commit'
+  | 'lattice_update_proposal'
+  | 'lattice_commit'
   | 'reflection_probe'
   | 'system_event'
   | 'identity_check'
   | 'goal_decomposition'
-  | 'sensor_data';
+  | 'sensor_data'
+  /** @deprecated Legacy alias kept for archive backward compatibility. */
+  | 'user_message'
+  /** @deprecated Legacy alias kept for archive backward compatibility. */
+  | 'index_update_proposal'
+  /** @deprecated Legacy alias kept for archive backward compatibility. */
+  | 'index_commit';
 
 /** A single event in the Raw Archive. Append-only. Never modified or deleted. */
 export type RawArchiveEvent = {

@@ -22,6 +22,7 @@ describe('GraphDB', () => {
   it('should initialize the database and tables', () => {
     const dbPath = path.join(tmpDir, 'soul.db');
     expect(fs.existsSync(dbPath)).toBe(true);
+    expect(graphDB.getBaseDir()).toBe(tmpDir);
   });
 
   it('should create and retrieve a node', () => {
@@ -136,5 +137,28 @@ describe('GraphDB', () => {
     expect(node?.weight.arousal).toBe(0.8);
     // Others should remain unchanged
     expect(node?.weight.valence).toBe(0.0);
+  });
+
+  it('should create and retrieve a checkpoint', () => {
+    graphDB.createNode({
+      premise: 'Checkpoint node',
+      nodeType: 'identity',
+      createdBy: 'test',
+    });
+
+    const checkpoint = graphDB.createCheckpoint({
+      capsuleContent: '# Soul Capsule\n\n- Checkpoint node',
+      createdBy: 'compiler',
+    });
+
+    expect(checkpoint.version).toBe(1);
+    expect(checkpoint.nodeCount).toBe(1);
+    expect(checkpoint.edgeCount).toBe(0);
+    expect(checkpoint.capsuleHash).toMatch(/^[a-f0-9]{64}$/);
+
+    const latest = graphDB.getLatestCheckpoint();
+    expect(latest).not.toBeNull();
+    expect(latest?.checkpointId).toBe(checkpoint.checkpointId);
+    expect(latest?.createdBy).toBe('compiler');
   });
 });

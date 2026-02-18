@@ -17,6 +17,8 @@ export interface CirculationContext {
 
 export interface CirculationResult {
   reply: string;
+  authorEventHash: string;
+  /** @deprecated Use authorEventHash. Kept for backward compatibility. */
   userEventHash: string;
   assistantEventHash: string;
   proposal?: latticeUpdateProposal;
@@ -60,7 +62,7 @@ export class SoulCirculation {
     // Format history for the prompt
     // We want a clean transcript: "Role: Message"
     const history = events.map(e => {
-        const role = e.agentId === context.agentId ? 'You' : (e.peer || 'User');
+        const role = e.agentId === context.agentId ? 'You' : (e.peer || 'Author');
         // We use payloadText (truncated) or check payload structure if available
         const payload = e.payload as any;
         const text = payload?.text || e.payloadText || JSON.stringify(payload);
@@ -75,33 +77,30 @@ ${systemPrompt}
 RECENT HISTORY:
 ${history}
 
-USER:
+AUTHOR:
 ${message}
 
-You are ${context.agentId}. Reply to the user.
-If you learn something new, include an <index_update> block at the end.
+You are ${context.agentId}. Reply to the Author.
+If you learn something new, include an <lattice_update> block at the end.
 `;
 
     // Call the Mind
     const response = await mind(fullPrompt);
 
     // [D] Persist
-    // 1. Persist User Message
+    // 1. Persist Author Message
     const timestamp = new Date().toISOString();
     
-    // Link to the last event we recalled to maintain a loose chain of continuity
-    const lastEventHash = events.length > 0 ? events[events.length - 1].eventHash : null;
-
-    const userEvent = this.archive.appendEvent({
-       eventType: 'user_message',
+    const authorEvent = this.archive.appendEvent({
+       eventType: 'author_message',
        sessionKey,
        timestamp,
-       agentId: 'user', 
+       agentId: 'author',
        peer: context.peer,
        channel: context.channel,
        model: null,
        payload: { text: message },
-       parentHash: lastEventHash
+       parentHash: null
     });
 
     // 2. Persist Assistant Reply
@@ -114,7 +113,7 @@ If you learn something new, include an <index_update> block at the end.
        channel: context.channel,
        model: context.model,
        payload: { text: response },
-       parentHash: userEvent.eventHash
+       parentHash: authorEvent.eventHash
     });
 
     // [E] Compile
@@ -127,16 +126,25 @@ If you learn something new, include an <index_update> block at the end.
     }
 
     if (proposal) {
+       const proposalEvent = this.archive.appendEvent({
+          eventType: 'lattice_update_proposal',
+          sessionKey,
+          timestamp: new Date().toISOString(),
+          agentId: context.agentId,
+          peer: context.peer,
+          channel: context.channel,
+          model: context.model,
+          payload: proposal,
+          parentHash: assistantEvent.eventHash
+       });
+
        try {
          // Validate & Commit
          this.compiler.compile(proposal, context.agentId);
-         
-         // Regen capsule (optional per turn, but architecture says "Regen capsule")
-         this.compiler.regenerateCapsule(); 
-         
+
          // Persist lattice Update Event
          this.archive.appendEvent({
-            eventType: 'index_commit',
+            eventType: 'lattice_commit',
             sessionKey,
             timestamp: new Date().toISOString(),
             agentId: context.agentId,
@@ -144,12 +152,25 @@ If you learn something new, include an <index_update> block at the end.
             channel: context.channel,
             model: context.model,
             payload: proposal,
-            parentHash: assistantEvent.eventHash
+            parentHash: proposalEvent.eventHash
          });
 
        } catch (err) {
          console.error('Compilation failed:', err);
-         // We might want to log a system_event for the error, but for now just log to console
+         this.archive.appendEvent({
+            eventType: 'system_event',
+            sessionKey,
+            timestamp: new Date().toISOString(),
+            agentId: 'compiler',
+            peer: context.peer,
+            channel: context.channel,
+            model: context.model,
+            payload: {
+              protocol: 'compiler.error.v1',
+              message: err instanceof Error ? err.message : String(err),
+            },
+            parentHash: proposalEvent.eventHash
+         });
        }
     }
 
@@ -158,7 +179,8 @@ If you learn something new, include an <index_update> block at the end.
 
     return {
       reply: response,
-      userEventHash: userEvent.eventHash,
+      authorEventHash: authorEvent.eventHash,
+      userEventHash: authorEvent.eventHash,
       assistantEventHash: assistantEvent.eventHash,
       proposal: proposal || undefined
     };

@@ -25,9 +25,9 @@ describe('Phase 5: Mycelial Routing Integration', () => {
     // Mock invoke for distillation
     distillation = new DistillationEngine(async (prompt) => {
       if (prompt.includes('IDENTITY')) {
-        return `<index_update>{"add": [{"premise": "I am a bridge between worlds.", "nodeType": "identity", "weight": {"commitment": 0.8, "uncertainty": 0.1}}], "reinforce": [], "contradict": [], "edges": []}</index_update>`;
+        return `<lattice_update>{"add": [{"premise": "I am a bridge between worlds.", "nodeType": "identity", "weight": {"commitment": 0.8, "uncertainty": 0.1}}], "reinforce": [], "contradict": [], "edges": []}</lattice_update>`;
       }
-      return '<index_update>{"add": [], "reinforce": [], "contradict": [], "edges": []}</index_update>';
+      return '<lattice_update>{"add": [], "reinforce": [], "contradict": [], "edges": []}</lattice_update>';
     });
     convergence = new ConvergenceAnalyzer(db, DEFAULT_CONFIG);
   });

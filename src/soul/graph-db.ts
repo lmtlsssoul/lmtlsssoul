@@ -1,9 +1,20 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { ulid } from 'ulid';
 import { fileURLToPath } from 'node:url';
-import type { SoulNode, SoulEdge, EvidenceLink, NodeType, NodeStatus, WeightVector, EdgeRelation, EvidenceLinkType } from './types.js';
+import type {
+  SoulNode,
+  SoulEdge,
+  EvidenceLink,
+  Checkpoint,
+  NodeType,
+  NodeStatus,
+  WeightVector,
+  EdgeRelation,
+  EvidenceLinkType,
+} from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +45,10 @@ export class GraphDB {
     } else {
       console.warn(`Schema file not found at ${schemaPath}. Assuming DB is initialized or will be initialized manually.`);
     }
+  }
+
+  public getBaseDir(): string {
+    return this.dbDir;
   }
 
   // ─── Nodes ──────────────────────────────────────────────────────
@@ -317,6 +332,53 @@ export class GraphDB {
     this.db.pragma('wal_checkpoint(FULL)');
   }
 
+  public createCheckpoint(params: { capsuleContent: string; createdBy: string }): Checkpoint {
+    const checkpointId = ulid();
+    const createdAt = new Date().toISOString();
+    const capsuleHash = crypto.createHash('sha256').update(params.capsuleContent).digest('hex');
+    const nodeCount = this.getNodeCount();
+    const edgeCount = this.getEdgeCount();
+    const latestVersion = this.getLatestCheckpointVersion();
+    const version = latestVersion + 1;
+
+    const stmt = this.db.prepare(`
+      INSERT INTO checkpoints (
+        checkpoint_id, version, node_count, edge_count, capsule_hash, created_at, created_by
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?
+      )
+    `);
+
+    stmt.run(
+      checkpointId,
+      version,
+      nodeCount,
+      edgeCount,
+      capsuleHash,
+      createdAt,
+      params.createdBy
+    );
+
+    return {
+      checkpointId,
+      version,
+      nodeCount,
+      edgeCount,
+      capsuleHash,
+      createdAt,
+      createdBy: params.createdBy,
+    };
+  }
+
+  public getLatestCheckpoint(): Checkpoint | null {
+    const stmt = this.db.prepare('SELECT * FROM checkpoints ORDER BY version DESC LIMIT 1');
+    const row = stmt.get() as any;
+    if (!row) {
+      return null;
+    }
+    return this.mapCheckpoint(row);
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
 
   private mapNode(row: any): SoulNode {
@@ -343,5 +405,29 @@ export class GraphDB {
       temporalStart: row.temporal_start ?? undefined,
       temporalEnd: row.temporal_end ?? undefined,
     };
+  }
+
+  private mapCheckpoint(row: any): Checkpoint {
+    return {
+      checkpointId: row.checkpoint_id,
+      version: row.version,
+      nodeCount: row.node_count,
+      edgeCount: row.edge_count,
+      capsuleHash: row.capsule_hash,
+      createdAt: row.created_at,
+      createdBy: row.created_by,
+    };
+  }
+
+  private getEdgeCount(): number {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM soul_edges');
+    const result = stmt.get() as { count: number };
+    return result.count;
+  }
+
+  private getLatestCheckpointVersion(): number {
+    const stmt = this.db.prepare('SELECT MAX(version) as version FROM checkpoints');
+    const result = stmt.get() as { version: number | null };
+    return result.version ?? 0;
   }
 }

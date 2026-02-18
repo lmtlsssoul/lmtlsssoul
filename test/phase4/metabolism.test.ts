@@ -94,7 +94,7 @@ describe('Phase 4: Metabolism Integration', () => {
       requestReason: 'Software License',
       amountUsd: 49.99
     });
-    approval.approve(approvalId, 'SIG_HARDCODED', 'owner');
+    approval.approve(approvalId, 'SIG_HARDCODED', 'author');
     approval.markUsed(approvalId);
     expect(approval.getApproval(approvalId)?.status).toBe('used');
   });

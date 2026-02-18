@@ -1,6 +1,6 @@
 -- Raw Archive Schema
 -- Append-only, content-addressed event chain.
--- JSONL records on disk with SQLite index for fast queries.
+-- JSONL records on disk with SQLite lattice rows for fast queries.
 -- NEVER delete or modify records. This is the ground truth.
 
 CREATE TABLE IF NOT EXISTS archive_events (
@@ -9,10 +9,11 @@ CREATE TABLE IF NOT EXISTS archive_events (
   timestamp     TEXT NOT NULL,                              -- ISO 8601 with milliseconds, UTC
   session_key   TEXT NOT NULL,                              -- Ephemeral key: lmtlss:<agentId>:<msgId>
   event_type    TEXT NOT NULL CHECK (event_type IN (
-    'user_message', 'assistant_message', 'tool_call', 'tool_result',
-    'world_action', 'heartbeat', 'index_update_proposal', 'index_commit',
-    'reflection_probe', 'system_event', 'identity_check', 'goal_decomposition',
-    'sensor_data'
+    'author_message', 'assistant_message', 'tool_call', 'tool_result',
+    'world_action', 'heartbeat', 'lattice_update_proposal', 'lattice_commit',
+    'reflection_probe', 'system_event', 'identity_check', 'goal_decomposition', 'sensor_data',
+    -- Legacy aliases kept for backward compatibility with older archives.
+    'user_message', 'index_update_proposal', 'index_commit'
   )),
   agent_id      TEXT NOT NULL,                             -- Which agent produced this event
   model         TEXT,                                      -- Model string used for this invocation

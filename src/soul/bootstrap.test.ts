@@ -24,13 +24,13 @@ describe('SoulBootstrap', () => {
     bootstrap = new SoulBootstrap(mockGraph as GraphDB, mockArchive as ArchiveDB);
   });
 
-  it('should return null if index is not sparse', () => {
-    mockGraph.getNodeCount.mockReturnValue(10); // > 5
+  it('should return null if lattice is not sparse', () => {
+    mockGraph.getNodeCount.mockReturnValue(10); // threshold is 10
     expect(bootstrap.isSparse()).toBe(false);
     expect(bootstrap.getBootstrapContext()).toBe(null);
   });
 
-  it('should return genesis prompt if index is sparse and archive is empty', () => {
+  it('should return genesis prompt if lattice is sparse and archive is empty', () => {
     mockGraph.getNodeCount.mockReturnValue(0);
     mockArchive.getRecentEvents.mockReturnValue([]);
 
@@ -40,12 +40,12 @@ describe('SoulBootstrap', () => {
     expect(result).toContain('GENESIS MODE');
   });
 
-  it('should return archive history if index is sparse and archive has events', () => {
+  it('should return archive history if lattice is sparse and archive has events', () => {
     mockGraph.getNodeCount.mockReturnValue(0);
     const mockEvents: Partial<HydratedArchiveEvent>[] = [
       {
         timestamp: '2023-01-01T00:00:00Z',
-        agentId: 'user',
+        agentId: 'author',
         payload: { text: 'Hello world' }
       },
       {

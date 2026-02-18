@@ -67,6 +67,18 @@ describe('SoulCompiler', () => {
     expect(nodes[0].premise).toBe('Sky is blue');
     expect(nodes[0].weight.salience).toBe(0.9);
     expect(nodes[0].createdBy).toBe('agent-007');
+
+    const checkpoint = graph.getLatestCheckpoint();
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint?.createdBy).toBe('agent-007');
+    expect(fs.existsSync(path.join(tmpDir, 'SOUL.md'))).toBe(true);
+
+    const backupsDir = path.join(tmpDir, 'backups');
+    expect(fs.existsSync(backupsDir)).toBe(true);
+    const snapshots = fs.readdirSync(backupsDir);
+    expect(snapshots.length).toBeGreaterThan(0);
+    const manifestPath = path.join(backupsDir, snapshots[0], 'manifest.json');
+    expect(fs.existsSync(manifestPath)).toBe(true);
   });
 
   it('should compile reinforcements correctly', () => {

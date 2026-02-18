@@ -46,7 +46,7 @@ describe('SensorChannel', () => {
     const visionData = {
       resolution: { width: 1920, height: 1080 },
       format: 'jpeg',
-      capturedObjects: ['human', 'laptop'],
+      capturedObjects: ['author', 'laptop'],
       imageRef: 'ipfs://QmX...'
     };
     const event = await sensors.ingestVisionMetadata('main-cam', visionData);

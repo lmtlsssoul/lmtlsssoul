@@ -134,15 +134,15 @@ TASK:
     switch (type) {
       case 'identity':
         return base + `Identify the most fundamental, unchanging aspects of this Soul's identity. 
-Return an <index_update> with these as 'identity' nodes.`;
+Return an <lattice_update> with these as 'identity' nodes.`;
       case 'goals':
         return base + `Identify the most urgent and consistent goals currently active.
-Return an <index_update> with these as 'goal' nodes.`;
+Return an <lattice_update> with these as 'goal' nodes.`;
       case 'values':
         return base + `Identify the core ethical and moral values driving this Soul.
-Return an <index_update> with these as 'value' nodes.`;
+Return an <lattice_update> with these as 'value' nodes.`;
       default:
-        return base + `Reflect on the Soul's state and propose updates in an <index_update> block.`;
+        return base + `Reflect on the Soul's state and propose updates in an <lattice_update> block.`;
     }
   }
 }

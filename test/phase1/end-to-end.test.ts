@@ -53,7 +53,7 @@ describe('Phase 1 End-to-End', () => {
     const context = {
       agentId: 'interface',
       channel: 'e2e-test',
-      peer: 'e2e-user',
+      peer: 'e2e-author',
       model: 'e2e-model',
     };
     
@@ -65,7 +65,7 @@ describe('Phase 1 End-to-End', () => {
         contradict: [],
         edges: [],
     };
-    const llmResponse1 = `That's an interesting fact. The sun is indeed a star.\n\n<index_update>${JSON.stringify({ add: proposal.add })}</index_update>`;
+    const llmResponse1 = `That's an interesting fact. The sun is indeed a star.\n\n<lattice_update>${JSON.stringify({ add: proposal.add })}</lattice_update>`;
     const mind1 = async () => llmResponse1;
 
     const result1 = await circulation.run('Tell me a fact.', context, mind1);

@@ -4,18 +4,23 @@ import { extractProposalBlocks, parseProposalJson, parseAllProposals, parseFirst
 describe('Proposal Parser', () => {
   describe('extractProposalBlocks', () => {
     it('should extract a single block', () => {
-      const text = 'Some text <index_update>{"add": []}</index_update> more text';
+      const text = 'Some text <lattice_update>{"add": []}</lattice_update> more text';
       expect(extractProposalBlocks(text)).toEqual(['{"add": []}']);
     });
 
     it('should extract multiple blocks', () => {
-      const text = '<index_update>block1</index_update> random <index_update>block2</index_update>';
+      const text = '<lattice_update>block1</lattice_update> random <lattice_update>block2</lattice_update>';
       expect(extractProposalBlocks(text)).toEqual(['block1', 'block2']);
     });
 
     it('should handle multi-line blocks', () => {
-      const text = '<index_update>\n{\n  "add": []\n}\n</index_update>';
+      const text = '<lattice_update>\n{\n  "add": []\n}\n</lattice_update>';
       expect(extractProposalBlocks(text)).toEqual(['{\n  "add": []\n}']);
+    });
+
+    it('should accept legacy index_update tags for backward compatibility', () => {
+      const text = '<index_update>{"add": []}</index_update>';
+      expect(extractProposalBlocks(text)).toEqual(['{"add": []}']);
     });
 
     it('should return empty array if no blocks found', () => {
@@ -53,9 +58,9 @@ describe('Proposal Parser', () => {
   describe('parseAllProposals', () => {
     it('should parse all blocks in text', () => {
       const text = `
-        <index_update>{"add": [{"premise": "p1"}]}</index_update>
+        <lattice_update>{"add": [{"premise": "p1"}]}</lattice_update>
         middle
-        <index_update>{"reinforce": ["id2"]}</index_update>
+        <lattice_update>{"reinforce": ["id2"]}</lattice_update>
       `;
       const results = parseAllProposals(text);
       expect(results).toHaveLength(2);
@@ -66,7 +71,7 @@ describe('Proposal Parser', () => {
 
   describe('parseFirstProposal', () => {
     it('should return the first parsed proposal', () => {
-      const text = '<index_update>{"add": []}</index_update><index_update>{"reinforce": []}</index_update>';
+      const text = '<lattice_update>{"add": []}</lattice_update><lattice_update>{"reinforce": []}</lattice_update>';
       const result = parseFirstProposal(text);
       expect(result).not.toBeNull();
       expect(result?.add).toEqual([]);
