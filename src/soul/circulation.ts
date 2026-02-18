@@ -9,7 +9,7 @@ import { parseFirstProposal } from './proposal-parser.ts';
 import { IndexUpdateProposal, AgentRole } from './types.ts';
 
 export interface CirculationContext {
-  agentId: string; // Should be AgentRole
+  agentId: AgentRole;
   channel: string;
   peer: string;
   model: string;
@@ -50,7 +50,7 @@ export class SoulCirculation {
     // We regenerate the capsule from the graph to ensure we have the latest state.
     // In a real optimized system, we might read SOUL.md from disk.
     const capsuleText = this.compiler.regenerateCapsule();
-    const systemPrompt = this.identity.generate(capsuleText, context.agentId as AgentRole);
+    const systemPrompt = this.identity.generate(capsuleText, context.agentId);
 
 
     // [B] Dual Path Recall

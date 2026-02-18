@@ -491,6 +491,34 @@ describe('VerifyBeforeCommit — archive persistence', () => {
     const failPayload = failEvent?.payload as Record<string, unknown>;
     expect(failPayload.passed).toBe(false);
   });
+
+  it('chains verification events within the artifact session', () => {
+    const archive = makeArchive();
+    const verifier = makeVerifier(archive);
+
+    verifier.register({
+      artifactType: 'chain_type',
+      checks: [{ kind: 'hash_integrity', label: 'Hash check' }],
+    });
+
+    const artifact = buildArtifact({
+      artifactId: 'art-302',
+      producedBy: 'compiler',
+      artifactType: 'chain_type',
+      jobId: 'job-302',
+      content: { sequence: 1 },
+    });
+
+    const first = verifier.verify(artifact);
+    const second = verifier.verify(artifact);
+
+    const firstEvent = archive.getEventByHash(first.archiveEventHash);
+    const secondEvent = archive.getEventByHash(second.archiveEventHash);
+
+    expect(firstEvent).not.toBeNull();
+    expect(secondEvent).not.toBeNull();
+    expect(secondEvent?.parentHash).toBe(firstEvent?.eventHash);
+  });
 });
 
 // ---------------------------------------------------------------------------

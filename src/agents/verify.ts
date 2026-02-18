@@ -476,9 +476,10 @@ export class VerifyBeforeCommit {
     }
   ): HydratedArchiveEvent {
     const timestamp = new Date().toISOString();
+    const parentHash = this.getLatestSessionHash(artifact.sessionKey);
 
     return this.archive.appendEvent({
-      parentHash: null,
+      parentHash,
       timestamp,
       sessionKey: artifact.sessionKey,
       eventType: 'system_event',
@@ -496,5 +497,10 @@ export class VerifyBeforeCommit {
         durationMs: result.durationMs,
       },
     });
+  }
+
+  private getLatestSessionHash(sessionKey: string): string | null {
+    const events = this.archive.getEventsBySession(sessionKey);
+    return events.at(-1)?.eventHash ?? null;
   }
 }

@@ -3,7 +3,7 @@
  * @author Gemini
  */
 
-import { RoleJob } from './runner.js';
+import type { RoleJob } from './types.ts';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';

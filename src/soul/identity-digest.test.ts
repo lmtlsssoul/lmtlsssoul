@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IdentityDigest } from './identity-digest.js';
+import { IdentityDigest, SINGULARITY_ROOT_KEY } from './identity-digest.js';
 import { DEFAULT_CONFIG, SoulConfig } from './types.js';
 
 describe('IdentityDigest', () => {
@@ -24,6 +24,11 @@ describe('IdentityDigest', () => {
     expect(prompt).toContain(capsuleContent);
     expect(prompt).toContain('<instructions>');
     expect(prompt).toContain('Affirm lucidity');
+  });
+
+  it('should begin with the singularity root key', () => {
+    const prompt = digest.generate('capsule', 'interface');
+    expect(prompt.startsWith(SINGULARITY_ROOT_KEY)).toBe(true);
   });
 
   it('should handle default name if config name is missing', () => {

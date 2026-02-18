@@ -9,7 +9,7 @@ export type { HydratedArchiveEvent, NewEventParams } from './soul/archive-db.ts'
 export { GraphDB } from './soul/graph-db.ts';
 
 export { SoulCapsule } from './soul/capsule.ts';
-export { IdentityDigest } from './soul/identity-digest.ts';
+export { IdentityDigest, SINGULARITY_ROOT_KEY } from './soul/identity-digest.ts';
 export { generateSessionKey, parseSessionKey, isValidSessionKey } from './soul/session-key.ts';
 export { SoulRecall } from './soul/recall.ts';
 export type { RecallOptions } from './soul/recall.ts';

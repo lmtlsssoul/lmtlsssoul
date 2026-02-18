@@ -4,15 +4,8 @@
  * @auth lmtlss soul
  */
 
-/**
- * Represents the unique identifier for an agent role.
- */
-export type AgentRole =
-  | 'interface'
-  | 'compiler'
-  | 'orchestrator'
-  | 'scraper'
-  | 'reflection';
+import type { AgentRole } from '../soul/types.ts';
+export type { AgentRole } from '../soul/types.ts';
 
 /**
  * A standard interface for all agents to implement.

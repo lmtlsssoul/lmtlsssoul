@@ -15,7 +15,7 @@ export interface NewEventParams {
   parentHash: string | null;
   timestamp: string;
   sessionKey: string;
-  eventType: string; // Relaxed to string to match usage, but should be EventType
+  eventType: EventType;
   agentId: string;
   model?: string | null;
   channel?: string | null;
@@ -178,7 +178,7 @@ export class ArchiveDB {
       parentHash,
       timestamp,
       sessionKey,
-      eventType: eventType as EventType,
+      eventType,
       agentId,
       model,
       channel,

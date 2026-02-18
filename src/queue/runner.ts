@@ -3,47 +3,22 @@
  * @author Gemini
  */
 
-import { AgentRole } from '../substrate/assignment.js';
-
-/**
- * Defines the structure of a job to be processed by the role runner.
- * This is based on the architecture document.
- */
-export type RoleJob = {
-  jobId: string;
-  role: AgentRole;
-  substrate: string;
-  modelId: string;
-  inputs: {
-    kernelSnapshotRef: string;
-    memorySlicesRef: string[];
-    taskRef: string;
-    toolPolicyRef: string;
-  };
-  outputs: {
-    artifactPaths: string[];
-    archiveAppendRef: string;
-  };
-  verify: {
-    commands: string[];
-  };
-  createdAt: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-};
+import type { RoleJob } from './types.ts';
+type RunnerJob = RoleJob & { status: 'queued' | 'running' | 'completed' | 'failed' };
 
 /**
  * A single-lane job queue for processing role-based jobs.
  */
 export class JobQueue {
-  private queue: RoleJob[] = [];
+  private queue: RunnerJob[] = [];
   private isProcessing = false;
 
   /**
    * Adds a new job to the queue.
    * @param job - The job to add.
    */
-  public addJob(job: Omit<RoleJob, 'status'>): void {
-    this.queue.push({ ...job, status: 'pending' });
+  public addJob(job: Omit<RunnerJob, 'status'>): void {
+    this.queue.push({ ...job, status: 'queued' });
     this.processQueue();
   }
 

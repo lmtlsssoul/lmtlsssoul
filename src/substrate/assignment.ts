@@ -3,17 +3,9 @@
  * @author Gemini
  */
 
-import { ModelDescriptor } from './types.js';
-
-/**
- * Defines the roles for the different agents in the system.
- */
-export type AgentRole =
-  | 'interface'
-  | 'compiler'
-  | 'orchestrator'
-  | 'scraper'
-  | 'reflection';
+import type { AgentRole } from '../soul/types.ts';
+import type { ModelDescriptor } from './types.js';
+export type { AgentRole } from '../soul/types.ts';
 
 /**
  * A map that defines the desired model for each agent role.
