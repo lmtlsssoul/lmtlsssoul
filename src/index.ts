@@ -46,6 +46,7 @@ export type {
 export { Orchestrator } from './agents/orchestrator.ts';
 export { Scraper } from './agents/scraper.ts';
 export { Reflection } from './agents/reflection.ts';
+export { Interface } from './agents/interface.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
