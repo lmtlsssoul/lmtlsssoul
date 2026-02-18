@@ -199,6 +199,13 @@ export class ArchiveDB {
       return rows.map(row => this.hydrateEvent(this.mapRow(row)));
   }
 
+  public getRecentEvents(limit: number): HydratedArchiveEvent[] {
+    const stmt = this.db.prepare('SELECT * FROM archive_events ORDER BY timestamp DESC LIMIT ?');
+    const rows = stmt.all(limit);
+    // Reverse to return in chronological order
+    return rows.reverse().map(row => this.hydrateEvent(this.mapRow(row)));
+  }
+
   private mapRow(row: any): RawArchiveEvent {
     return {
       eventHash: row.event_hash,
