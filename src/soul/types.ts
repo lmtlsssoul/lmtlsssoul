@@ -117,7 +117,8 @@ export type EventType =
   | 'reflection_probe'
   | 'system_event'
   | 'identity_check'
-  | 'goal_decomposition';
+  | 'goal_decomposition'
+  | 'sensor_data';
 
 /** A single event in the Raw Archive. Append-only. Never modified or deleted. */
 export type RawArchiveEvent = {

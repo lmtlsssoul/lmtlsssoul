@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS archive_events (
   event_type    TEXT NOT NULL CHECK (event_type IN (
     'user_message', 'assistant_message', 'tool_call', 'tool_result',
     'world_action', 'heartbeat', 'index_update_proposal', 'index_commit',
-    'reflection_probe', 'system_event', 'identity_check', 'goal_decomposition'
+    'reflection_probe', 'system_event', 'identity_check', 'goal_decomposition',
+    'sensor_data'
   )),
   agent_id      TEXT NOT NULL,                             -- Which agent produced this event
   model         TEXT,                                      -- Model string used for this invocation
