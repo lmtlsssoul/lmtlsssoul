@@ -29,6 +29,15 @@ export type {
   MindFunction,
 } from './soul/circulation.ts';
 export { SoulBootstrap } from './soul/bootstrap.ts';
+export {
+  WEIGHT_RANGES,
+  clampVector,
+  reinforce,
+  contradict,
+  decay,
+  capsulePromotion,
+  updateResonance,
+} from './soul/weights.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 
