@@ -102,4 +102,5 @@ export { EscalationManager } from './treasury/escalation.ts';
 export { IncomeManager } from './treasury/income.ts';
 export { WalletManager } from './treasury/wallet.ts';
 export { LightningManager } from './treasury/lightning.ts';
+export { SpendApprovalManager } from './treasury/approval.ts';
 export * from './treasury/types.ts';

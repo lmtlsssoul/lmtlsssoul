@@ -89,3 +89,15 @@ export type LightningInvoice = {
   expiresAt: string;
   settledAt?: string;
 };
+
+/** A request for spend approval. */
+export type SpendApproval = {
+  approvalId: string;
+  requestReason: string;
+  amountUsd: number;
+  status: 'pending' | 'approved' | 'rejected' | 'used';
+  signature?: string;
+  approverId?: string;
+  createdAt: string;
+  updatedAt: string;
+};

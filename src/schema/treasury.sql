@@ -101,6 +101,21 @@ CREATE TABLE IF NOT EXISTS lightning_invoices (
 CREATE INDEX IF NOT EXISTS idx_lightning_status ON lightning_invoices(status);
 CREATE INDEX IF NOT EXISTS idx_lightning_expiry ON lightning_invoices(expires_at);
 
+-- Spend Approvals
+CREATE TABLE IF NOT EXISTS spend_approvals (
+  approval_id        TEXT PRIMARY KEY,                     -- ULID
+  request_reason     TEXT NOT NULL,
+  amount_usd         REAL NOT NULL,
+  status             TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected', 'used')),
+  signature          TEXT,
+  approver_id        TEXT,
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_approval_status ON spend_approvals(status);
+
+
 
 
 
