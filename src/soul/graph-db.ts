@@ -85,6 +85,12 @@ export class GraphDB {
     return this.mapNode(row);
   }
 
+  public getNodeCount(): number {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM soul_nodes');
+    const result = stmt.get() as { count: number };
+    return result.count;
+  }
+
   public updateNodeWeight(nodeId: string, weight: Partial<WeightVector>): void {
     const updates: string[] = [];
     const params: any[] = [];
