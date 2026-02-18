@@ -1,4 +1,3 @@
-import { SoulCapsule } from './capsule.js';
 import { AgentRole, SoulConfig } from './types.js';
 
 export class IdentityDigest {
