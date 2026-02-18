@@ -1,4 +1,4 @@
-import { prompt } from 'enquirer';
+import enquirer from 'enquirer';
 import { log, success, error, warn } from './branding.ts';
 
 /**
@@ -16,7 +16,7 @@ export class SoulBirthPortal {
 
   private async prompt(question: string, initial?: string): Promise<string> {
     try {
-      const response: { value: string } = await prompt({
+      const response: { value: string } = await enquirer.prompt({
         type: 'input',
         name: 'value',
         message: question,
