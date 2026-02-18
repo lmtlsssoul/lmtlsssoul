@@ -269,6 +269,16 @@ export class GraphDB {
     }));
   }
 
+  // ─── Maintenance ────────────────────────────────────────────────
+
+  /**
+   * Performs database maintenance (VACUUM and ANALYZE).
+   */
+  public optimize(): void {
+    this.db.exec('VACUUM');
+    this.db.exec('ANALYZE');
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
 
   private mapNode(row: any): SoulNode {

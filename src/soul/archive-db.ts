@@ -218,6 +218,16 @@ export class ArchiveDB {
     return rows.reverse().map(row => this.hydrateEvent(this.mapRow(row)));
   }
 
+  // ─── Maintenance ────────────────────────────────────────────────
+
+  /**
+   * Performs database maintenance (VACUUM and ANALYZE).
+   */
+  public optimize(): void {
+    this.db.exec('VACUUM');
+    this.db.exec('ANALYZE');
+  }
+
   private mapRow(row: any): RawArchiveEvent {
     return {
       eventHash: row.event_hash,

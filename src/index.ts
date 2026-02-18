@@ -20,6 +20,7 @@ export {
   parseFirstProposal,
 } from './soul/proposal-parser.ts';
 export { SoulCompiler } from './soul/compiler.ts';
+export { CronAutonomics } from './soul/cron.ts';
 export {
   SoulCirculation,
 } from './soul/circulation.ts';
