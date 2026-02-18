@@ -39,6 +39,9 @@ describe('SoulCirculation - Phase 1 Integration', () => {
       eventHash: `hash_${Math.random()}`,
       payloadText: JSON.stringify(event.payload),
     }));
+    vi.spyOn(archiveDbMock, 'getEventCount').mockReturnValue(0);
+    vi.spyOn(graphDbMock, 'getNodeCount').mockReturnValue(0);
+    vi.spyOn(graphDbMock, 'getBaseDir').mockReturnValue(':memory:');
     vi.spyOn(recallMock, 'recall').mockReturnValue([]);
     vi.spyOn(compilerMock, 'regenerateCapsule').mockReturnValue('SOUL CAPSULE TEXT');
     vi.spyOn(compilerMock, 'compile').mockImplementation(() => {});
@@ -69,7 +72,11 @@ describe('SoulCirculation - Phase 1 Integration', () => {
 
     // [A] Cold Boot checks
     expect(compilerMock.regenerateCapsule).toHaveBeenCalledOnce();
-    expect(identityDigestMock.generate).toHaveBeenCalledWith('SOUL CAPSULE TEXT', 'interface');
+    expect(identityDigestMock.generate).toHaveBeenCalledWith(
+      'SOUL CAPSULE TEXT',
+      'interface',
+      expect.any(String)
+    );
 
     // [B] Recall check
     expect(recallMock.recall).toHaveBeenCalledWith('Hi there');
@@ -81,7 +88,10 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     expect(prompt).toContain('AUTHOR:\nHi there');
 
     // [D] Persist checks
-    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(2);
+    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(3);
+    expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'identity_check' })
+    );
     expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'author_message' })
     );
@@ -114,8 +124,8 @@ describe('SoulCirculation - Phase 1 Integration', () => {
     expect(result.reply).toBe(responseWithProposal);
     expect(result.proposal).toEqual(proposal);
 
-    // [D] Persist checks (4 events: author, assistant, lattice_update_proposal, lattice_commit)
-    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(4);
+    // [D] Persist checks (5 events: identity_check, author, assistant, lattice_update_proposal, lattice_commit)
+    expect(archiveDbMock.appendEvent).toHaveBeenCalledTimes(5);
     expect(archiveDbMock.appendEvent).toHaveBeenCalledWith(
         expect.objectContaining({ eventType: 'lattice_update_proposal' })
     );

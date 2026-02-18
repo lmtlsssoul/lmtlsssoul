@@ -4,6 +4,7 @@ import { GraphDB } from './graph-db.ts';
 import { SoulRecall } from './recall.ts';
 import { SoulCompiler } from './compiler.ts';
 import { IdentityDigest } from './identity-digest.ts';
+import { runDeterministicSystemsCheck } from './presence.ts';
 import { generateSessionKey } from './session-key.ts';
 import { parseFirstProposal } from './proposal-parser.ts';
 import { latticeUpdateProposal, AgentRole } from './types.ts';
@@ -17,6 +18,7 @@ export interface CirculationContext {
 
 export interface CirculationResult {
   reply: string;
+  presenceEventHash: string;
   authorEventHash: string;
   /** @deprecated Use authorEventHash. Kept for backward compatibility. */
   userEventHash: string;
@@ -52,7 +54,16 @@ export class SoulCirculation {
     // We regenerate the capsule from the graph to ensure we have the latest state.
     // In a real optimized system, we might read SOUL.md from disk.
     const capsuleText = this.compiler.regenerateCapsule();
-    const systemPrompt = this.identity.generate(capsuleText, context.agentId);
+    const systemsCheck = runDeterministicSystemsCheck({
+      role: context.agentId,
+      model: context.model,
+      stateDir: this.graph.getBaseDir(),
+      graph: this.graph,
+      archive: this.archive,
+      compiler: this.compiler,
+    });
+    const presenceText = systemsCheck.summary;
+    const systemPrompt = this.identity.generate(capsuleText, context.agentId, presenceText);
 
 
     // [B] Dual Path Recall
@@ -61,13 +72,16 @@ export class SoulCirculation {
     
     // Format history for the prompt
     // We want a clean transcript: "Role: Message"
-    const history = events.map(e => {
+    const history = events
+      .filter((event) => event.eventType !== 'identity_check')
+      .map(e => {
         const role = e.agentId === context.agentId ? 'You' : (e.peer || 'Author');
         // We use payloadText (truncated) or check payload structure if available
         const payload = e.payload as any;
         const text = payload?.text || e.payloadText || JSON.stringify(payload);
         return `${role}: ${text}`;
-    }).join('\n');
+      })
+      .join('\n');
 
     // [C] Inference
     // Construct Prompt
@@ -88,8 +102,29 @@ If you learn something new, include an <lattice_update> block at the end.
     const response = await mind(fullPrompt);
 
     // [D] Persist
-    // 1. Persist Author Message
+    // 1. Persist deterministic self-awareness check
     const timestamp = new Date().toISOString();
+
+    const presenceEvent = this.archive.appendEvent({
+      eventType: 'identity_check',
+      sessionKey,
+      timestamp,
+      agentId: context.agentId,
+      peer: context.peer,
+      channel: context.channel,
+      model: context.model,
+      payload: {
+        protocol: 'system.presence.v1',
+        ok: systemsCheck.ok,
+        checks: systemsCheck.checks,
+        corrections: systemsCheck.corrections,
+        summary: presenceText,
+        snapshot: systemsCheck.snapshot,
+      },
+      parentHash: null,
+    });
+
+    // 2. Persist Author Message
     
     const authorEvent = this.archive.appendEvent({
        eventType: 'author_message',
@@ -100,10 +135,10 @@ If you learn something new, include an <lattice_update> block at the end.
        channel: context.channel,
        model: null,
        payload: { text: message },
-       parentHash: null
+       parentHash: presenceEvent.eventHash
     });
 
-    // 2. Persist Assistant Reply
+    // 3. Persist Assistant Reply
     const assistantEvent = this.archive.appendEvent({
        eventType: 'assistant_message',
        sessionKey,
@@ -179,6 +214,7 @@ If you learn something new, include an <lattice_update> block at the end.
 
     return {
       reply: response,
+      presenceEventHash: presenceEvent.eventHash,
       authorEventHash: authorEvent.eventHash,
       userEventHash: authorEvent.eventHash,
       assistantEventHash: assistantEvent.eventHash,

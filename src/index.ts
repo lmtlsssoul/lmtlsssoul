@@ -10,6 +10,11 @@ export { GraphDB } from './soul/graph-db.ts';
 
 export { SoulCapsule } from './soul/capsule.ts';
 export { IdentityDigest, SINGULARITY_ROOT_KEY } from './soul/identity-digest.ts';
+export {
+  collectPresenceSnapshot,
+  formatPresenceSnapshot,
+  runDeterministicSystemsCheck,
+} from './soul/presence.ts';
 export { generateSessionKey, parseSessionKey, isValidSessionKey } from './soul/session-key.ts';
 export { SoulRecall } from './soul/recall.ts';
 export type { RecallOptions } from './soul/recall.ts';

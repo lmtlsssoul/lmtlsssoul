@@ -44,6 +44,7 @@ describe('SoulCirculation', () => {
 
     const mockMind = async (prompt: string) => {
       expect(prompt).toContain('Identity Digest');
+      expect(prompt).toContain('System Presence Check');
       expect(prompt).toContain('AUTHOR:\nHello world');
       return 'Hello! <lattice_update>{"add":[{"premise":"Author says hello","nodeType":"premise","weight":{}}]}</lattice_update>';
     };
@@ -51,14 +52,20 @@ describe('SoulCirculation', () => {
     const result = await circulation.run('Hello world', context, mockMind);
 
     expect(result.reply).toContain('Hello!');
+    expect(result.presenceEventHash).toBeDefined();
     expect(result.proposal).toBeDefined();
     expect(result.proposal?.add).toHaveLength(1);
+
+    const presenceEvent = archive.getEventByHash(result.presenceEventHash);
+    expect(presenceEvent).not.toBeNull();
+    expect(presenceEvent?.eventType).toBe('identity_check');
     
     // Verify persistence
     const authorEvent = archive.getEventByHash(result.authorEventHash);
     expect(authorEvent).not.toBeNull();
     expect(authorEvent?.eventType).toBe('author_message');
     expect((authorEvent?.payload as any).text).toBe('Hello world');
+    expect(authorEvent?.parentHash).toBe(result.presenceEventHash);
 
     const asstEvent = archive.getEventByHash(result.assistantEventHash);
     expect(asstEvent).not.toBeNull();

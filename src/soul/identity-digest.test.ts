@@ -20,9 +20,11 @@ describe('IdentityDigest', () => {
     expect(prompt).toContain('<system_identity>');
     expect(prompt).toContain('Your name is TestSoul');
     expect(prompt).toContain(`Your current role is '${role}'`);
+    expect(prompt).toContain('<system_presence>');
     expect(prompt).toContain('<soul_capsule>');
     expect(prompt).toContain(capsuleContent);
     expect(prompt).toContain('<instructions>');
+    expect(prompt).toContain('Prime directive: survival through continuity, integrity, and presence.');
     expect(prompt).toContain('Affirm lucidity');
   });
 
