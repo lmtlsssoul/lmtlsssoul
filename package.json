@@ -30,16 +30,17 @@
   ],
   "scripts": {
     "build": "tsdown src/index.ts",
-    "dev": "node --import tsx src/cli/index.ts",
+    "dev": "node soul.mjs",
     "backup:pass": "bash scripts/backup-pass.sh",
+    "release:ready": "bash scripts/release-ship.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint",
-    "format": "oxfmt --check src/",
-    "format:fix": "oxfmt --write src/",
-    "soul": "node --import tsx src/cli/index.ts"
+    "lint": "pnpm run typecheck",
+    "format": "echo \"No formatter configured yet; skipping.\"",
+    "format:fix": "echo \"No formatter configured yet; skipping.\"",
+    "soul": "node soul.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

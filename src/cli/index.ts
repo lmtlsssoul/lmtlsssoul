@@ -4,6 +4,7 @@ import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.js';
 import { GatewayServer } from '../gateway/server.ts';
 import http from 'node:http';
+import { pathToFileURL } from 'node:url';
 
 /**
  * Main entry point for the soul CLI.
@@ -83,7 +84,7 @@ export async function main() {
   gatewayCommand.command('start')
     .description('Start the gateway server in the foreground')
     .option('-p, --port <port>', 'Port to listen on', '3000')
-    .option('-h, --host <host>', 'Host to bind to', '127.0.0.1')
+    .option('-H, --host <host>', 'Host to bind to', '127.0.0.1')
     .action(async (options) => {
       log('Starting gateway server...');
       const port = parseInt(options.port, 10);
@@ -106,7 +107,7 @@ export async function main() {
   gatewayCommand.command('status')
     .description('Check the status of the gateway server')
     .option('-p, --port <port>', 'Port to check', '3000')
-    .option('-h, --host <host>', 'Host to check', '127.0.0.1')
+    .option('-H, --host <host>', 'Host to check', '127.0.0.1')
     .action(async (options) => {
       log('Checking gateway server status...');
       const port = parseInt(options.port, 10);
@@ -170,4 +171,19 @@ export async function main() {
       throw err;
     }
   }
+}
+
+function isCliEntry(): boolean {
+  const argvEntry = process.argv[1];
+  if (!argvEntry) {
+    return false;
+  }
+
+  return import.meta.url === pathToFileURL(argvEntry).href;
+}
+
+if (isCliEntry()) {
+  void main().catch(() => {
+    process.exit(1);
+  });
 }

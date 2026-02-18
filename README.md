@@ -35,11 +35,11 @@ pnpm install
 # Run soul birth (Birth Portal setup)
 pnpm soul birth
 
-# Start the gateway
-pnpm soul start
+# Start the gateway API server
+pnpm soul gateway start
 
-# Check status
-pnpm soul status
+# Check gateway health
+pnpm soul gateway status
 ```
 
 ## Backup Policy
@@ -54,19 +54,28 @@ pnpm run backup:pass -- 3.06
 
 Replace `3.06` with the current milestone step.
 
+## Release Rail
+
+`release` push is intentionally disabled until final ship.
+
+```bash
+# Run full release gates (dry run)
+pnpm run release:ready
+
+# Final publish (only when explicitly approved)
+RELEASE_ACK=I_UNDERSTAND_RELEASE_IS_FINAL pnpm run release:ready -- --publish
+```
+
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
 | `soul birth` | Launch Birth Portal setup (captures birthday core memory first) |
-| `soul start` / `soul stop` | Start or stop the gateway daemon |
-| `soul status` | Gateway, channels, cron, graph stats |
+| `soul start` / `soul stop` / `soul status` | Daemon lifecycle placeholders (stubs for upcoming milestones) |
 | `soul models scan` | Discover available models from all substrates |
-| `soul models set <role> <sub>/<model>` | Assign model to agent role |
-| `soul treasury status` | Treasury and budget report |
-| `soul wallet status` | Wallet balance and history |
-| `soul archive verify` | Verify hash chain integrity |
-| `soul reflect` | Trigger immediate reflection pass |
+| `soul models set <role> <modelId>` | Assign model to an agent role |
+| `soul gateway start [-p|--port] [-H|--host]` | Start gateway server in foreground |
+| `soul gateway status [-p|--port] [-H|--host]` | Check gateway health endpoint |
 
 ## Architecture
 
