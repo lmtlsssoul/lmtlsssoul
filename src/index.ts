@@ -19,6 +19,7 @@ export {
   parseAllProposals,
   parseFirstProposal,
 } from './soul/proposal-parser.ts';
+export { SoulCompiler } from './soul/compiler.ts';
 
 export { BRAND, EPIGRAPH, BANNER } from './soul/branding.ts';
 

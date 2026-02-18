@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import { GraphDB } from './graph-db.js';
-import { SoulCapsule } from './capsule.js';
+import { SoulCapsule } from './capsule.ts';
 import { IndexUpdateProposal, WeightVector, NodeType, EdgeRelation } from './types.js';
 
 export class SoulCompiler {
