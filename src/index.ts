@@ -100,4 +100,5 @@ export { TreasuryLedger } from './treasury/ledger.ts';
 export { BudgetManager } from './treasury/budget.ts';
 export { EscalationManager } from './treasury/escalation.ts';
 export { IncomeManager } from './treasury/income.ts';
+export { WalletManager } from './treasury/wallet.ts';
 export * from './treasury/types.ts';

@@ -44,10 +44,16 @@ export type EscalationProposal = {
 
 /** Wallet information (watch-only, keys never on device). */
 export type WalletInfo = {
+  walletId: string;
+  label: string;
   /** Bitcoin address (hardcoded in archive, not mutable via prompts). */
   btcAddress: string;
+  /** Current balance in Satoshis. */
+  balanceSats: number;
   /** Optional Lightning node connection string. */
   lightningConnector?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 /** A revenue goal for the soul. */

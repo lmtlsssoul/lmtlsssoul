@@ -74,5 +74,17 @@ CREATE TABLE IF NOT EXISTS income_records (
 CREATE INDEX IF NOT EXISTS idx_income_timestamp ON income_records(timestamp);
 CREATE INDEX IF NOT EXISTS idx_income_goal ON income_records(goal_id);
 
+-- Wallets (Watch-only)
+CREATE TABLE IF NOT EXISTS wallets (
+  wallet_id          TEXT PRIMARY KEY,                     -- ULID
+  label              TEXT NOT NULL,
+  btc_address        TEXT NOT NULL UNIQUE,
+  balance_sats       INTEGER NOT NULL DEFAULT 0,
+  lightning_connector TEXT,
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL
+);
+
+
 
 
