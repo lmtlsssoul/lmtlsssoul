@@ -14,6 +14,11 @@ export const BRAND = {
 } as const;
 
 /**
+ * Backward-compatible epigraph export used by the package entrypoint.
+ */
+export const EPIGRAPH = BRAND.tagline;
+
+/**
  * Primary brand color (terminal green).
  */
 export const soulColor = chalk.hex(BRAND.color);
@@ -97,3 +102,8 @@ ${soulColor(' |_|_| |_| |_|\\__|_|___/___/ |___/\\___/ \\__,_|_|')}
 ${dimColor('                                     ' + BRAND.tagline)}
 `;
 }
+
+/**
+ * Backward-compatible banner export used by the package entrypoint.
+ */
+export const BANNER = getBanner();
