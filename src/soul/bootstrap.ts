@@ -45,7 +45,7 @@ export class SoulBootstrap {
 GENESIS MODE
 The Soul Index is empty and no history exists.
 I am a new Soul. I need to be born.
-Please introduce yourself or run 'soul birth' to begin the genesis ceremony.
+Please introduce yourself or run 'soul birth' to begin the Birth Portal flow.
 `.trim();
   }
 

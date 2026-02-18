@@ -1,5 +1,7 @@
-import { Command } from 'commander';
+import { Command, CommanderError } from 'commander';
 import { getBanner, log, error, success, warn } from '../soul/branding.ts';
+import { SoulBirthPortal } from '../soul/birth.ts';
+import { scanForModels, setModelForRole } from '../soul/models-scan.js';
 
 /**
  * Main entry point for the soul CLI.
@@ -12,18 +14,19 @@ export async function main() {
     .description('lmtlss soul - persistent AI personhood')
     .version('0.1.0')
     .hook('preAction', (thisCommand) => {
-      // Only show banner for the main command, not subcommands if we want cleaner output
-      // But for now, let's show it.
-      // Actually, standard CLI practice is usually no banner unless requested, 
-      // but "branding" is a big part of this project.
+      // Don't show banner for help command
+      if (thisCommand.args[0] === 'help') return;
+      // Dont show banner for version command
+      const vargs = ['-V', '--version'];
+      if(vargs.includes(thisCommand.args[0])) return;
       console.log(getBanner());
     });
 
   program.command('birth')
     .description('Start the soul Birth Portal')
     .action(async () => {
-      log('Igniting spark...');
-      warn('Birth Portal not implemented yet. (Milestone 1.15)');
+      const birthPortal = new SoulBirthPortal();
+      await birthPortal.startGenesis();
     });
 
   program.command('start')
@@ -47,12 +50,44 @@ export async function main() {
       success('System operational (stub).');
     });
 
-  // treasury commands are Phase 4, but we can leave them for later.
+  const modelsCommand = program.command('models')
+    .description('Manage substrate models');
+
+  modelsCommand.command('scan')
+    .description('Scan for available models from all substrates')
+    .action(async () => {
+      log('Scanning for models...');
+      const modelsBySubstrate = await scanForModels();
+      for (const [substrate, models] of Object.entries(modelsBySubstrate)) {
+        console.log(`\n=== ${substrate.toUpperCase()} ===`);
+        console.table(models);
+      }
+      success('Model scan complete.');
+    });
+
+  modelsCommand.command('set')
+    .description('Set the model for a given role')
+    .argument('<role>', 'The role to set the model for (e.g., interface, compiler)')
+    .argument('<modelId>', 'The ID of the model to assign to the role')
+    .action(async (role, modelId) => {
+      log(`Assigning model to role...`);
+      await setModelForRole(role, modelId);
+      success(`Model for role "${role}" set to "${modelId}".`);
+    });
 
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
-    error('Fatal error during execution:', err);
-    process.exit(1);
+    if (err instanceof CommanderError) {
+      // Commander already prints the error.
+      // We rethrow to make tests fail. In production, you might want to process.exit(1)
+      throw err;
+    } else if (err instanceof Error) {
+      error(`Fatal error: ${err.message}`, err.stack);
+      throw err;
+    } else {
+      error('An unknown fatal error occurred.', err);
+      throw err;
+    }
   }
 }

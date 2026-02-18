@@ -32,7 +32,7 @@ every update. The model proposes. The architecture decides.
 # Install
 pnpm install
 
-# Run soul birth (Birth Portal)
+# Run soul birth (Birth Portal setup)
 pnpm soul birth
 
 # Start the gateway
@@ -46,7 +46,7 @@ pnpm soul status
 
 | Command | Description |
 |---------|-------------|
-| `soul birth` | Launch onboarding portal |
+| `soul birth` | Launch Birth Portal setup (captures birthday core memory first) |
 | `soul start` / `soul stop` | Start or stop the gateway daemon |
 | `soul status` | Gateway, channels, cron, graph stats |
 | `soul models scan` | Discover available models from all substrates |
