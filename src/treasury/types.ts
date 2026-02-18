@@ -49,3 +49,24 @@ export type WalletInfo = {
   /** Optional Lightning node connection string. */
   lightningConnector?: string;
 };
+
+/** A revenue goal for the soul. */
+export type RevenueGoal = {
+  goalId: string;
+  description: string;
+  targetUsd: number;
+  actualUsd: number;
+  status: 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  deadline?: string;
+};
+
+/** A record of income received. */
+export type IncomeRecord = {
+  recordId: string;
+  timestamp: string;
+  amountUsd: number;
+  source: string;
+  goalId?: string;
+  txid?: string;
+};

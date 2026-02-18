@@ -49,4 +49,30 @@ CREATE TABLE IF NOT EXISTS escalation_proposals (
 
 CREATE INDEX IF NOT EXISTS idx_escalation_status ON escalation_proposals(status);
 
+-- Revenue Goals
+CREATE TABLE IF NOT EXISTS revenue_goals (
+  goal_id        TEXT PRIMARY KEY,                         -- ULID
+  description    TEXT NOT NULL,
+  target_usd     REAL NOT NULL,
+  actual_usd     REAL NOT NULL DEFAULT 0.0,
+  status         TEXT NOT NULL CHECK (status IN ('active', 'completed', 'cancelled')),
+  created_at     TEXT NOT NULL,
+  deadline       TEXT
+);
+
+-- Income Records
+CREATE TABLE IF NOT EXISTS income_records (
+  record_id      TEXT PRIMARY KEY,                         -- ULID
+  timestamp      TEXT NOT NULL,                            -- ISO 8601 UTC
+  amount_usd     REAL NOT NULL,
+  source         TEXT NOT NULL,
+  goal_id        TEXT,
+  txid           TEXT,
+  FOREIGN KEY (goal_id) REFERENCES revenue_goals(goal_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_income_timestamp ON income_records(timestamp);
+CREATE INDEX IF NOT EXISTS idx_income_goal ON income_records(goal_id);
+
+
 
