@@ -41,10 +41,11 @@ MAX_PROCEDURAL_SIGIL_ID = LILITH_SIGIL_ID
 SIGIL_PHASE_WARP = 0.055
 LOCAL_SIGIL_PHASE_NOISE = 0.30
 FIELD_PHASE_NOISE = 0.26
-SIGIL_STROKE_CHARS = "|/\\-+=x*#"
-SIGIL_CORE_CHARS = "WMNZXKRVH#%&*+/\\|"
-SIGIL_EDGE_CHARS = "\\/|xvYy+-=~^;:!i"
-SIGIL_CLOUD_CHARS = ".,'`:-~"
+# Fine-grain thread glyphs to keep sigils airy instead of blocky.
+SIGIL_STROKE_CHARS = "|/\\!;:.'`-~"
+SIGIL_CORE_CHARS = "|/\\!;:"
+SIGIL_EDGE_CHARS = ".`'~-:^"
+SIGIL_CLOUD_CHARS = ".,'`"
 ASSET_DIR = Path(__file__).resolve().parent / "assets"
 VERIFIED_SIGIL_ROOT = ASSET_DIR / "verified_sigils"
 VERIFIED_SIGIL_INDEX_PATH = VERIFIED_SIGIL_ROOT / "index.json"
@@ -225,26 +226,26 @@ def inject_sigil_excitation(excitation_grid, active_sparks, x, y, base_intensity
 
     neighbors = [(-1,0), (1,0), (0,-1), (0,1), (-1,-1), (1,1), (-1,1), (1,-1)]
     for dx, dy in neighbors:
-        if trng.random() < 0.58:
+        if trng.random() < 0.18:
             nx, ny = x + dx, y + dy
             if 0 <= nx < width and 0 <= ny < height:
-                halo = base_intensity * trng.uniform(0.14, 0.42)
+                halo = base_intensity * trng.uniform(0.04, 0.18)
                 if halo > excitation_grid.get((nx, ny), 0.0):
                     excitation_grid[(nx, ny)] = halo
 
     # Directional spike strand to create fragmented, ethereal edges.
-    if trng.random() < 0.40:
+    if trng.random() < 0.12:
         dx, dy = neighbors[trng.randint(0, len(neighbors) - 1)]
         sx, sy = x, y
-        spike = base_intensity * trng.uniform(0.42, 0.68)
-        for _ in range(trng.randint(2, 5)):
+        spike = base_intensity * trng.uniform(0.22, 0.42)
+        for _ in range(trng.randint(1, 3)):
             sx += dx
             sy += dy
             if sx < 0 or sy < 0 or sx >= width or sy >= height:
                 break
             if spike > excitation_grid.get((sx, sy), 0.0):
                 excitation_grid[(sx, sy)] = spike
-            spike *= trng.uniform(0.62, 0.80)
+            spike *= trng.uniform(0.45, 0.70)
 
 def pick_weighted_sigil_id(trng):
     # Strict verified-only selection (no procedural IDs).
@@ -338,6 +339,40 @@ def is_point_in_mask(u, v, scale, mask):
     for oy in range(-probe, probe + 1):
         for ox in range(-probe, probe + 1):
             if mask_bit(mask, mx + ox, my + oy):
+                return True
+    return False
+
+
+def is_mask_edge(mask, mx, my):
+    if not mask_bit(mask, mx, my):
+        return False
+    # A point is on a thread edge if at least one neighbor is empty.
+    for oy in (-1, 0, 1):
+        for ox in (-1, 0, 1):
+            if ox == 0 and oy == 0:
+                continue
+            if mask_bit(mask, mx + ox, my + oy) == 0:
+                return True
+    return False
+
+
+def is_point_on_mask_thread(u, v, scale, mask):
+    if mask is None:
+        return False
+    if u < -1.0 or u > 1.0 or v < -1.0 or v > 1.0:
+        return False
+
+    width, height, _, _ = mask
+    mx = int((u + 1.0) * 0.5 * (width - 1))
+    my = int((v + 1.0) * 0.5 * (height - 1))
+
+    # Keep thread width tight; only modest expansion at very small scales.
+    probe = 0 if scale >= 16.0 else 1
+    for oy in range(-probe, probe + 1):
+        for ox in range(-probe, probe + 1):
+            px = mx + ox
+            py = my + oy
+            if is_mask_edge(mask, px, py):
                 return True
     return False
 
@@ -476,7 +511,7 @@ def is_point_in_sigil(x, y, type_id, cx, cy, scale, phase_noise):
     mask = SIGIL_MASKS_BY_ID.get(type_id)
     if mask is None:
         return False
-    return is_point_in_mask(u, v, scale, mask)
+    return is_point_on_mask_thread(u, v, scale, mask)
 
 def main(stdscr):
     # Hide cursor
@@ -662,7 +697,7 @@ def main(stdscr):
                     if is_point_in_sigil(rx, ry, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], 0.0):
                         inject_sigil_excitation(
                             excitation_grid, active_sparks, rx, ry,
-                            1.0, trng, width, height, with_halo=True
+                            1.0, trng, width, height, with_halo=False
                         )
 
         # --- Layer 4: Negentropy Snowball / Sigil Diffusion ---
@@ -752,14 +787,14 @@ def main(stdscr):
                 if excite > 0:
                     fragment = min(1.0, abs(w1 - w2) * 0.56 + abs(w2 - w3) * 0.44)
                     if excite > 0.82 or (excite > 0.68 and fragment > 0.74):
-                        char = SIGIL_CORE_CHARS[(ent_byte + int(fragment * 11.0)) % len(SIGIL_CORE_CHARS)]
+                        char = get_sigil_stroke_char(ent_byte, fragment)
                         cp = curses.color_pair(7) | curses.A_BOLD
                     elif excite > 0.42 or fragment > 0.60:
                         char = SIGIL_EDGE_CHARS[(ent_byte + int(fragment * 17.0)) % len(SIGIL_EDGE_CHARS)]
-                        cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.52 else curses.A_NORMAL)
+                        cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.70 else curses.A_NORMAL)
                     else:
                         char = SIGIL_CLOUD_CHARS[((ent_byte >> 1) + x + y) % len(SIGIL_CLOUD_CHARS)]
-                        cp = curses.color_pair(3) if ent_val > 0.33 else (curses.color_pair(2) | curses.A_DIM)
+                        cp = curses.color_pair(2) | curses.A_DIM
                         
                     try:
                         stdscr.addstr(y, x, char, cp)
