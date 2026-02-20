@@ -301,6 +301,13 @@ export async function main() {
       await runInteractiveChat(options.peer, options.channel);
     });
 
+  program.command('art')
+    .description('Launch the terminal art field renderer')
+    .option('--python <binary>', 'Python runtime binary (defaults to SOUL_ART_PYTHON or python3)')
+    .action((options: { python?: string }) => {
+      launchTerminalArt(options.python);
+    });
+
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
@@ -579,4 +586,46 @@ function printGrownupSummary(
   if (mode.updatedAt) {
     console.log(`Updated At: ${mode.updatedAt}`);
   }
+}
+
+function launchTerminalArt(pythonOverride?: string): void {
+  const entrypoint = resolveTerminalArtEntrypoint();
+  const python = (pythonOverride?.trim() || process.env.SOUL_ART_PYTHON?.trim() || 'python3');
+  log(`Launching terminal art from ${entrypoint}`);
+
+  const child = spawn(python, [entrypoint], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+
+  child.on('error', (err) => {
+    const maybeErr = err as NodeJS.ErrnoException;
+    if (maybeErr.code === 'ENOENT') {
+      error(`Unable to find Python runtime "${python}". Install python3 or pass --python <binary>.`);
+      return;
+    }
+    error(`Terminal art launch failed: ${err.message}`);
+  });
+}
+
+function resolveTerminalArtEntrypoint(): string {
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    // Source layout: src/cli/index.ts -> ../../terminalart/art.6.py
+    path.resolve(moduleDir, '../../terminalart/art.6.py'),
+    // Bundled layout: dist/index.js -> ../terminalart/art.6.py
+    path.resolve(moduleDir, '../terminalart/art.6.py'),
+    // Local execution from package root.
+    path.resolve(process.cwd(), 'terminalart/art.6.py'),
+    // Workspace root fallback.
+    path.resolve(process.cwd(), 'lmtlss_soul/terminalart/art.6.py'),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.6.py).');
 }

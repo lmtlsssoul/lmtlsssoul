@@ -24,3 +24,16 @@ coverage/
 
 # Logs
 *.log
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Local multi-agent worktrees
+.worktrees/
+
+# Local preserved backups (not shipped)
+terminalart/backups/
+
+# Local scratch backups
+*.master.bak

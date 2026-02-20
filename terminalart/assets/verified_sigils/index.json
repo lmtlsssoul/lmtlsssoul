@@ -1,0 +1,2197 @@
+{
+  "schema": 3,
+  "generated_by": "local_sigils_import_all_variants",
+  "count": 219,
+  "sigils": [
+    {
+      "id": 1,
+      "entity": "Lilith",
+      "tradition": "demon",
+      "source_title": "The_Grand_Seal_of_Lilith.png",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/sigils/The_Grand_Seal_of_Lilith.png",
+      "pbm": "the_grand_seal_of_lilith.pbm",
+      "verified": true,
+      "weight": 4.2
+    },
+    {
+      "id": 2,
+      "entity": "01 Bael",
+      "tradition": "demon",
+      "source_title": "01-bael-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/01-bael-seal",
+      "pbm": "01-bael-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 3,
+      "entity": "02 Agares",
+      "tradition": "demon",
+      "source_title": "02-agares-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/02-agares-seal",
+      "pbm": "02-agares-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 4,
+      "entity": "03 Vassago",
+      "tradition": "demon",
+      "source_title": "03-vassago-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/03-vassago-seal",
+      "pbm": "03-vassago-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 5,
+      "entity": "036 Stolas",
+      "tradition": "demon",
+      "source_title": "036-seal-of-stolas-q100-500x500",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/036-seal-of-stolas-q100-500x500",
+      "pbm": "036-seal-of-stolas-q100-500x500.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 6,
+      "entity": "04 Samigina",
+      "tradition": "demon",
+      "source_title": "04-samigina-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/04-samigina-seal",
+      "pbm": "04-samigina-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 7,
+      "entity": "05 Marbas",
+      "tradition": "demon",
+      "source_title": "05-marbas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/05-marbas-seal",
+      "pbm": "05-marbas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 8,
+      "entity": "06 Valefor",
+      "tradition": "demon",
+      "source_title": "06-valefor-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/06-valefor-seal",
+      "pbm": "06-valefor-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 9,
+      "entity": "07 Amon",
+      "tradition": "demon",
+      "source_title": "07-amon-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/07-amon-seal",
+      "pbm": "07-amon-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 10,
+      "entity": "08 Barbatos",
+      "tradition": "demon",
+      "source_title": "08-barbatos-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/08-barbatos-seal",
+      "pbm": "08-barbatos-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 11,
+      "entity": "09 Paimon",
+      "tradition": "demon",
+      "source_title": "09-paimon-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/09-paimon-seal01",
+      "pbm": "09-paimon-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 12,
+      "entity": "09 Paimon",
+      "tradition": "demon",
+      "source_title": "09-paimon-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/09-paimon-seal02",
+      "pbm": "09-paimon-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 13,
+      "entity": "10 Buer 1",
+      "tradition": "demon",
+      "source_title": "10-buer-seal-1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/10-buer-seal-1",
+      "pbm": "10-buer-seal-1.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 14,
+      "entity": "10 Buer",
+      "tradition": "demon",
+      "source_title": "10-buer-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/10-buer-seal",
+      "pbm": "10-buer-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 15,
+      "entity": "11 Gusion",
+      "tradition": "demon",
+      "source_title": "11-gusion-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/11-gusion-seal",
+      "pbm": "11-gusion-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 16,
+      "entity": "12 Sitri",
+      "tradition": "demon",
+      "source_title": "12-sitri-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/12-sitri-seal",
+      "pbm": "12-sitri-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 17,
+      "entity": "33 Gaap",
+      "tradition": "demon",
+      "source_title": "120px-33-gaap-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-33-gaap-seal",
+      "pbm": "120px-33-gaap-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 18,
+      "entity": "34 Furfur",
+      "tradition": "demon",
+      "source_title": "120px-34-furfur-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-34-furfur-seal",
+      "pbm": "120px-34-furfur-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 19,
+      "entity": "35 Marchosias",
+      "tradition": "demon",
+      "source_title": "120px-35-marchosias-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-35-marchosias-seal",
+      "pbm": "120px-35-marchosias-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 20,
+      "entity": "36 Stolas",
+      "tradition": "demon",
+      "source_title": "120px-36-stolas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-36-stolas-seal",
+      "pbm": "120px-36-stolas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 21,
+      "entity": "37 Phenex",
+      "tradition": "demon",
+      "source_title": "120px-37-phenex-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-37-phenex-seal",
+      "pbm": "120px-37-phenex-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 22,
+      "entity": "41 Focalor",
+      "tradition": "demon",
+      "source_title": "120px-41-focalor-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-41-focalor-seal",
+      "pbm": "120px-41-focalor-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 23,
+      "entity": "44 Shax",
+      "tradition": "demon",
+      "source_title": "120px-44-shax-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-44-shax-seal",
+      "pbm": "120px-44-shax-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 24,
+      "entity": "46 Bifrons",
+      "tradition": "demon",
+      "source_title": "120px-46-bifrons-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-46-bifrons-seal",
+      "pbm": "120px-46-bifrons-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 25,
+      "entity": "48 Haagenti",
+      "tradition": "demon",
+      "source_title": "120px-48-haagenti-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-48-haagenti-seal",
+      "pbm": "120px-48-haagenti-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 26,
+      "entity": "49 Crocell",
+      "tradition": "demon",
+      "source_title": "120px-49-crocell-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-49-crocell-seal",
+      "pbm": "120px-49-crocell-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 27,
+      "entity": "50 Furcas",
+      "tradition": "demon",
+      "source_title": "120px-50-furcas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-50-furcas-seal",
+      "pbm": "120px-50-furcas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 28,
+      "entity": "51 Balam",
+      "tradition": "demon",
+      "source_title": "120px-51-balam-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-51-balam-seal",
+      "pbm": "120px-51-balam-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 29,
+      "entity": "52 Alloces",
+      "tradition": "demon",
+      "source_title": "120px-52-alloces-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-52-alloces-seal",
+      "pbm": "120px-52-alloces-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 30,
+      "entity": "54 Murmur",
+      "tradition": "demon",
+      "source_title": "120px-54-murmur-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-54-murmur-seal",
+      "pbm": "120px-54-murmur-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 31,
+      "entity": "56 Gremory",
+      "tradition": "demon",
+      "source_title": "120px-56-gremory-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-56-gremory-seal",
+      "pbm": "120px-56-gremory-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 32,
+      "entity": "62 Valac",
+      "tradition": "demon",
+      "source_title": "120px-62-valac-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-62-valac-seal",
+      "pbm": "120px-62-valac-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 33,
+      "entity": "63 Andras",
+      "tradition": "demon",
+      "source_title": "120px-63-andras-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-63-andras-seal",
+      "pbm": "120px-63-andras-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 34,
+      "entity": "65 Andrealphus",
+      "tradition": "demon",
+      "source_title": "120px-65-andrealphus-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-65-andrealphus-seal",
+      "pbm": "120px-65-andrealphus-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 35,
+      "entity": "68 Belial",
+      "tradition": "demon",
+      "source_title": "120px-68-belial-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-68-belial-seal",
+      "pbm": "120px-68-belial-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 36,
+      "entity": "71 Dantalion",
+      "tradition": "demon",
+      "source_title": "120px-71-dantalion-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-71-dantalion-seal",
+      "pbm": "120px-71-dantalion-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 37,
+      "entity": "72",
+      "tradition": "demon",
+      "source_title": "120px-72-goeta-sigils",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-72-goeta-sigils",
+      "pbm": "120px-72-goeta-sigils.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 38,
+      "entity": "Amon",
+      "tradition": "demon",
+      "source_title": "120px-amon",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-amon",
+      "pbm": "120px-amon.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 39,
+      "entity": "Botis",
+      "tradition": "demon",
+      "source_title": "120px-seal-of-botis",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/120px-seal-of-botis",
+      "pbm": "120px-seal-of-botis.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 40,
+      "entity": "13 Beleth",
+      "tradition": "demon",
+      "source_title": "13-beleth-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/13-beleth-seal01",
+      "pbm": "13-beleth-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 41,
+      "entity": "13 Beleth",
+      "tradition": "demon",
+      "source_title": "13-beleth-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/13-beleth-seal02",
+      "pbm": "13-beleth-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 42,
+      "entity": "14 Leraie",
+      "tradition": "demon",
+      "source_title": "14-leraie-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/14-leraie-seal",
+      "pbm": "14-leraie-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 43,
+      "entity": "15 Eligos",
+      "tradition": "demon",
+      "source_title": "15-eligos-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/15-eligos-seal",
+      "pbm": "15-eligos-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 44,
+      "entity": "16 Zepar",
+      "tradition": "demon",
+      "source_title": "16-zepar-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/16-zepar-seal",
+      "pbm": "16-zepar-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 45,
+      "entity": "17 Botis",
+      "tradition": "demon",
+      "source_title": "17-botis-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/17-botis-seal",
+      "pbm": "17-botis-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 46,
+      "entity": "18 Bathin",
+      "tradition": "demon",
+      "source_title": "18-bathin-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/18-bathin-seal01",
+      "pbm": "18-bathin-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 47,
+      "entity": "18 Bathin",
+      "tradition": "demon",
+      "source_title": "18-bathin-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/18-bathin-seal02",
+      "pbm": "18-bathin-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 48,
+      "entity": "19 Sallos",
+      "tradition": "demon",
+      "source_title": "19-sallos-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/19-sallos-seal",
+      "pbm": "19-sallos-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 49,
+      "entity": "20 Purson",
+      "tradition": "demon",
+      "source_title": "20-purson-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/20-purson-seal",
+      "pbm": "20-purson-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 50,
+      "entity": "21 Marax",
+      "tradition": "demon",
+      "source_title": "21-marax-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/21-marax-seal",
+      "pbm": "21-marax-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 51,
+      "entity": "22 Ipos",
+      "tradition": "demon",
+      "source_title": "22-ipos-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/22-ipos-seal",
+      "pbm": "22-ipos-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 52,
+      "entity": "23 Aim",
+      "tradition": "demon",
+      "source_title": "23-aim-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/23-aim-seal",
+      "pbm": "23-aim-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 53,
+      "entity": "24 Naberius",
+      "tradition": "demon",
+      "source_title": "24-naberius-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/24-naberius-seal",
+      "pbm": "24-naberius-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 54,
+      "entity": "25 Glasya Labolas",
+      "tradition": "demon",
+      "source_title": "25-glasya-labolas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/25-glasya-labolas-seal",
+      "pbm": "25-glasya-labolas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 55,
+      "entity": "26 Bune",
+      "tradition": "demon",
+      "source_title": "26-bune-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/26-bune-seal01",
+      "pbm": "26-bune-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 56,
+      "entity": "26 Bune",
+      "tradition": "demon",
+      "source_title": "26-bune-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/26-bune-seal02",
+      "pbm": "26-bune-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 57,
+      "entity": "27 Ronove",
+      "tradition": "demon",
+      "source_title": "27-ronove-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/27-ronove-seal",
+      "pbm": "27-ronove-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 58,
+      "entity": "28 Berith",
+      "tradition": "demon",
+      "source_title": "28-berith-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/28-berith-seal",
+      "pbm": "28-berith-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 59,
+      "entity": "30 Forneus",
+      "tradition": "demon",
+      "source_title": "30-forneus-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/30-forneus-seal",
+      "pbm": "30-forneus-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 60,
+      "entity": "31 Foras",
+      "tradition": "demon",
+      "source_title": "31-foras-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/31-foras-seal",
+      "pbm": "31-foras-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 61,
+      "entity": "32 Asmoday",
+      "tradition": "demon",
+      "source_title": "32-asmoday-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/32-asmoday-seal",
+      "pbm": "32-asmoday-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 62,
+      "entity": "38 Halphus",
+      "tradition": "demon",
+      "source_title": "38-halphus-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/38-halphus-seal",
+      "pbm": "38-halphus-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 63,
+      "entity": "39 Malphas",
+      "tradition": "demon",
+      "source_title": "39-malphas",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/39-malphas",
+      "pbm": "39-malphas.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 64,
+      "entity": "40 Raum",
+      "tradition": "demon",
+      "source_title": "40-raum-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/40-raum-seal",
+      "pbm": "40-raum-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 65,
+      "entity": "42 Vepar",
+      "tradition": "demon",
+      "source_title": "42-vepar-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/42-vepar-seal02",
+      "pbm": "42-vepar-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 66,
+      "entity": "43 Sabnock",
+      "tradition": "demon",
+      "source_title": "43-sabnock-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/43-sabnock-seal",
+      "pbm": "43-sabnock-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 67,
+      "entity": "45 Vine",
+      "tradition": "demon",
+      "source_title": "45-vine-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/45-vine-seal",
+      "pbm": "45-vine-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 68,
+      "entity": "47 Vual",
+      "tradition": "demon",
+      "source_title": "47-vual-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/47-vual-seal01",
+      "pbm": "47-vual-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 69,
+      "entity": "53 Camio",
+      "tradition": "demon",
+      "source_title": "53-camio-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/53-camio-seal",
+      "pbm": "53-camio-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 70,
+      "entity": "55 Orobas",
+      "tradition": "demon",
+      "source_title": "55-orobas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/55-orobas-seal",
+      "pbm": "55-orobas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 71,
+      "entity": "57 Ose",
+      "tradition": "demon",
+      "source_title": "57-ose-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/57-ose-seal",
+      "pbm": "57-ose-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 72,
+      "entity": "58 Amy",
+      "tradition": "demon",
+      "source_title": "58-amy-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/58-amy-seal",
+      "pbm": "58-amy-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 73,
+      "entity": "59 Orias",
+      "tradition": "demon",
+      "source_title": "59-orias-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/59-orias-seal",
+      "pbm": "59-orias-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 74,
+      "entity": "60 Vapula",
+      "tradition": "demon",
+      "source_title": "60-vapula-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/60-vapula-seal",
+      "pbm": "60-vapula-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 75,
+      "entity": "61 Zagan",
+      "tradition": "demon",
+      "source_title": "61-zagan-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/61-zagan-seal",
+      "pbm": "61-zagan-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 76,
+      "entity": "64 Haures",
+      "tradition": "demon",
+      "source_title": "64-haures-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/64-haures-seal",
+      "pbm": "64-haures-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 77,
+      "entity": "66 Cimeies",
+      "tradition": "demon",
+      "source_title": "66-cimeies-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/66-cimeies-seal",
+      "pbm": "66-cimeies-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 78,
+      "entity": "67 Amdusias",
+      "tradition": "demon",
+      "source_title": "67-amdusias-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/67-amdusias-seal",
+      "pbm": "67-amdusias-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 79,
+      "entity": "70 Seere",
+      "tradition": "demon",
+      "source_title": "70-seere-seal01",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/70-seere-seal01",
+      "pbm": "70-seere-seal01.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 80,
+      "entity": "70 Seere",
+      "tradition": "demon",
+      "source_title": "70-seere-seal02",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/70-seere-seal02",
+      "pbm": "70-seere-seal02.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 81,
+      "entity": "72 Andromalius",
+      "tradition": "demon",
+      "source_title": "72-andromalius-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/72-andromalius-seal",
+      "pbm": "72-andromalius-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 82,
+      "entity": "Seven Archangels",
+      "tradition": "angel",
+      "source_title": "7archangels",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/7archangels",
+      "pbm": "7archangels.pbm",
+      "verified": true,
+      "weight": 0.78
+    },
+    {
+      "id": 83,
+      "entity": "Agares",
+      "tradition": "demon",
+      "source_title": "agares-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/agares-seal",
+      "pbm": "agares-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 84,
+      "entity": "Ageres",
+      "tradition": "demon",
+      "source_title": "ageres",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/ageres",
+      "pbm": "ageres.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 85,
+      "entity": "Astaroth",
+      "tradition": "demon",
+      "source_title": "astaroth-seal-old",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/astaroth-seal-old",
+      "pbm": "astaroth-seal-old.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 86,
+      "entity": "Astaroth Svg",
+      "tradition": "demon",
+      "source_title": "astaroth-seal-svg",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/astaroth-seal-svg",
+      "pbm": "astaroth-seal-svg.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 87,
+      "entity": "Astaroth",
+      "tradition": "demon",
+      "source_title": "astaroth-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/astaroth-seal",
+      "pbm": "astaroth-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 88,
+      "entity": "Astaroth",
+      "tradition": "demon",
+      "source_title": "astaroth",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/astaroth",
+      "pbm": "astaroth.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 89,
+      "entity": "Baal",
+      "tradition": "demon",
+      "source_title": "baal-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/baal-seal",
+      "pbm": "baal-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 90,
+      "entity": "Barbatos",
+      "tradition": "demon",
+      "source_title": "barbatos",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/barbatos",
+      "pbm": "barbatos.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 91,
+      "entity": "Beleth",
+      "tradition": "demon",
+      "source_title": "beleth-seal-850x850",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/beleth-seal-850x850",
+      "pbm": "beleth-seal-850x850.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 92,
+      "entity": "Beleth",
+      "tradition": "demon",
+      "source_title": "beleth-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/beleth-seal",
+      "pbm": "beleth-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 93,
+      "entity": "Buer",
+      "tradition": "demon",
+      "source_title": "buer-seal-1134x1134",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/buer-seal-1134x1134",
+      "pbm": "buer-seal-1134x1134.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 94,
+      "entity": "Buer",
+      "tradition": "demon",
+      "source_title": "buer-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/buer-seal",
+      "pbm": "buer-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 95,
+      "entity": "Decarabia",
+      "tradition": "demon",
+      "source_title": "decarabia-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/decarabia-seal",
+      "pbm": "decarabia-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 96,
+      "entity": "Solomon Svg",
+      "tradition": "deity",
+      "source_title": "goetia-seal-of-solomon-svg",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/goetia-seal-of-solomon-svg",
+      "pbm": "goetia-seal-of-solomon-svg.pbm",
+      "verified": true,
+      "weight": 0.68
+    },
+    {
+      "id": 97,
+      "entity": "Grimorium Verum Full Lucifer",
+      "tradition": "demon",
+      "source_title": "grimorium-verum-full-sigil-of-lucifer",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/grimorium-verum-full-sigil-of-lucifer",
+      "pbm": "grimorium-verum-full-sigil-of-lucifer.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 98,
+      "entity": "Gusion 1",
+      "tradition": "demon",
+      "source_title": "gusion-seal-1134x1134-1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/gusion-seal-1134x1134-1",
+      "pbm": "gusion-seal-1134x1134-1.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 99,
+      "entity": "Gusion",
+      "tradition": "demon",
+      "source_title": "gusion-seal-1134x1134",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/gusion-seal-1134x1134",
+      "pbm": "gusion-seal-1134x1134.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 100,
+      "entity": "Gusion",
+      "tradition": "demon",
+      "source_title": "gusion-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/gusion-seal",
+      "pbm": "gusion-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 101,
+      "entity": "Hekate",
+      "tradition": "deity",
+      "source_title": "hekate-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/hekate-seal",
+      "pbm": "hekate-seal.pbm",
+      "verified": true,
+      "weight": 0.68
+    },
+    {
+      "id": 102,
+      "entity": "Leraie",
+      "tradition": "demon",
+      "source_title": "leraie-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/leraie-seal",
+      "pbm": "leraie-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 103,
+      "entity": "Marbas",
+      "tradition": "demon",
+      "source_title": "marbas-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/marbas-seal",
+      "pbm": "marbas-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 104,
+      "entity": "Marbas",
+      "tradition": "demon",
+      "source_title": "marbas",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/marbas",
+      "pbm": "marbas.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 105,
+      "entity": "Mother Hekate",
+      "tradition": "deity",
+      "source_title": "mother-seal-of-hekate",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/mother-seal-of-hekate",
+      "pbm": "mother-seal-of-hekate.pbm",
+      "verified": true,
+      "weight": 0.68
+    },
+    {
+      "id": 106,
+      "entity": "Paimon",
+      "tradition": "demon",
+      "source_title": "paimon-seal-1134x1134",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/paimon-seal-1134x1134",
+      "pbm": "paimon-seal-1134x1134.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 107,
+      "entity": "Paimon",
+      "tradition": "demon",
+      "source_title": "paimon-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/paimon-seal",
+      "pbm": "paimon-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 108,
+      "entity": "Paimon Sello",
+      "tradition": "demon",
+      "source_title": "paimon-sello",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/paimon-sello",
+      "pbm": "paimon-sello.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 109,
+      "entity": "Pentacolo Trappola Del Diavolo",
+      "tradition": "deity",
+      "source_title": "pentacolo-trappola-del-diavolo",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/pentacolo-trappola-del-diavolo",
+      "pbm": "pentacolo-trappola-del-diavolo.pbm",
+      "verified": true,
+      "weight": 0.68
+    },
+    {
+      "id": 110,
+      "entity": "Rune U16A0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a0",
+      "pbm": "rune-u16a0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 111,
+      "entity": "Rune U16A1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a1",
+      "pbm": "rune-u16a1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 112,
+      "entity": "Rune U16A2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a2",
+      "pbm": "rune-u16a2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 113,
+      "entity": "Rune U16A3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a3",
+      "pbm": "rune-u16a3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 114,
+      "entity": "Rune U16A4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a4",
+      "pbm": "rune-u16a4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 115,
+      "entity": "Rune U16A5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a5",
+      "pbm": "rune-u16a5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 116,
+      "entity": "Rune U16A6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a6",
+      "pbm": "rune-u16a6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 117,
+      "entity": "Rune U16A7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a7",
+      "pbm": "rune-u16a7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 118,
+      "entity": "Rune U16A8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a8",
+      "pbm": "rune-u16a8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 119,
+      "entity": "Rune U16A9",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16a9",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16a9",
+      "pbm": "rune-u16a9.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 120,
+      "entity": "Rune U16Aa",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16aa",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16aa",
+      "pbm": "rune-u16aa.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 121,
+      "entity": "Rune U16Ab",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ab",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ab",
+      "pbm": "rune-u16ab.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 122,
+      "entity": "Rune U16Ac",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ac",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ac",
+      "pbm": "rune-u16ac.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 123,
+      "entity": "Rune U16Ad",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ad",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ad",
+      "pbm": "rune-u16ad.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 124,
+      "entity": "Rune U16Ae",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ae",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ae",
+      "pbm": "rune-u16ae.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 125,
+      "entity": "Rune U16Af",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16af",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16af",
+      "pbm": "rune-u16af.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 126,
+      "entity": "Rune U16B0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b0",
+      "pbm": "rune-u16b0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 127,
+      "entity": "Rune U16B1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b1",
+      "pbm": "rune-u16b1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 128,
+      "entity": "Rune U16B2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b2",
+      "pbm": "rune-u16b2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 129,
+      "entity": "Rune U16B3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b3",
+      "pbm": "rune-u16b3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 130,
+      "entity": "Rune U16B4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b4",
+      "pbm": "rune-u16b4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 131,
+      "entity": "Rune U16B5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b5",
+      "pbm": "rune-u16b5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 132,
+      "entity": "Rune U16B6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b6",
+      "pbm": "rune-u16b6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 133,
+      "entity": "Rune U16B7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b7",
+      "pbm": "rune-u16b7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 134,
+      "entity": "Rune U16B8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b8",
+      "pbm": "rune-u16b8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 135,
+      "entity": "Rune U16B9",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16b9",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16b9",
+      "pbm": "rune-u16b9.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 136,
+      "entity": "Rune U16Ba",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ba",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ba",
+      "pbm": "rune-u16ba.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 137,
+      "entity": "Rune U16Bb",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16bb",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16bb",
+      "pbm": "rune-u16bb.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 138,
+      "entity": "Rune U16Bc",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16bc",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16bc",
+      "pbm": "rune-u16bc.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 139,
+      "entity": "Rune U16Bd",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16bd",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16bd",
+      "pbm": "rune-u16bd.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 140,
+      "entity": "Rune U16Be",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16be",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16be",
+      "pbm": "rune-u16be.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 141,
+      "entity": "Rune U16Bf",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16bf",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16bf",
+      "pbm": "rune-u16bf.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 142,
+      "entity": "Rune U16C0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c0",
+      "pbm": "rune-u16c0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 143,
+      "entity": "Rune U16C1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c1",
+      "pbm": "rune-u16c1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 144,
+      "entity": "Rune U16C2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c2",
+      "pbm": "rune-u16c2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 145,
+      "entity": "Rune U16C3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c3",
+      "pbm": "rune-u16c3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 146,
+      "entity": "Rune U16C4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c4",
+      "pbm": "rune-u16c4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 147,
+      "entity": "Rune U16C5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c5",
+      "pbm": "rune-u16c5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 148,
+      "entity": "Rune U16C6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c6",
+      "pbm": "rune-u16c6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 149,
+      "entity": "Rune U16C7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c7",
+      "pbm": "rune-u16c7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 150,
+      "entity": "Rune U16C8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c8",
+      "pbm": "rune-u16c8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 151,
+      "entity": "Rune U16C9",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16c9",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16c9",
+      "pbm": "rune-u16c9.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 152,
+      "entity": "Rune U16Ca",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ca",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ca",
+      "pbm": "rune-u16ca.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 153,
+      "entity": "Rune U16Cb",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16cb",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16cb",
+      "pbm": "rune-u16cb.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 154,
+      "entity": "Rune U16Cc",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16cc",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16cc",
+      "pbm": "rune-u16cc.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 155,
+      "entity": "Rune U16Cd",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16cd",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16cd",
+      "pbm": "rune-u16cd.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 156,
+      "entity": "Rune U16Ce",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ce",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ce",
+      "pbm": "rune-u16ce.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 157,
+      "entity": "Rune U16Cf",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16cf",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16cf",
+      "pbm": "rune-u16cf.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 158,
+      "entity": "Rune U16D0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d0",
+      "pbm": "rune-u16d0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 159,
+      "entity": "Rune U16D1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d1",
+      "pbm": "rune-u16d1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 160,
+      "entity": "Rune U16D2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d2",
+      "pbm": "rune-u16d2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 161,
+      "entity": "Rune U16D3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d3",
+      "pbm": "rune-u16d3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 162,
+      "entity": "Rune U16D4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d4",
+      "pbm": "rune-u16d4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 163,
+      "entity": "Rune U16D5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d5",
+      "pbm": "rune-u16d5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 164,
+      "entity": "Rune U16D6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d6",
+      "pbm": "rune-u16d6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 165,
+      "entity": "Rune U16D7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d7",
+      "pbm": "rune-u16d7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 166,
+      "entity": "Rune U16D8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d8",
+      "pbm": "rune-u16d8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 167,
+      "entity": "Rune U16D9",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16d9",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16d9",
+      "pbm": "rune-u16d9.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 168,
+      "entity": "Rune U16Da",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16da",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16da",
+      "pbm": "rune-u16da.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 169,
+      "entity": "Rune U16Db",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16db",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16db",
+      "pbm": "rune-u16db.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 170,
+      "entity": "Rune U16Dc",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16dc",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16dc",
+      "pbm": "rune-u16dc.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 171,
+      "entity": "Rune U16Dd",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16dd",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16dd",
+      "pbm": "rune-u16dd.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 172,
+      "entity": "Rune U16De",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16de",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16de",
+      "pbm": "rune-u16de.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 173,
+      "entity": "Rune U16Df",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16df",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16df",
+      "pbm": "rune-u16df.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 174,
+      "entity": "Rune U16E0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e0",
+      "pbm": "rune-u16e0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 175,
+      "entity": "Rune U16E1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e1",
+      "pbm": "rune-u16e1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 176,
+      "entity": "Rune U16E2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e2",
+      "pbm": "rune-u16e2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 177,
+      "entity": "Rune U16E3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e3",
+      "pbm": "rune-u16e3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 178,
+      "entity": "Rune U16E4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e4",
+      "pbm": "rune-u16e4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 179,
+      "entity": "Rune U16E5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e5",
+      "pbm": "rune-u16e5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 180,
+      "entity": "Rune U16E6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e6",
+      "pbm": "rune-u16e6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 181,
+      "entity": "Rune U16E7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e7",
+      "pbm": "rune-u16e7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 182,
+      "entity": "Rune U16E8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e8",
+      "pbm": "rune-u16e8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 183,
+      "entity": "Rune U16E9",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16e9",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16e9",
+      "pbm": "rune-u16e9.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 184,
+      "entity": "Rune U16Ea",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ea",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ea",
+      "pbm": "rune-u16ea.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 185,
+      "entity": "Rune U16Eb",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16eb",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16eb",
+      "pbm": "rune-u16eb.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 186,
+      "entity": "Rune U16Ec",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ec",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ec",
+      "pbm": "rune-u16ec.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 187,
+      "entity": "Rune U16Ed",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ed",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ed",
+      "pbm": "rune-u16ed.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 188,
+      "entity": "Rune U16Ee",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ee",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ee",
+      "pbm": "rune-u16ee.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 189,
+      "entity": "Rune U16Ef",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16ef",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16ef",
+      "pbm": "rune-u16ef.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 190,
+      "entity": "Rune U16F0",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f0",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f0",
+      "pbm": "rune-u16f0.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 191,
+      "entity": "Rune U16F1",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f1",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f1",
+      "pbm": "rune-u16f1.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 192,
+      "entity": "Rune U16F2",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f2",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f2",
+      "pbm": "rune-u16f2.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 193,
+      "entity": "Rune U16F3",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f3",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f3",
+      "pbm": "rune-u16f3.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 194,
+      "entity": "Rune U16F4",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f4",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f4",
+      "pbm": "rune-u16f4.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 195,
+      "entity": "Rune U16F5",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f5",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f5",
+      "pbm": "rune-u16f5.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 196,
+      "entity": "Rune U16F6",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f6",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f6",
+      "pbm": "rune-u16f6.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 197,
+      "entity": "Rune U16F7",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f7",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f7",
+      "pbm": "rune-u16f7.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 198,
+      "entity": "Rune U16F8",
+      "tradition": "nordic-rune",
+      "source_title": "rune-u16f8",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/rune-u16f8",
+      "pbm": "rune-u16f8.pbm",
+      "verified": true,
+      "weight": 0.22
+    },
+    {
+      "id": 199,
+      "entity": "Samigina",
+      "tradition": "demon",
+      "source_title": "samigina-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/samigina-seal",
+      "pbm": "samigina-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 200,
+      "entity": "Sceau Scirlin Webp",
+      "tradition": "demon",
+      "source_title": "sceau-daemon-scirlin-webp",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sceau-daemon-scirlin-webp",
+      "pbm": "sceau-daemon-scirlin-webp.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 201,
+      "entity": "Andras",
+      "tradition": "demon",
+      "source_title": "seal-of-andras",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/seal-of-andras",
+      "pbm": "seal-of-andras.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 202,
+      "entity": "Asmodeus",
+      "tradition": "demon",
+      "source_title": "seal-of-asmodeus",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/seal-of-asmodeus",
+      "pbm": "seal-of-asmodeus.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 203,
+      "entity": "Haagenti",
+      "tradition": "demon",
+      "source_title": "seal-of-haagenti",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/seal-of-haagenti",
+      "pbm": "seal-of-haagenti.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 204,
+      "entity": "Marbas",
+      "tradition": "demon",
+      "source_title": "seal-of-marbas",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/seal-of-marbas",
+      "pbm": "seal-of-marbas.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 205,
+      "entity": "Murmur",
+      "tradition": "demon",
+      "source_title": "seal-of-murmur",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/seal-of-murmur",
+      "pbm": "seal-of-murmur.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 206,
+      "entity": "Sello De Okaryuz",
+      "tradition": "demon",
+      "source_title": "sello-de-okaryuz",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sello-de-okaryuz",
+      "pbm": "sello-de-okaryuz.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 207,
+      "entity": "Lilith",
+      "tradition": "demon",
+      "source_title": "sigil-of-lilith",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sigil-of-lilith",
+      "pbm": "sigil-of-lilith.pbm",
+      "verified": true,
+      "weight": 1.4
+    },
+    {
+      "id": 208,
+      "entity": "Crocell 2025 Svg",
+      "tradition": "demon",
+      "source_title": "sigil-of-the-demon-crocell-vectorization-2025-svg",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sigil-of-the-demon-crocell-vectorization-2025-svg",
+      "pbm": "sigil-of-the-demon-crocell-vectorization-2025-svg.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 209,
+      "entity": "Crocell",
+      "tradition": "demon",
+      "source_title": "sigil-of-the-demon-crocell",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sigil-of-the-demon-crocell",
+      "pbm": "sigil-of-the-demon-crocell.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 210,
+      "entity": "Sitri",
+      "tradition": "demon",
+      "source_title": "sitri-seal-1134x1134",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sitri-seal-1134x1134",
+      "pbm": "sitri-seal-1134x1134.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 211,
+      "entity": "Sitri",
+      "tradition": "demon",
+      "source_title": "sitri-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/sitri-seal",
+      "pbm": "sitri-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 212,
+      "entity": "Grand Crone Hekate",
+      "tradition": "deity",
+      "source_title": "the-grand-crone-seal-of-hekate",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/the-grand-crone-seal-of-hekate",
+      "pbm": "the-grand-crone-seal-of-hekate.pbm",
+      "verified": true,
+      "weight": 0.68
+    },
+    {
+      "id": 213,
+      "entity": "Grand Lilith",
+      "tradition": "demon",
+      "source_title": "the-grand-seal-of-lilith",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/the-grand-seal-of-lilith",
+      "pbm": "the-grand-seal-of-lilith.pbm",
+      "verified": true,
+      "weight": 4.2
+    },
+    {
+      "id": 214,
+      "entity": "Belial",
+      "tradition": "demon",
+      "source_title": "the-seal-of-belial",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/the-seal-of-belial",
+      "pbm": "the-seal-of-belial.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 215,
+      "entity": "Bael",
+      "tradition": "demon",
+      "source_title": "the-seal-of-the-demon-bael",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/the-seal-of-the-demon-bael",
+      "pbm": "the-seal-of-the-demon-bael.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 216,
+      "entity": "Valefor",
+      "tradition": "demon",
+      "source_title": "valefor-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/valefor-seal",
+      "pbm": "valefor-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 217,
+      "entity": "Valefor",
+      "tradition": "demon",
+      "source_title": "valefor",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/valefor",
+      "pbm": "valefor.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 218,
+      "entity": "Vassago",
+      "tradition": "demon",
+      "source_title": "vassago-seal",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/vassago-seal",
+      "pbm": "vassago-seal.pbm",
+      "verified": true,
+      "weight": 1.0
+    },
+    {
+      "id": 219,
+      "entity": "Vassago",
+      "tradition": "demon",
+      "source_title": "vassago",
+      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/vassago",
+      "pbm": "vassago.pbm",
+      "verified": true,
+      "weight": 1.0
+    }
+  ]
+}

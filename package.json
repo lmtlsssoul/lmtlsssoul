@@ -25,6 +25,8 @@
   "files": [
     "dist/",
     "schema/",
+    "terminalart/art.6.py",
+    "terminalart/assets/",
     "soul.mjs",
     "README.md",
     "LICENSE"
@@ -33,6 +35,9 @@
     "build": "tsdown src/index.ts && node scripts/postbuild-copy-schema.mjs",
     "dev": "node soul.mjs",
     "backup:pass": "bash scripts/backup-pass.sh",
+    "agents:worktree": "bash scripts/agents/prepare-worktree.sh",
+    "agents:gates": "bash scripts/agents/run-gates.sh",
+    "agents:ship-check": "bash scripts/agents/ship-check.sh",
     "release:ready": "bash scripts/release-ship.sh",
     "test": "vitest run",
     "test:watch": "vitest",

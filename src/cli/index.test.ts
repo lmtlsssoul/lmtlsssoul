@@ -11,6 +11,7 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(() => ({
     pid: 4242,
     unref: vi.fn(),
+    on: vi.fn(),
   })),
   spawnSync: vi.fn(() => ({
     status: 1,
@@ -129,6 +130,17 @@ describe('CLI entrypoint', () => {
     process.argv.push('grownup');
     await main();
     expect(log).toHaveBeenCalledWith('--- Grownup Mode ---');
+  });
+
+  it('launches terminal art command', async () => {
+    process.argv.push('art');
+    await main();
+
+    expect(spawn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining([expect.stringContaining('art.6.py')]),
+      expect.objectContaining({ stdio: 'inherit' })
+    );
   });
 
   it('verifies archive hash-chain command', async () => {

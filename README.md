@@ -67,6 +67,25 @@ This installs Node dependencies, builds the TypeScript, installs `soul` globally
 
 ---
 
+## multi-agent rails
+
+Use isolated git worktrees and deterministic ship gates:
+
+```bash
+# create an isolated branch + worktree for one agent
+pnpm run agents:worktree -- compiler-agent main
+
+# inside that worktree, run compile/test/build with art-lock verification
+pnpm run agents:gates
+
+# from a clean tree, validate pack payload before release
+pnpm run agents:ship-check
+```
+
+Reference: `docs/MULTI_AGENT_SHIP.md`
+
+---
+
 ## hardware requirements
 
 **minimum (local Ollama mode):**
@@ -94,6 +113,7 @@ This installs Node dependencies, builds the TypeScript, installs `soul` globally
 | `soul models scan` | discover models from all substrates (ollama, openai, anthropic, xai) |
 | `soul models set <role> <model>` | assign a model to an agent role (`<substrate>:<modelId>`) |
 | `soul reflect` | trigger immediate reflection pass |
+| `soul art` | launch the integrated terminal field renderer (python3 runtime required) |
 | `soul archive verify` | verify archive sha-256 hash-chain integrity |
 | `soul grownup [on\|off\|status]` | toggle author-level self-optimization and root intent |
 | `soul treasury status` | show treasury totals, burn rate, budget caps |
@@ -124,6 +144,20 @@ GET  /api/openclaw/context   — soul capsule + status for current context
 POST /api/openclaw/observe   — send page observations to the soul
 POST /api/openclaw/respond   — get a soul response for a page query
 ```
+
+---
+
+## integration sockets
+
+Reserved websocket routes remain open for future embodiment channels:
+
+- `/socket/mobile`
+- `/socket/robotics`
+- `/socket/plugins`
+- `/socket/pattern-input`
+- `/socket/hardware-oracle`
+- `/socket/psionic-link` (open-intent gate; optional focus token via `x-lmtlss-psionic-gate` header or `?gate=...`)
+- `/sockets` (live socket and gate status)
 
 ---
 
