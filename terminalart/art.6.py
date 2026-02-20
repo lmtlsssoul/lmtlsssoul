@@ -731,7 +731,7 @@ def main(stdscr):
                 'cy': cy,
                 'scale': trng.uniform(height * 0.3, height * 1.2) * dilation_scale,
                 'type_id': t_id,
-                'life': trng.uniform(8.0, 20.0) * (1.0 + intent_dilation * (0.30 if intent_gate_open else 0.0))
+                'life': trng.uniform(10.0, 26.0) * (1.0 + intent_dilation * (0.30 if intent_gate_open else 0.0))
             })
             
         # Cleanup dead sigils
@@ -754,7 +754,7 @@ def main(stdscr):
         # --- Layer 4: Negentropy Snowball / Sigil Diffusion ---
         # Decay excitation grid
         dead_keys = []
-        excite_decay = max(0.08, 0.12 - (intent_dilation * 0.015 if intent_gate_open else 0.0))
+        excite_decay = max(0.065, 0.105 - (intent_dilation * 0.013 if intent_gate_open else 0.0))
         for k in excitation_grid:
             excitation_grid[k] -= excite_decay
             if excitation_grid[k] <= 0:
@@ -764,7 +764,7 @@ def main(stdscr):
             
         # Propagate sparks
         new_sparks = set()
-        spread_chance = min(0.72, 0.56 + (intent_dilation * 0.05 if intent_gate_open else 0.0))
+        spread_chance = min(0.74, 0.57 + (intent_dilation * 0.05 if intent_gate_open else 0.0))
         for sx, sy in active_sparks:
             for dx, dy in [(-1,0), (1,0), (0,-1), (0,1), (-1,-1), (1,1), (-1,1), (1,-1)]:
                 nx, ny = sx + dx, sy + dy
@@ -841,19 +841,19 @@ def main(stdscr):
                     sig_idx = (y * width + x + int(t * 33.8)) % max_entropy_len
                     sig_byte = entropy_pool[sig_idx]
                     sig_val = sig_byte / 255.0
-                    if excite > 0.82 or (excite > 0.68 and fragment > 0.74):
+                    if excite > 0.80 or (excite > 0.66 and fragment > 0.72):
                         char = get_text_glyph(sig_byte, sig_val)
                         cp = curses.color_pair(7) | curses.A_BOLD
-                    elif excite > 0.42 or fragment > 0.60:
-                        if render_gate > 0.72:
+                    elif excite > 0.40 or fragment > 0.58:
+                        if render_gate > 0.76:
                             continue
                         char = get_text_glyph(sig_byte ^ ent_byte, (sig_val + ent_val) * 0.5)
                         cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.74 else curses.A_NORMAL)
                     else:
-                        if render_gate > 0.18:
+                        if render_gate > 0.24:
                             continue
                         char = get_text_glyph(sig_byte ^ ((ent_byte >> 1) & 0xFF), (sig_val * 0.6) + (ent_val * 0.4))
-                        cp = curses.color_pair(2) | curses.A_DIM
+                        cp = curses.color_pair(2) | (curses.A_DIM if ent_val < 0.70 else curses.A_NORMAL)
                         
                     try:
                         stdscr.addstr(y, x, char, cp)
