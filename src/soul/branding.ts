@@ -103,7 +103,8 @@ const BASE: readonly string[] = [
   '   ▀▀▀▀▀▀▀▀▀▀▀▀▀    ',  //  3sp + 13(▀)    + 4sp  = 20  (flat base)
 ];
 
-const TAGLINE = '    presence.';
+const RIGHT_STACK: readonly string[] = [...SPHERE, ...BASE];
+const LEFT_TOP_PADDING = Math.max(0, RIGHT_STACK.length - TEXT.length);
 
 // ── Chalk color tiers for getBanner() (static, chalk-based) ───────────────────
 const _vdim = chalk.hex('#1b5a0c');  // ░ very dim green glow
@@ -130,22 +131,13 @@ export function getBanner(): string {
   const blank = ' '.repeat(TEXT_W);
 
   const rows: string[] = [''];
-  // One row above text: top of the sphere
-  rows.push(blank + _renderOrbLineCh(SPHERE[0]));
-  // Text rows alongside sphere rows 1–6
-  for (let i = 0; i < TEXT.length; i++) {
-    const gap = ' '.repeat(TEXT_W - TEXT[i].length);
-    rows.push(g(TEXT[i]) + gap + _renderOrbLineCh(SPHERE[i + 1]));
+  for (let row = 0; row < RIGHT_STACK.length; row++) {
+    const textIdx = row - LEFT_TOP_PADDING;
+    const left = textIdx >= 0 && textIdx < TEXT.length
+      ? g(TEXT[textIdx]) + ' '.repeat(TEXT_W - TEXT[textIdx].length)
+      : blank;
+    rows.push(left + _renderOrbLineCh(RIGHT_STACK[row]));
   }
-  // Two rows below text: bottom of the sphere
-  rows.push(blank + _renderOrbLineCh(SPHERE[7]));
-  rows.push(blank + _renderOrbLineCh(SPHERE[8]));
-  // Pedestal
-  for (const baseLine of BASE) {
-    rows.push(blank + _renderOrbLineCh(baseLine));
-  }
-  rows.push('');
-  rows.push(dimColor(TAGLINE));
   rows.push('');
   return rows.join('\n');
 }
@@ -196,29 +188,25 @@ export async function printBanner(): Promise<void> {
   }
 
   const blank    = ' '.repeat(TEXT_W);
-  const presDim  = `\x1b[2;38;2;74;246;38m${TAGLINE}\x1b[0m`;
 
   // Total lines per frame:
-  //   1 blank + 1 sphere[0] + 6 text+sphere + 2 sphere[7-8]
-  //   + 3 base + 1 blank + 1 presence + 1 blank = 16
-  const TOTAL = 16;
+  //   1 blank (breathing room above letters) + 12 stacked rows + 1 blank = 14
+  const TOTAL = 14;
 
   const printFrame = (lit: boolean): void => {
-    const sLines = SPHERE.map(l => renderOrbLine(l, lit));
-    const bLines = BASE.map(l => renderOrbLine(l, lit));
+    const rightLines = RIGHT_STACK.map(l => renderOrbLine(l, lit));
 
     let out = '\n';
-    out += blank + sLines[0] + '\n';
-    for (let i = 0; i < TEXT.length; i++) {
-      const gap = ' '.repeat(TEXT_W - TEXT[i].length);
-      out += G + TEXT[i] + R + gap + sLines[i + 1] + '\n';
+    for (let row = 0; row < rightLines.length; row++) {
+      const textIdx = row - LEFT_TOP_PADDING;
+      if (textIdx >= 0 && textIdx < TEXT.length) {
+        const gap = ' '.repeat(TEXT_W - TEXT[textIdx].length);
+        out += G + TEXT[textIdx] + R + gap + rightLines[row] + '\n';
+      } else {
+        out += blank + rightLines[row] + '\n';
+      }
     }
-    out += blank + sLines[7] + '\n';
-    out += blank + sLines[8] + '\n';
-    out += blank + bLines[0] + '\n';
-    out += blank + bLines[1] + '\n';
-    out += blank + bLines[2] + '\n';
-    out += '\n' + presDim + '\n\n';
+    out += '\n';
     process.stdout.write(out);
   };
 

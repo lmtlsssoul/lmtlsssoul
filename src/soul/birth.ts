@@ -10,8 +10,25 @@ import { SoulCompiler } from './compiler.ts';
 import { writeCheckpointBackup } from './backup.ts';
 import { DEFAULT_SOUL_LATTICE_SEED, getLatticeStats } from './soul-lattice-seed.ts';
 
+type ToolKeyOption = {
+  label: string;
+  env: string;
+  purpose: string;
+};
+
+const TOOL_KEY_OPTIONS: readonly ToolKeyOption[] = [
+  { label: 'Brave Search', env: 'BRAVE_API_KEY', purpose: 'Web search' },
+  { label: 'Serper Search', env: 'SERPER_API_KEY', purpose: 'Google search API' },
+  { label: 'Tavily Search', env: 'TAVILY_API_KEY', purpose: 'Retrieval/search' },
+  { label: 'GitHub', env: 'GITHUB_TOKEN', purpose: 'Repository and API access' },
+  { label: 'OpenAI', env: 'OPENAI_API_KEY', purpose: 'OpenAI substrate access' },
+  { label: 'Anthropic', env: 'ANTHROPIC_API_KEY', purpose: 'Anthropic substrate access' },
+  { label: 'xAI', env: 'XAI_API_KEY', purpose: 'xAI substrate access' },
+];
+
 export class SoulBirthPortal {
   private config: Record<string, unknown> = {};
+  private toolKeySecrets: Record<string, string> = {};
 
   constructor() {
     log('\nBirth Portal\n');
@@ -34,6 +51,173 @@ export class SoulBirthPortal {
       error('Birth Portal cancelled.');
       throw new Error('Birth Portal cancelled');
     }
+  }
+
+  private async promptSelect(question: string, choices: string[], initial: number = 0): Promise<string> {
+    try {
+      const response: { value: string } = await enquirer.prompt({
+        type: 'select',
+        name: 'value',
+        message: question,
+        choices,
+        initial,
+      } as never);
+      log('');
+      return response.value;
+    } catch {
+      error('Birth Portal cancelled.');
+      throw new Error('Birth Portal cancelled');
+    }
+  }
+
+  private async promptMultiSelect(question: string, choices: string[]): Promise<string[]> {
+    try {
+      const response: { value: string[] } = await enquirer.prompt({
+        type: 'multiselect',
+        name: 'value',
+        message: question,
+        choices,
+      } as never);
+      log('');
+      return Array.isArray(response.value) ? response.value : [];
+    } catch {
+      error('Birth Portal cancelled.');
+      throw new Error('Birth Portal cancelled');
+    }
+  }
+
+  private async promptSecret(question: string): Promise<string> {
+    try {
+      const response: { value: string } = await enquirer.prompt({
+        type: 'password',
+        name: 'value',
+        message: question,
+      } as never);
+      log('');
+      return response.value.trim();
+    } catch {
+      error('Birth Portal cancelled.');
+      throw new Error('Birth Portal cancelled');
+    }
+  }
+
+  private parseJsonObject(raw: string, fieldName: string): Record<string, unknown> {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return {};
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch (err) {
+      throw new Error(`${fieldName} must be valid JSON (${err instanceof Error ? err.message : 'parse error'}).`);
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`${fieldName} must be a JSON object.`);
+    }
+
+    return parsed as Record<string, unknown>;
+  }
+
+  private async captureSubstrateConfig(): Promise<void> {
+    const choice = await this.promptSelect(
+      'Choose substrate setup mode',
+      [
+        'Auto setup (recommended)',
+        'Import from existing birth-config.json',
+        'Manual JSON entry',
+      ],
+      0
+    );
+
+    if (choice === 'Auto setup (recommended)') {
+      this.config['substrateConfig'] = {
+        mode: 'auto',
+        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+      };
+      success('Substrate config auto-initialized.');
+      return;
+    }
+
+    if (choice === 'Import from existing birth-config.json') {
+      const importPath = await this.prompt(
+        'Path to existing birth-config.json',
+        path.join(getStateDir(), 'birth-config.json')
+      );
+
+      try {
+        const raw = fs.readFileSync(importPath, 'utf-8');
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        const imported = parsed.substrateConfig;
+        if (imported && typeof imported === 'object' && !Array.isArray(imported)) {
+          this.config['substrateConfig'] = imported;
+          success(`Imported substrate config from ${importPath}.`);
+          return;
+        }
+        warn('No usable substrateConfig found in that file; falling back to auto setup.');
+      } catch (err) {
+        warn(`Could not import substrate config (${err instanceof Error ? err.message : 'unknown error'}).`);
+        warn('Falling back to auto setup.');
+      }
+
+      this.config['substrateConfig'] = {
+        mode: 'auto',
+        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+      };
+      success('Substrate config auto-initialized.');
+      return;
+    }
+
+    const rawManual = await this.prompt('Enter substrate config JSON', '{}');
+    try {
+      this.config['substrateConfig'] = this.parseJsonObject(rawManual, 'Substrate config');
+      success('Substrate config captured.');
+    } catch (err) {
+      warn(err instanceof Error ? err.message : 'Invalid substrate JSON.');
+      warn('Falling back to auto setup.');
+      this.config['substrateConfig'] = {
+        mode: 'auto',
+        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+      };
+      success('Substrate config auto-initialized.');
+    }
+  }
+
+  private async captureToolKeys(): Promise<void> {
+    const choices = TOOL_KEY_OPTIONS.map((item) => `${item.label} (${item.env}) — ${item.purpose}`);
+    const selected = await this.promptMultiSelect('Select tool keys to configure now (optional)', choices);
+
+    if (selected.length === 0) {
+      this.config['toolKeys'] = {
+        providers: [],
+        count: 0,
+        storage: 'state/tool-keys.json',
+      };
+      success('No tool keys configured right now.');
+      return;
+    }
+
+    for (const selectedLabel of selected) {
+      const option = TOOL_KEY_OPTIONS.find((item) => selectedLabel.startsWith(item.label));
+      if (!option) {
+        continue;
+      }
+      const value = await this.promptSecret(`Enter ${option.env} (leave blank to skip)`);
+      if (!value) {
+        continue;
+      }
+      this.toolKeySecrets[option.env] = value;
+      process.env[option.env] = value;
+    }
+
+    this.config['toolKeys'] = {
+      providers: Object.keys(this.toolKeySecrets),
+      count: Object.keys(this.toolKeySecrets).length,
+      storage: 'state/tool-keys.json',
+    };
+    success(`Captured ${Object.keys(this.toolKeySecrets).length} tool key(s).`);
   }
 
   private async initializeCoreMemories(): Promise<void> {
@@ -70,19 +254,11 @@ export class SoulBirthPortal {
     await this.initializeCoreMemories();
 
     log('Step 1/8: Substrate Connection & Authentication');
-    this.config['substrateConfig'] = await this.prompt(
-      'Enter substrate connection config (JSON, optional)',
-      '{}'
-    );
-    success('Substrate config captured.');
+    await this.captureSubstrateConfig();
     log('\n---\n');
 
-    log('Step 2/8: Tool Keys (Optional)');
-    this.config['toolKeys'] = await this.prompt(
-      'Enter tool key config (JSON, optional)',
-      '{}'
-    );
-    success('Tool key config captured.');
+    log('Step 2/8: Tool Keys & Search Connectors (Optional)');
+    await this.captureToolKeys();
     log('\n---\n');
 
     log('Step 3/8: Model Discovery');
@@ -160,6 +336,7 @@ export class SoulBirthPortal {
   private async initializeState(): Promise<void> {
     const stateDir = getStateDir();
     fs.mkdirSync(stateDir, { recursive: true });
+    this.persistToolKeys(stateDir);
 
     const graph = new GraphDB(stateDir);
     const archive = new ArchiveDB(stateDir);
@@ -264,5 +441,19 @@ export class SoulBirthPortal {
 
     success(`Soul Capsule generated at ${capsulePath}`);
     success(`Birth config saved to ${birthConfigPath}`);
+  }
+
+  private persistToolKeys(stateDir: string): void {
+    if (Object.keys(this.toolKeySecrets).length === 0) {
+      return;
+    }
+
+    const toolKeysPath = path.join(stateDir, 'tool-keys.json');
+    fs.writeFileSync(toolKeysPath, `${JSON.stringify(this.toolKeySecrets, null, 2)}\n`, {
+      encoding: 'utf-8',
+      mode: 0o600,
+    });
+    fs.chmodSync(toolKeysPath, 0o600);
+    success(`Tool keys stored at ${toolKeysPath}`);
   }
 }

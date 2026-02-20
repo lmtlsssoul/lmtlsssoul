@@ -12,7 +12,7 @@ describe('Soul Branding', () => {
 
   it('should generate a banner string', () => {
     const banner = getBanner();
-    expect(banner).toContain('presence.');
+    expect(banner).toContain('░');
     expect(banner).not.toBe('');
   });
 
