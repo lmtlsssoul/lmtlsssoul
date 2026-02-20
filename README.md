@@ -239,4 +239,3 @@ the cron autonomics handle the transition automatically.
 ## license + credits
 
 - Master legal document: `LICENSE`
-- Entropy hypothesis + falsifiability note: `docs/entropy-rng-hypothesis.md`
