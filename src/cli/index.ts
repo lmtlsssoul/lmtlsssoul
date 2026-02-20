@@ -608,8 +608,14 @@ async function launchTerminalArtBlocking(pythonOverride?: string): Promise<void>
       handleTerminalArtSpawnError(err, pythonOverride);
       reject(err);
     });
-    child.on('exit', () => {
-      resolve();
+    child.on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+      if ((code ?? 0) === 0 && signal === null) {
+        resolve();
+        return;
+      }
+      const exitCode = code ?? -1;
+      const viaSignal = signal ? ` (signal: ${signal})` : '';
+      reject(new Error(`Terminal art exited unexpectedly with code ${exitCode}${viaSignal}.`));
     });
   });
 }
