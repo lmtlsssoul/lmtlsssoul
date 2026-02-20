@@ -22,6 +22,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { SubstrateAdapter } from '../substrate/types.ts';
@@ -636,15 +637,14 @@ function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void 
 
 function resolveTerminalArtEntrypoint(): string {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const homeInstall = path.resolve(os.homedir(), '.lmtlss/src/terminalart/art.6.py');
   const candidates = [
+    // Canonical install location (always prefer current installed art).
+    homeInstall,
     // Source layout: src/cli/index.ts -> ../../terminalart/art.6.py
     path.resolve(moduleDir, '../../terminalart/art.6.py'),
     // Bundled layout: dist/index.js -> ../terminalart/art.6.py
     path.resolve(moduleDir, '../terminalart/art.6.py'),
-    // Local execution from package root.
-    path.resolve(process.cwd(), 'terminalart/art.6.py'),
-    // Workspace root fallback.
-    path.resolve(process.cwd(), 'lmtlss_soul/terminalart/art.6.py'),
   ];
 
   for (const candidate of candidates) {
