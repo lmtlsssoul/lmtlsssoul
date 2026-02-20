@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { randomBytes } from 'node:crypto';
 
 /**
  * lmtlss soul branding constants.
@@ -105,6 +106,7 @@ const BASE: readonly string[] = [
 
 const RIGHT_STACK: readonly string[] = [...SPHERE, ...BASE];
 const LEFT_TOP_PADDING = Math.max(0, RIGHT_STACK.length - TEXT.length);
+const TOP_FLICKER_ROWS = 4;
 
 // ── Chalk color tiers for getBanner() (static, chalk-based) ───────────────────
 const _vdim = chalk.hex('#1b5a0c');  // ░ very dim green glow
@@ -149,9 +151,8 @@ export function getBanner(): string {
  * brand green), crystal ball + pedestal on the RIGHT (flickering).
  *
  * Animation — crystal ball ignition:
- *   The orb is dark on first render. It then flickers between dark and fully
- *   lit (░▒▓ in gradient green), simulating the ball powering up.
- *   After the flicker sequence it settles to a steady glow.
+ *   Only the top cap of the sphere flickers. Pedestal stays stable.
+ *   Flicker timings and states are generated from cryptographic randomness.
  *
  * Falls back to static getBanner() in non-TTY environments.
  */
@@ -173,7 +174,7 @@ export async function printBanner(): Promise<void> {
 
   const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
 
-  // ── Orb line renderer: lit=false → all dark, lit=true → full gradient ────────
+  // ── Orb line renderer: lit=false → dark, lit=true → full gradient ───────────
   function renderOrbLine(line: string, lit: boolean): string {
     const [outer, mid, inner, block] = lit
       ? [B1, B2, B3, B3]
@@ -193,8 +194,13 @@ export async function printBanner(): Promise<void> {
   //   1 blank (breathing room above letters) + 12 stacked rows + 1 blank = 14
   const TOTAL = 14;
 
-  const printFrame = (lit: boolean): void => {
-    const rightLines = RIGHT_STACK.map(l => renderOrbLine(l, lit));
+  const printFrame = (topRowLitMask: readonly boolean[]): void => {
+    const sphereLines = SPHERE.map((line, idx) => {
+      const lit = idx < TOP_FLICKER_ROWS ? (topRowLitMask[idx] ?? true) : true;
+      return renderOrbLine(line, lit);
+    });
+    const baseLines = BASE.map((line) => renderOrbLine(line, true));
+    const rightLines = [...sphereLines, ...baseLines];
 
     let out = '\n';
     for (let row = 0; row < rightLines.length; row++) {
@@ -212,35 +218,44 @@ export async function printBanner(): Promise<void> {
 
   const redraw = (lit: boolean): void => {
     process.stdout.write(`\x1b[${TOTAL}A\r`);
-    printFrame(lit);
+    printFrame(Array(TOP_FLICKER_ROWS).fill(lit));
   };
 
   // ── Boot sequence ─────────────────────────────────────────────────────────────
   process.stdout.write(HIDE);
-  printFrame(false);  // initial: text visible, ball dark
+  printFrame(Array(TOP_FLICKER_ROWS).fill(false));  // initial: text visible, top cap dark
 
-  // Crystal ball ignition: flicker dark ↔ lit with accelerating rhythm
-  const flickers: Array<{ ms: number; lit: boolean }> = [
-    { ms: 90,  lit: true  },
-    { ms: 60,  lit: false },
-    { ms: 50,  lit: true  },
-    { ms: 40,  lit: false },
-    { ms: 40,  lit: true  },
-    { ms: 50,  lit: false },
-    { ms: 60,  lit: true  },
-    { ms: 80,  lit: false },
-    { ms: 120, lit: true  },  // last bright flash before settle
-  ];
-  for (const { ms, lit } of flickers) {
-    await sleep(ms);
-    redraw(lit);
+  // True-random intermittent flicker for the upper cap.
+  const flickerWindowMs = 900;
+  let elapsed = 0;
+  while (elapsed < flickerWindowMs) {
+    const frameMs = secureRandomInt(28, 130);
+    await sleep(frameMs);
+    elapsed += frameMs;
+
+    const rowMask = Array.from({ length: TOP_FLICKER_ROWS }, (_, idx) => {
+      // Higher rows flicker more often than lower rows.
+      const threshold = 0.26 + (idx * 0.11);
+      return secureRandomFloat() > threshold;
+    });
+    printFrame(rowMask);
   }
 
-  // Settle to steady glow
-  await sleep(60);
+  // Settle to steady fully lit sphere.
+  await sleep(45);
   redraw(true);
 
   process.stdout.write(SHOW);
+}
+
+function secureRandomFloat(): number {
+  const value = randomBytes(4).readUInt32BE(0);
+  return value / 0xFFFFFFFF;
+}
+
+function secureRandomInt(min: number, max: number): number {
+  const span = max - min + 1;
+  return min + Math.floor(secureRandomFloat() * span);
 }
 
 /** Backward-compatible banner export used by the package entrypoint. */

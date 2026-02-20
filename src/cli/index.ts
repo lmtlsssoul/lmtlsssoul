@@ -618,11 +618,16 @@ function spawnTerminalArtProcess(pythonOverride?: string) {
   const entrypoint = resolveTerminalArtEntrypoint();
   const python = (pythonOverride?.trim() || process.env.SOUL_ART_PYTHON?.trim() || 'python3');
   log(`Launching terminal art from ${entrypoint}`);
+  const restoreViewport = enterTerminalArtViewport();
 
-  return spawn(python, [entrypoint], {
+  const child = spawn(python, [entrypoint], {
     stdio: 'inherit',
     env: process.env,
   });
+  const restoreOnce = once(restoreViewport);
+  bindChildEvent(child as unknown as { on?: Function; once?: Function }, 'exit', restoreOnce);
+  bindChildEvent(child as unknown as { on?: Function; once?: Function }, 'error', restoreOnce);
+  return child;
 }
 
 function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void {
@@ -654,4 +659,72 @@ function resolveTerminalArtEntrypoint(): string {
   }
 
   throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.6.py).');
+}
+
+function enterTerminalArtViewport(): () => void {
+  if (!process.stdout.isTTY) {
+    return () => {};
+  }
+
+  const supportsWindowOps = terminalSupportsWindowOps();
+  const out = process.stdout;
+
+  // Hide cursor during portal prelude.
+  out.write('\x1b[?25l');
+
+  if (supportsWindowOps) {
+    // Best-effort maximize/edge pin (xterm window ops).
+    out.write('\x1b[9;1t'); // maximize
+    out.write('\x1b[3;0;0t'); // move top-left
+  }
+
+  return () => {
+    if (!process.stdout.isTTY) {
+      return;
+    }
+    if (supportsWindowOps) {
+      out.write('\x1b[9;0t'); // restore from maximize/fullscreen mode
+    }
+    out.write('\x1b[?25h');
+  };
+}
+
+function terminalSupportsWindowOps(): boolean {
+  const term = (process.env.TERM ?? '').toLowerCase();
+  const termProgram = (process.env.TERM_PROGRAM ?? '').toLowerCase();
+
+  return (
+    term.includes('xterm') ||
+    term.includes('screen') ||
+    term.includes('tmux') ||
+    term.includes('kitty') ||
+    termProgram.includes('wezterm') ||
+    termProgram.includes('iterm') ||
+    termProgram.includes('vscode')
+  );
+}
+
+function once(fn: () => void): () => void {
+  let called = false;
+  return () => {
+    if (called) {
+      return;
+    }
+    called = true;
+    fn();
+  };
+}
+
+function bindChildEvent(
+  child: { on?: Function; once?: Function },
+  event: string,
+  handler: () => void
+): void {
+  if (typeof child.once === 'function') {
+    child.once(event, handler);
+    return;
+  }
+  if (typeof child.on === 'function') {
+    child.on(event, handler);
+  }
 }
