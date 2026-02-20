@@ -216,9 +216,9 @@ export async function printBanner(): Promise<void> {
     process.stdout.write(out);
   };
 
-  const redraw = (lit: boolean): void => {
+  const redraw = (topRowLitMask: readonly boolean[]): void => {
     process.stdout.write(`\x1b[${TOTAL}A\r`);
-    printFrame(Array(TOP_FLICKER_ROWS).fill(lit));
+    printFrame(topRowLitMask);
   };
 
   // ── Boot sequence ─────────────────────────────────────────────────────────────
@@ -238,12 +238,12 @@ export async function printBanner(): Promise<void> {
       const threshold = 0.26 + (idx * 0.11);
       return secureRandomFloat() > threshold;
     });
-    printFrame(rowMask);
+    redraw(rowMask);
   }
 
   // Settle to steady fully lit sphere.
   await sleep(45);
-  redraw(true);
+  redraw(Array(TOP_FLICKER_ROWS).fill(true));
 
   process.stdout.write(SHOW);
 }

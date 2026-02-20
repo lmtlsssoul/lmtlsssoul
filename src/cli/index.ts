@@ -673,9 +673,12 @@ function enterTerminalArtViewport(): () => void {
   out.write('\x1b[?25l');
 
   if (supportsWindowOps) {
-    // Best-effort maximize/edge pin (xterm window ops).
-    out.write('\x1b[9;1t'); // maximize
-    out.write('\x1b[3;0;0t'); // move top-left
+    // Best-effort fullscreen/maximize + edge pin (terminal window ops).
+    out.write('\x1b[?1049h');   // alternate screen buffer
+    out.write('\x1b[8;999;999t'); // resize text area to max supported
+    out.write('\x1b[9;1t');     // maximize window
+    out.write('\x1b[10;1t');    // request fullscreen mode where supported
+    out.write('\x1b[3;0;0t');   // move top-left
   }
 
   return () => {
@@ -683,7 +686,9 @@ function enterTerminalArtViewport(): () => void {
       return;
     }
     if (supportsWindowOps) {
-      out.write('\x1b[9;0t'); // restore from maximize/fullscreen mode
+      out.write('\x1b[10;0t'); // exit fullscreen mode
+      out.write('\x1b[9;0t');  // restore maximize state
+      out.write('\x1b[?1049l'); // leave alternate screen buffer
     }
     out.write('\x1b[?25h');
   };
