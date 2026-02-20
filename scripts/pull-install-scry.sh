@@ -65,9 +65,14 @@ else
   npm run build
 fi
 
+# Launch directly when already attached to a TTY.
+if [[ -t 0 && -t 1 && -t 2 ]]; then
+  exec node soul.mjs birth
+fi
+
 # Reattach to the interactive terminal when invoked via `curl | bash`.
 # Without this, curses input cannot receive keypresses from stdin.
-if [[ -r /dev/tty && -w /dev/tty ]]; then
+if [[ -c /dev/tty ]] && (: </dev/tty >/dev/tty 2>/dev/tty) 2>/dev/null; then
   exec node soul.mjs birth </dev/tty >/dev/tty 2>/dev/tty
 fi
 
