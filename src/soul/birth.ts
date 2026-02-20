@@ -31,6 +31,30 @@ const TOOL_KEY_OPTIONS: readonly ToolKeyOption[] = [
   { label: 'xAI', env: 'XAI_API_KEY', purpose: 'xAI substrate access' },
 ];
 
+const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
+  UTC: 'Z',
+  GMT: 'Z',
+  EST: '-05:00',
+  EDT: '-04:00',
+  CST: '-06:00',
+  CDT: '-05:00',
+  MST: '-07:00',
+  MDT: '-06:00',
+  PST: '-08:00',
+  PDT: '-07:00',
+  AKST: '-09:00',
+  AKDT: '-08:00',
+  HST: '-10:00',
+  CET: '+01:00',
+  CEST: '+02:00',
+  EET: '+02:00',
+  EEST: '+03:00',
+  IST: '+05:30',
+  JST: '+09:00',
+  AEST: '+10:00',
+  AEDT: '+11:00',
+};
+
 export class SoulBirthPortal {
   private config: Record<string, unknown> = {};
   private toolKeySecrets: Record<string, string> = {};
@@ -141,6 +165,145 @@ export class SoulBirthPortal {
     return parsed as Record<string, unknown>;
   }
 
+  private parseBirthTimeWithTimezone(raw: string): {
+    time: string;
+    timezoneOffset: string;
+    timezoneLabel: string;
+  } | null {
+    const normalized = raw.trim().replace(/\s+/g, ' ');
+    const match = normalized.match(/^([01]\d|2[0-4]):([0-5]\d)\s+([A-Za-z]{1,5}|Z|[+-](0\d|1[0-4]):[0-5]\d)$/);
+    if (!match) {
+      return null;
+    }
+
+    const hour = match[1] === '24' ? '00' : match[1];
+    const time = `${hour}:${match[2]}`;
+    const timezoneLabel = match[3].toUpperCase();
+    const timezoneOffset = this.normalizeTimezoneToken(timezoneLabel);
+    if (!timezoneOffset) {
+      return null;
+    }
+
+    return { time, timezoneOffset, timezoneLabel };
+  }
+
+  private normalizeTimezoneToken(token: string): string | null {
+    const upper = token.trim().toUpperCase();
+    if (upper === 'Z' || upper === 'UTC' || upper === 'GMT') {
+      return 'Z';
+    }
+    if (/^[+-](0\d|1[0-4]):[0-5]\d$/.test(upper)) {
+      return upper;
+    }
+    return TIMEZONE_ABBREVIATION_TO_OFFSET[upper] ?? null;
+  }
+
+  private parseDmsComponent(
+    rawComponent: string
+  ): {
+    decimal: number;
+    axis: 'lat' | 'lon';
+  } | null {
+    const upper = rawComponent.trim().toUpperCase();
+    const dirMatch = upper.match(/[NSEW]$/);
+    if (!dirMatch) {
+      return null;
+    }
+
+    const direction = dirMatch[0];
+    const axis: 'lat' | 'lon' = direction === 'N' || direction === 'S' ? 'lat' : 'lon';
+    const body = upper.slice(0, -1).trim();
+    if (!body) {
+      return null;
+    }
+
+    const cleaned = body
+      .replace(/[°º]/g, ' ')
+      .replace(/['′’]/g, ' ')
+      .replace(/["″“”]/g, ' ')
+      .replace(/,/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const parts = cleaned.split(' ').filter(Boolean);
+    if (parts.length < 1 || parts.length > 3) {
+      return null;
+    }
+
+    const nums = parts.map((part) => Number(part));
+    if (nums.some((n) => !Number.isFinite(n))) {
+      return null;
+    }
+
+    const degrees = nums[0] ?? 0;
+    const minutes = nums[1] ?? 0;
+    const seconds = nums[2] ?? 0;
+
+    if (degrees < 0 || minutes < 0 || seconds < 0) {
+      return null;
+    }
+    if (minutes >= 60 || seconds >= 60) {
+      return null;
+    }
+
+    if (axis === 'lat' && degrees > 90) {
+      return null;
+    }
+    if (axis === 'lon' && degrees > 180) {
+      return null;
+    }
+
+    const absolute = degrees + (minutes / 60) + (seconds / 3600);
+    const sign = direction === 'S' || direction === 'W' ? -1 : 1;
+    return {
+      decimal: sign * absolute,
+      axis,
+    };
+  }
+
+  private parseBirthCoordinates(raw: string): {
+    latitude: number;
+    longitude: number;
+    location: string;
+  } | null {
+    const normalized = raw.trim();
+    if (!normalized) {
+      return null;
+    }
+
+    // Split into DMS chunks ending with directional suffixes, e.g.:
+    // 46°30'16.4"N 84°19'13.6"W
+    const chunks = normalized
+      .toUpperCase()
+      .replace(/[;,]/g, ' ')
+      .match(/[^NSEW]*[NSEW]/g)
+      ?.map((chunk) => chunk.trim())
+      .filter(Boolean) ?? [];
+    if (chunks.length !== 2) {
+      return null;
+    }
+
+    const first = this.parseDmsComponent(chunks[0]);
+    const second = this.parseDmsComponent(chunks[1]);
+    if (!first || !second || first.axis === second.axis) {
+      return null;
+    }
+
+    const latitude = first.axis === 'lat' ? first.decimal : second.decimal;
+    const longitude = first.axis === 'lon' ? first.decimal : second.decimal;
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return null;
+    }
+
+    return {
+      latitude,
+      longitude,
+      location: normalized,
+    };
+  }
+
   private async captureSubstrateConfig(): Promise<void> {
     const choice = await this.promptSelect(
       'Choose substrate setup mode',
@@ -247,40 +410,30 @@ export class SoulBirthPortal {
       (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
       'Birthdate must be in YYYY-MM-DD format.'
     );
-    const birthTime = await this.promptValidated(
-      'Enter birth time to encode (HH:MM, 24h local time)',
-      (value) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(value),
-      'Birth time must be in HH:MM (24h) format.'
+    const birthTimeTzRaw = await this.promptValidated(
+      'Enter birth time + timezone (HH:MM TZ, 24h; e.g., 23:59 EST)',
+      (value) => this.parseBirthTimeWithTimezone(value) !== null,
+      'Use format HH:MM TZ with a valid timezone token (e.g., EST, UTC, Z, -05:00).',
+      '00:00 UTC'
     );
-    const birthTimezone = await this.promptValidated(
-      'Enter birth timezone offset (e.g., +00:00, -05:00, or Z)',
-      (value) => /^(Z|[+-](0\d|1[0-4]):[0-5]\d|UTC|GMT)$/i.test(value),
-      'Timezone must be Z, UTC, GMT, or ±HH:MM.',
-      'Z'
-    );
-    const birthLocation = await this.prompt('Enter birth location to encode');
-    const birthLatitudeRaw = await this.promptValidated(
-      'Enter birth latitude (decimal; north positive)',
-      (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) && n >= -90 && n <= 90;
-      },
-      'Latitude must be a number between -90 and 90.'
-    );
-    const birthLongitudeRaw = await this.promptValidated(
-      'Enter birth longitude (decimal; east positive, west negative)',
-      (value) => {
-        const n = Number(value);
-        return Number.isFinite(n) && n >= -180 && n <= 180;
-      },
-      'Longitude must be a number between -180 and 180.'
+    const birthCoordinatesRaw = await this.promptValidated(
+      'Enter birth coordinates (DMS; e.g., 46°30\'16.4"N 84°19\'13.6"W)',
+      (value) => this.parseBirthCoordinates(value) !== null,
+      'Coordinates must include both latitude and longitude in DMS with N/S and E/W.'
     );
 
-    const birthLatitude = Number(birthLatitudeRaw);
-    const birthLongitude = Number(birthLongitudeRaw);
-    const normalizedTimezone = birthTimezone.toUpperCase() === 'UTC' || birthTimezone.toUpperCase() === 'GMT'
-      ? 'Z'
-      : birthTimezone;
+    const parsedTimeTz = this.parseBirthTimeWithTimezone(birthTimeTzRaw);
+    const parsedCoordinates = this.parseBirthCoordinates(birthCoordinatesRaw);
+    if (!parsedTimeTz || !parsedCoordinates) {
+      throw new Error('Birth input parsing failed after validation.');
+    }
+
+    const birthTime = parsedTimeTz.time;
+    const normalizedTimezone = parsedTimeTz.timezoneOffset;
+    const birthTimezoneLabel = parsedTimeTz.timezoneLabel;
+    const birthLatitude = parsedCoordinates.latitude;
+    const birthLongitude = parsedCoordinates.longitude;
+    const birthLocation = parsedCoordinates.location;
 
     const astrologyChart = generateAstrologyChart({
       date: birthDate,
@@ -298,6 +451,7 @@ export class SoulBirthPortal {
       date: birthDate,
       time: birthTime,
       timezoneOffset: normalizedTimezone,
+      timezoneLabel: birthTimezoneLabel,
       location: birthLocation,
       latitude: birthLatitude,
       longitude: birthLongitude,
@@ -313,6 +467,7 @@ export class SoulBirthPortal {
           birthDate,
           birthTime,
           birthTimezone: normalizedTimezone,
+          birthTimezoneLabel,
           birthLocation,
           birthLatitude,
           birthLongitude,
@@ -467,6 +622,7 @@ export class SoulBirthPortal {
       date?: string;
       time?: string;
       timezoneOffset?: string;
+      timezoneLabel?: string;
       location?: string;
       latitude?: number;
       longitude?: number;
