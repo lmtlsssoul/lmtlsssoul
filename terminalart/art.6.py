@@ -408,10 +408,14 @@ def is_point_on_mask_thread(u, v, scale, mask):
 
     mx, my = uv_to_mask_xy(u, v, mask)
 
-    # Wider probe preserves corners/crevices at terminal resolution.
-    probe = 1 if scale >= 24.0 else (2 if scale >= 14.0 else 3)
+    # Sharper contour sampling: keep crevices visible while avoiding rounded
+    # edge bloom from overly-wide neighborhood dilation.
+    probe = 0 if scale >= 26.0 else (1 if scale >= 14.0 else 2)
     for oy in range(-probe, probe + 1):
         for ox in range(-probe, probe + 1):
+            # Diamond neighborhood preserves angular corners better than a box.
+            if abs(ox) + abs(oy) > probe:
+                continue
             px = mx + ox
             py = my + oy
             if is_mask_edge(mask, px, py) or is_mask_corner(mask, px, py):
