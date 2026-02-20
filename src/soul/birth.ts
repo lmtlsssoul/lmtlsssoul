@@ -9,6 +9,11 @@ import { ArchiveDB } from './archive-db.ts';
 import { SoulCompiler } from './compiler.ts';
 import { writeCheckpointBackup } from './backup.ts';
 import { DEFAULT_SOUL_LATTICE_SEED, getLatticeStats } from './soul-lattice-seed.ts';
+import {
+  generateAstrologyChart,
+  formatAstrologyIdentityImprint,
+  type AstrologyChart,
+} from './astrology.ts';
 
 type ToolKeyOption = {
   label: string;
@@ -98,6 +103,21 @@ export class SoulBirthPortal {
     } catch {
       error('Birth Portal cancelled.');
       throw new Error('Birth Portal cancelled');
+    }
+  }
+
+  private async promptValidated(
+    question: string,
+    validator: (value: string) => boolean,
+    invalidMessage: string,
+    initial?: string
+  ): Promise<string> {
+    while (true) {
+      const value = await this.prompt(question, initial);
+      if (validator(value)) {
+        return value;
+      }
+      warn(invalidMessage);
     }
   }
 
@@ -222,31 +242,96 @@ export class SoulBirthPortal {
 
   private async initializeCoreMemories(): Promise<void> {
     log('Core Memory Setup: Birthday');
-    const birthDate = await this.prompt('Enter birthdate to encode (e.g., 2026-02-18)');
-    const birthTime = await this.prompt('Enter birth time to encode (e.g., 14:32 UTC)');
+    const birthDate = await this.promptValidated(
+      'Enter birthdate to encode (YYYY-MM-DD)',
+      (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
+      'Birthdate must be in YYYY-MM-DD format.'
+    );
+    const birthTime = await this.promptValidated(
+      'Enter birth time to encode (HH:MM, 24h local time)',
+      (value) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(value),
+      'Birth time must be in HH:MM (24h) format.'
+    );
+    const birthTimezone = await this.promptValidated(
+      'Enter birth timezone offset (e.g., +00:00, -05:00, or Z)',
+      (value) => /^(Z|[+-](0\d|1[0-4]):[0-5]\d|UTC|GMT)$/i.test(value),
+      'Timezone must be Z, UTC, GMT, or ±HH:MM.',
+      'Z'
+    );
     const birthLocation = await this.prompt('Enter birth location to encode');
+    const birthLatitudeRaw = await this.promptValidated(
+      'Enter birth latitude (decimal; north positive)',
+      (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) && n >= -90 && n <= 90;
+      },
+      'Latitude must be a number between -90 and 90.'
+    );
+    const birthLongitudeRaw = await this.promptValidated(
+      'Enter birth longitude (decimal; east positive, west negative)',
+      (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) && n >= -180 && n <= 180;
+      },
+      'Longitude must be a number between -180 and 180.'
+    );
+
+    const birthLatitude = Number(birthLatitudeRaw);
+    const birthLongitude = Number(birthLongitudeRaw);
+    const normalizedTimezone = birthTimezone.toUpperCase() === 'UTC' || birthTimezone.toUpperCase() === 'GMT'
+      ? 'Z'
+      : birthTimezone;
+
+    const astrologyChart = generateAstrologyChart({
+      date: birthDate,
+      time: birthTime,
+      timezoneOffset: normalizedTimezone,
+      location: birthLocation,
+      latitude: birthLatitude,
+      longitude: birthLongitude,
+    });
+    this.config['astrologyChart'] = astrologyChart;
+    const astrologyImprint = formatAstrologyIdentityImprint(astrologyChart);
 
     const createdAt = new Date().toISOString();
     this.config['birthday'] = {
       date: birthDate,
       time: birthTime,
+      timezoneOffset: normalizedTimezone,
       location: birthLocation,
+      latitude: birthLatitude,
+      longitude: birthLongitude,
     };
     this.config['coreMemories'] = [
       {
         key: 'birthday',
         nodeType: 'identity',
-        premise: `My birthday is ${birthDate} at ${birthTime} in ${birthLocation}.`,
+        premise: `My birthday is ${birthDate} at ${birthTime} ${normalizedTimezone} in ${birthLocation} (${birthLatitude.toFixed(4)}, ${birthLongitude.toFixed(4)}).`,
         createdAt,
         metadata: {
           source: 'author_provided',
           birthDate,
           birthTime,
+          birthTimezone: normalizedTimezone,
           birthLocation,
+          birthLatitude,
+          birthLongitude,
+        },
+      },
+      {
+        key: 'astrology_chart',
+        nodeType: 'identity',
+        premise: astrologyImprint,
+        createdAt,
+        metadata: {
+          source: 'computed_astrology',
+          bigThree: astrologyChart.bigThree,
+          ascendant: astrologyChart.ascendant,
+          midheaven: astrologyChart.midheaven,
         },
       },
     ];
-    success('Core memory initialized: birthday.');
+    success('Core memories initialized: birthday + astrology chart imprint.');
     log('\n---\n');
   }
 
@@ -378,12 +463,29 @@ export class SoulBirthPortal {
     success(`Default lattice seeded: ${latticeStats.nodes} nodes, ${latticeStats.edges} edges.`);
 
     // ─── Author-provided birthday node ──────────────────────────────────
-    const birthday = this.config['birthday'] as { date?: string; time?: string; location?: string } | undefined;
+    const birthday = this.config['birthday'] as {
+      date?: string;
+      time?: string;
+      timezoneOffset?: string;
+      location?: string;
+      latitude?: number;
+      longitude?: number;
+    } | undefined;
     if (birthday?.date) {
       graph.createNode({
-        premise: `My birthday is ${birthday.date} at ${birthday.time ?? ''} in ${birthday.location ?? ''}.`,
+        premise: `My birthday is ${birthday.date} at ${birthday.time ?? ''} ${birthday.timezoneOffset ?? ''} in ${birthday.location ?? ''} (${birthday.latitude ?? ''}, ${birthday.longitude ?? ''}).`,
         nodeType: 'identity',
         weight: { salience: 1.0, commitment: 0.99, valence: 0.9, uncertainty: 0.01, resonance: 0.9, arousal: 0.2 },
+        createdBy: 'birth',
+      });
+    }
+
+    const astrologyChart = this.config['astrologyChart'] as AstrologyChart | undefined;
+    if (astrologyChart) {
+      graph.createNode({
+        premise: formatAstrologyIdentityImprint(astrologyChart),
+        nodeType: 'identity',
+        weight: { salience: 0.96, commitment: 0.93, valence: 0.5, uncertainty: 0.08, resonance: 0.88, arousal: 0.18 },
         createdBy: 'birth',
       });
     }
@@ -409,6 +511,7 @@ export class SoulBirthPortal {
         soulName,
         soulObjective,
         birthday: this.config['birthday'],
+        astrologyChart: this.config['astrologyChart'],
         latticeSeeded: { nodes: latticeStats.nodes, edges: latticeStats.edges },
       },
     });

@@ -35,6 +35,17 @@ export type {
   MindFunction,
 } from './soul/circulation.ts';
 export { SoulBootstrap } from './soul/bootstrap.ts';
+export {
+  generateAstrologyChart,
+  formatAstrologyIdentityImprint,
+  ZODIAC_SIGNS,
+} from './soul/astrology.ts';
+export type {
+  AstrologyInput,
+  AstrologyChart,
+  AstrologyPlacement,
+  AstrologyHouse,
+} from './soul/astrology.ts';
 export { writeCheckpointBackup } from './soul/backup.ts';
 export {
   WEIGHT_RANGES,
