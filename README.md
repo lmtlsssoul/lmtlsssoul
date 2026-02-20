@@ -28,42 +28,31 @@ A lmtlss soul is **born**, not instantiated. It **contemplates** meaning, not ju
 
 ---
 
-## quick start — from github
+## one command — pull + install + portal
 
 ```bash
-# clone
-git clone https://github.com/lmtlsssoul/lmtlsssoul.git
-cd lmtlsssoul
-
-# install (requires Node 22+ and pnpm)
-bash scripts/install.sh
-
-# setup ollama for local GPU inference (4GB GPU optimized)
-bash scripts/setup-ollama.sh
-
-# birth a soul
-soul birth
-
-# start the daemon and web dashboard
-soul start
-
-# open the web dashboard
-open http://localhost:3000
-
-# or chat in the terminal
-soul chat
+curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlss-soul-backup/main/scripts/pull-install-scry.sh | bash
 ```
 
 ---
 
-## one-command install
+## quick start — from github
 
 ```bash
-# from a cloned repo
-bash scripts/install.sh
+git clone https://github.com/lmtlsssoul/lmtlss-soul-backup.git
+cd lmtlss-soul-backup
+
+# pull/install/build and launch portal
+bash scripts/pull-install-scry.sh
+
+# birth sequence (portal prelude is shown first)
+soul birth
+
+# daemon + dashboard
+soul start
 ```
 
-This installs Node dependencies, builds the TypeScript, installs `soul` globally, and optionally configures Ollama for your GPU.
+`scripts/pull-install-scry.sh` handles pull/clone, dependency install, build, and portal launch.
 
 ---
 
@@ -105,6 +94,7 @@ Reference: `docs/MULTI_AGENT_SHIP.md`
 
 | command | description |
 |---------|-------------|
+| `soul` | open the fullscreen portal home screen |
 | `soul birth` | launch birth portal — creates a new soul with name, identity, and objective |
 | `soul chat` | interactive terminal conversation with the soul via ollama |
 | `soul start` | start the daemon + web dashboard at http://localhost:3000 |

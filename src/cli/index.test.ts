@@ -8,11 +8,23 @@ import { printBanner, log, error, success, warn } from '../soul/branding.ts';
 import { spawn } from 'node:child_process';
 
 vi.mock('node:child_process', () => ({
-  spawn: vi.fn(() => ({
-    pid: 4242,
-    unref: vi.fn(),
-    on: vi.fn(),
-  })),
+  spawn: vi.fn(() => {
+    const child: {
+      pid: number;
+      unref: ReturnType<typeof vi.fn>;
+      on: ReturnType<typeof vi.fn>;
+    } = {
+      pid: 4242,
+      unref: vi.fn(),
+      on: vi.fn((event: string, cb: (...args: any[]) => void) => {
+        if (event === 'exit') {
+          cb(0, null);
+        }
+        return child;
+      }),
+    };
+    return child;
+  }),
   spawnSync: vi.fn(() => ({
     status: 1,
     stdout: '',
@@ -61,9 +73,23 @@ describe('CLI entrypoint', () => {
   it('calls the birth portal when birth command is executed', async () => {
     process.argv.push('birth');
     await main();
+    expect(spawn).toHaveBeenCalled();
+    const spawnedArgs = vi.mocked(spawn).mock.calls[0]?.[1];
+    expect(Array.isArray(spawnedArgs)).toBe(true);
+    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.6.py'))).toBe(true);
     expect(SoulBirthPortal).toHaveBeenCalledTimes(1);
     expect(vi.mocked(SoulBirthPortal).mock.results[0].value.startGenesis).toHaveBeenCalledTimes(1);
     expect(printBanner).toHaveBeenCalled();
+  });
+
+  it('launches portal home screen when no subcommand is provided', async () => {
+    await main();
+
+    expect(spawn).toHaveBeenCalled();
+    const spawnedArgs = vi.mocked(spawn).mock.calls[0]?.[1];
+    expect(Array.isArray(spawnedArgs)).toBe(true);
+    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.6.py'))).toBe(true);
+    expect(SoulBirthPortal).not.toHaveBeenCalled();
   });
 
   it('starts daemon command and records daemon state', async () => {

@@ -4,7 +4,7 @@
 # Installs lmtlss soul from source and makes 'soul' available globally.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlsssoul/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlss-soul-backup/main/scripts/install.sh | bash
 #
 # Or from a cloned repo:
 #   bash scripts/install.sh
@@ -92,7 +92,7 @@ else
   else
     log "Cloning lmtlss soul..."
     mkdir -p "${HOME}/.lmtlss"
-    git clone https://github.com/lmtlsssoul/lmtlsssoul.git "$INSTALL_DIR"
+    git clone https://github.com/lmtlsssoul/lmtlss-soul-backup.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
   fi
 fi

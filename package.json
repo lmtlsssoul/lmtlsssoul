@@ -34,6 +34,8 @@
   "scripts": {
     "build": "tsdown src/index.ts && node scripts/postbuild-copy-schema.mjs",
     "dev": "node soul.mjs",
+    "scry": "node soul.mjs",
+    "scry:bootstrap": "bash scripts/pull-install-scry.sh",
     "backup:pass": "bash scripts/backup-pass.sh",
     "agents:worktree": "bash scripts/agents/prepare-worktree.sh",
     "agents:gates": "bash scripts/agents/run-gates.sh",

@@ -43,6 +43,9 @@ export async function main() {
     .name('soul')
     .description('lmtlss soul - persistent AI personhood')
     .version('0.1.0')
+    .action(async () => {
+      await launchTerminalArtBlocking();
+    })
     .hook('preAction', async (thisCommand) => {
       // Don't show banner for help or version
       if (thisCommand.args[0] === 'help') return;
@@ -55,7 +58,9 @@ export async function main() {
 
   program.command('birth')
     .description('Start the soul Birth Portal')
-    .action(async () => {
+    .option('--python <binary>', 'Python runtime binary for the scry portal prelude')
+    .action(async (options: { python?: string }) => {
+      await launchTerminalArtBlocking(options.python);
       const birthPortal = new SoulBirthPortal();
       await birthPortal.startGenesis();
     });
@@ -589,23 +594,44 @@ function printGrownupSummary(
 }
 
 function launchTerminalArt(pythonOverride?: string): void {
+  const child = spawnTerminalArtProcess(pythonOverride);
+  child.on('error', (err) => {
+    handleTerminalArtSpawnError(err, pythonOverride);
+  });
+}
+
+async function launchTerminalArtBlocking(pythonOverride?: string): Promise<void> {
+  const child = spawnTerminalArtProcess(pythonOverride);
+  await new Promise<void>((resolve, reject) => {
+    child.on('error', (err) => {
+      handleTerminalArtSpawnError(err, pythonOverride);
+      reject(err);
+    });
+    child.on('exit', () => {
+      resolve();
+    });
+  });
+}
+
+function spawnTerminalArtProcess(pythonOverride?: string) {
   const entrypoint = resolveTerminalArtEntrypoint();
   const python = (pythonOverride?.trim() || process.env.SOUL_ART_PYTHON?.trim() || 'python3');
   log(`Launching terminal art from ${entrypoint}`);
 
-  const child = spawn(python, [entrypoint], {
+  return spawn(python, [entrypoint], {
     stdio: 'inherit',
     env: process.env,
   });
+}
 
-  child.on('error', (err) => {
-    const maybeErr = err as NodeJS.ErrnoException;
-    if (maybeErr.code === 'ENOENT') {
-      error(`Unable to find Python runtime "${python}". Install python3 or pass --python <binary>.`);
-      return;
-    }
-    error(`Terminal art launch failed: ${err.message}`);
-  });
+function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void {
+  const python = (pythonOverride?.trim() || process.env.SOUL_ART_PYTHON?.trim() || 'python3');
+  const maybeErr = err as NodeJS.ErrnoException;
+  if (maybeErr.code === 'ENOENT') {
+    error(`Unable to find Python runtime "${python}". Install python3 or pass --python <binary>.`);
+    return;
+  }
+  error(`Terminal art launch failed: ${err.message}`);
 }
 
 function resolveTerminalArtEntrypoint(): string {
