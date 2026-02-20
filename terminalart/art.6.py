@@ -918,7 +918,7 @@ def main(stdscr):
         key = stdscr.getch()
         if key == curses.KEY_RESIZE:
             pass
-        elif key in (ord('q'), ord('Q')):
+        elif key != -1:
             break
             
         time.sleep(0.05) # ~20 FPS
