@@ -235,18 +235,32 @@ def inject_sigil_excitation(excitation_grid, active_sparks, x, y, base_intensity
 
     neighbors = [(-1,0), (1,0), (0,-1), (0,1), (-1,-1), (1,1), (-1,1), (1,-1)]
     for dx, dy in neighbors:
-        if trng.random() < 0.18:
+        if trng.random() < 0.24:
             nx, ny = x + dx, y + dy
             if 0 <= nx < width and 0 <= ny < height:
-                halo = base_intensity * trng.uniform(0.04, 0.18)
+                halo = base_intensity * trng.uniform(0.07, 0.24)
                 if halo > excitation_grid.get((nx, ny), 0.0):
                     excitation_grid[(nx, ny)] = halo
 
+    # Second-ring mist points add depth around sharp corners/crevices.
+    if trng.random() < 0.11:
+        ring2 = [
+            (-2,0), (2,0), (0,-2), (0,2),
+            (-2,-1), (-2,1), (2,-1), (2,1),
+            (-1,-2), (1,-2), (-1,2), (1,2),
+        ]
+        dx, dy = ring2[trng.randint(0, len(ring2) - 1)]
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < width and 0 <= ny < height:
+            halo2 = base_intensity * trng.uniform(0.04, 0.14)
+            if halo2 > excitation_grid.get((nx, ny), 0.0):
+                excitation_grid[(nx, ny)] = halo2
+
     # Directional spike strand to create fragmented, ethereal edges.
-    if trng.random() < 0.12:
+    if trng.random() < 0.16:
         dx, dy = neighbors[trng.randint(0, len(neighbors) - 1)]
         sx, sy = x, y
-        spike = base_intensity * trng.uniform(0.22, 0.42)
+        spike = base_intensity * trng.uniform(0.26, 0.46)
         for _ in range(trng.randint(1, 3)):
             sx += dx
             sy += dy
@@ -748,7 +762,7 @@ def main(stdscr):
                     if is_point_in_sigil(rx, ry, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], 0.0):
                         inject_sigil_excitation(
                             excitation_grid, active_sparks, rx, ry,
-                            1.0, trng, width, height, with_halo=False
+                            1.0, trng, width, height, with_halo=True
                         )
 
         # --- Layer 4: Negentropy Snowball / Sigil Diffusion ---
@@ -845,12 +859,12 @@ def main(stdscr):
                         char = get_text_glyph(sig_byte, sig_val)
                         cp = curses.color_pair(7) | curses.A_BOLD
                     elif excite > 0.40 or fragment > 0.58:
-                        if render_gate > 0.76:
+                        if render_gate > 0.84:
                             continue
                         char = get_text_glyph(sig_byte ^ ent_byte, (sig_val + ent_val) * 0.5)
-                        cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.74 else curses.A_NORMAL)
+                        cp = curses.color_pair(3) | (curses.A_BOLD if ent_val > 0.86 else curses.A_NORMAL)
                     else:
-                        if render_gate > 0.24:
+                        if render_gate > 0.34:
                             continue
                         char = get_text_glyph(sig_byte ^ ((ent_byte >> 1) & 0xFF), (sig_val * 0.6) + (ent_val * 0.4))
                         cp = curses.color_pair(2) | (curses.A_DIM if ent_val < 0.70 else curses.A_NORMAL)
@@ -954,7 +968,7 @@ def main(stdscr):
                         if is_point_in_sigil(x, y, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], phase_noise):
                             inject_sigil_excitation(
                                 excitation_grid, active_sparks, x, y,
-                                1.0, trng, width, height, with_halo=False
+                                1.0, trng, width, height, with_halo=True
                             )
                             break
 
