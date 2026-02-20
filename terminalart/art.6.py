@@ -632,6 +632,7 @@ def main(stdscr):
         except NotImplementedError:
             # Fallback if urandom is somehow missing, though rare on Linux
             entropy_pool = bytes([trng.randint(0, 255) for _ in range(width * height)])
+        max_entropy_len = max(1, len(entropy_pool))
 
         stdscr.erase()
 
