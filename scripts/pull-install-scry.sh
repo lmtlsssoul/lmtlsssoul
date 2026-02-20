@@ -63,4 +63,4 @@ else
   npm run build
 fi
 
-exec node soul.mjs art
+exec node soul.mjs birth

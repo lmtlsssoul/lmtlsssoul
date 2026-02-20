@@ -52,7 +52,7 @@ soul birth
 soul start
 ```
 
-`scripts/pull-install-scry.sh` handles pull/clone, dependency install, build, and portal launch.
+`scripts/pull-install-scry.sh` handles pull/clone, dependency install, build, and auto-starts `soul birth` (with portal prelude first).
 
 ---
 
