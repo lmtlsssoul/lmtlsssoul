@@ -713,7 +713,7 @@ def main(stdscr):
             
         # Propagate sparks
         new_sparks = set()
-        spread_chance = min(0.88, 0.75 + (intent_dilation * 0.06 if intent_gate_open else 0.0))
+        spread_chance = min(0.72, 0.56 + (intent_dilation * 0.05 if intent_gate_open else 0.0))
         for sx, sy in active_sparks:
             for dx, dy in [(-1,0), (1,0), (0,-1), (0,1), (-1,-1), (1,1), (-1,1), (1,-1)]:
                 nx, ny = sx + dx, sy + dy
@@ -786,13 +786,18 @@ def main(stdscr):
                 excite = excitation_grid.get((x, y), 0.0)
                 if excite > 0:
                     fragment = min(1.0, abs(w1 - w2) * 0.56 + abs(w2 - w3) * 0.44)
+                    render_gate = ((ent_byte * 1103515245 + x * 131 + y * 197) & 0xFF) / 255.0
                     if excite > 0.82 or (excite > 0.68 and fragment > 0.74):
                         char = get_sigil_stroke_char(ent_byte, fragment)
                         cp = curses.color_pair(7) | curses.A_BOLD
                     elif excite > 0.42 or fragment > 0.60:
+                        if render_gate > 0.72:
+                            continue
                         char = SIGIL_EDGE_CHARS[(ent_byte + int(fragment * 17.0)) % len(SIGIL_EDGE_CHARS)]
-                        cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.70 else curses.A_NORMAL)
+                        cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.74 else curses.A_NORMAL)
                     else:
+                        if render_gate > 0.18:
+                            continue
                         char = SIGIL_CLOUD_CHARS[((ent_byte >> 1) + x + y) % len(SIGIL_CLOUD_CHARS)]
                         cp = curses.color_pair(2) | curses.A_DIM
                         
@@ -895,7 +900,7 @@ def main(stdscr):
                         if is_point_in_sigil(x, y, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], phase_noise):
                             inject_sigil_excitation(
                                 excitation_grid, active_sparks, x, y,
-                                1.0, trng, width, height, with_halo=True
+                                1.0, trng, width, height, with_halo=False
                             )
                             break
 
