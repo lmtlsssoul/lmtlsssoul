@@ -37,6 +37,7 @@
     "backup:pass": "bash scripts/backup-pass.sh",
     "agents:worktree": "bash scripts/agents/prepare-worktree.sh",
     "agents:gates": "bash scripts/agents/run-gates.sh",
+    "agents:read-only-debug": "bash scripts/agents/read-only-debug.sh",
     "agents:ship-check": "bash scripts/agents/ship-check.sh",
     "release:ready": "bash scripts/release-ship.sh",
     "test": "vitest run",

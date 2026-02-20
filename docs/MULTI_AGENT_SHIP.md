@@ -2,6 +2,8 @@
 
 This repository supports concurrent implementation by multiple agents with isolated worktrees and deterministic gates.
 
+For read-only Gemini debugging, use `gemini.md` in repo root.
+
 ## 1) Create an isolated worktree per agent
 
 ```bash
@@ -29,6 +31,18 @@ This enforces:
 2. `pnpm run typecheck`
 3. `pnpm run test`
 4. `pnpm run build`
+
+## 2.5) Read-only debug rail (Gemini)
+
+```bash
+pnpm run agents:read-only-debug
+```
+
+This enforces:
+1. clean working tree pre-check
+2. terminal art lock integrity
+3. no-emit typecheck
+4. clean working tree post-check
 
 ## 3) Validate ship payload
 
