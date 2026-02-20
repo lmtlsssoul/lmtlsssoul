@@ -29,9 +29,7 @@
     "terminalart/assets/",
     "soul.mjs",
     "README.md",
-    "LICENSE",
-    "NOTICE",
-    "TRADEMARKS.md"
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsdown src/index.ts && node scripts/postbuild-copy-schema.mjs",

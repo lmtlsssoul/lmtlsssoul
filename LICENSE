@@ -19,3 +19,50 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-----------------------------------------------------------------------
+Master Legal Addendum
+-----------------------------------------------------------------------
+
+This section consolidates attribution, trademark, and inspiration notices
+into this single master legal document.
+
+1) OpenClaw Attribution
+
+- This repository includes OpenClaw integration surfaces (API routes,
+  dashboard bridge, and extension compatibility workflow).
+- Where upstream OpenClaw code is incorporated, upstream copyright and
+  license notices must remain intact in the relevant files.
+- Attribution label for docs/UI: "OpenClaw integration support".
+
+2) Brand And Identity Reservation
+
+The MIT license above applies to software code. Brand identity assets are
+separate and are not granted by that code license.
+
+Reserved brand assets:
+
+- project name: "lmtlss soul"
+- project logos and visual identity marks
+- public-facing narrative identity language representing the canonical project
+
+Allowed without additional permission:
+
+- factual reference to this project
+- statements that a fork is "based on lmtlss soul"
+- retention of attribution and license notices
+
+Not allowed without written permission:
+
+- presenting a derivative as the official lmtlss soul project
+- use of marks/logos that imply endorsement
+- marketing a derivative as canonical lmtlss soul identity
+
+3) Inspiration Credits
+
+- Hermes
+- Lilith
+- Prometheus
+- Jason Reza Jorjani
+
+These credits acknowledge symbolic inspiration and do not imply endorsement.

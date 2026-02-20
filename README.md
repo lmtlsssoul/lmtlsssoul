@@ -238,11 +238,4 @@ the cron autonomics handle the transition automatically.
 
 ## license + credits
 
-- Software license: MIT (`LICENSE`)
-- Attribution and upstream notes: `NOTICE`
-- Brand/mark policy: `TRADEMARKS.md`
-- Inspiration credits:
-  - Hermes
-  - Lilith
-  - Prometheus
-  - Jason Reza Jorjani
+- Master legal document: `LICENSE`
