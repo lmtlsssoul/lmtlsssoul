@@ -1,7 +1,7 @@
 {
   "schema": 3,
   "generated_by": "local_sigils_import_all_variants",
-  "count": 219,
+  "count": 221,
   "sigils": [
     {
       "id": 1,
@@ -2192,6 +2192,26 @@
       "pbm": "vassago.pbm",
       "verified": true,
       "weight": 1.0
+    },
+    {
+      "id": 220,
+      "entity": "Prometheus",
+      "tradition": "deity",
+      "source_title": "prometheus.png",
+      "source_url": "local:/mnt/c/users/ebj/desktop/lmtlsssoul/sigils/prometheus.png",
+      "pbm": "prometheus-jorjani.pbm",
+      "verified": true,
+      "weight": 0.055
+    },
+    {
+      "id": 221,
+      "entity": "Satan",
+      "tradition": "demon",
+      "source_title": "satan.png",
+      "source_url": "local:/mnt/c/users/ebj/desktop/lmtlsssoul/sigils/satan.png",
+      "pbm": "satan-jorjani.pbm",
+      "verified": true,
+      "weight": 0.0222
     }
   ]
 }
