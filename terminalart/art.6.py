@@ -559,6 +559,10 @@ def main(stdscr):
     # Hide cursor
     curses.curs_set(0)
     stdscr.nodelay(1)
+    # Drop any buffered shell keypress (e.g., launch Enter) so fullscreen
+    # only collapses on deliberate input after render begins.
+    curses.flushinp()
+    startup_key_guard_until = time.time() + 0.25
     
     # Strictly green on black, shades centered around logo green.
     curses.start_color()
@@ -1004,7 +1008,8 @@ def main(stdscr):
         if key == curses.KEY_RESIZE:
             pass
         elif key != -1:
-            break
+            if time.time() >= startup_key_guard_until:
+                break
             
         time.sleep(0.05) # ~20 FPS
 
