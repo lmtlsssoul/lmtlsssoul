@@ -2,7 +2,7 @@
 
 This repository supports concurrent implementation by multiple agents with isolated worktrees and deterministic gates.
 
-For read-only Gemini debugging, use `gemini.md` in repo root.
+For Gemini handoff, use `gemini.md` in repo root.
 
 ## 1) Create an isolated worktree per agent
 
@@ -39,10 +39,28 @@ pnpm run agents:read-only-debug
 ```
 
 This enforces:
-1. clean working tree pre-check
+1. repository state snapshot pre-check
 2. terminal art lock integrity
 3. no-emit typecheck
-4. clean working tree post-check
+4. repository state equality post-check
+
+## 2.6) Deep audit rail (Gemini 3.1 Pro, read-only)
+
+```bash
+pnpm run agents:deep-audit-readonly
+```
+
+Primary references:
+1. `/home/eebee/lmtlss_soul/lmtlss_soul/gemini.md`
+2. `/home/eebee/lmtlss_soul/lmtlss_soul/scripts/agents/deep-audit-readonly.sh`
+3. `/home/eebee/lmtlss_soul/report.md`
+
+This enforces:
+1. terminal art lock integrity
+2. typecheck
+3. tests
+4. build
+5. unchanged git status before/after
 
 ## 3) Validate ship payload
 
