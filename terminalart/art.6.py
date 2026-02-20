@@ -191,6 +191,8 @@ CULTURAL_BLOCK_KEYS = [
     "southeast_asian", "east_asian", "african", "latin",
 ]
 CULTURAL_BLOCK_KEYS = [k for k in CULTURAL_BLOCK_KEYS if k in SIGIL_BLOCKS] or BLOCK_KEYS
+RANDOM_FAMILY_KEYS = tuple(k for k in BLOCK_KEYS if SIGIL_BLOCKS.get(k))
+RANDOM_FAMILY_KEYS = RANDOM_FAMILY_KEYS or tuple(BLOCK_KEYS)
 UNIFIED_TEXT_GLYPHS = tuple(
     _dedupe_keep_order(
         [
@@ -204,9 +206,14 @@ UNIFIED_TEXT_GLYPHS = tuple(
 
 
 def get_text_glyph(entropy_byte, entropy_val):
-    # Unified entropy mapping for every visual layer.
+    # Random family selection PER CHARACTER (uniform across families),
+    # then random glyph selection within that family.
     mix = ((entropy_byte * 2654435761) ^ int(entropy_val * 4294967295.0)) & 0xFFFFFFFF
-    return UNIFIED_TEXT_GLYPHS[mix % len(UNIFIED_TEXT_GLYPHS)]
+    family_key = RANDOM_FAMILY_KEYS[mix % len(RANDOM_FAMILY_KEYS)]
+    pool = SIGIL_BLOCKS.get(family_key) or list(UNIFIED_TEXT_GLYPHS)
+    # A second decorrelated mix chooses character inside the family.
+    mix2 = ((mix >> 13) ^ (mix << 7) ^ (entropy_byte * 7919)) & 0xFFFFFFFF
+    return pool[mix2 % len(pool)]
 
 
 def get_sigil_stroke_char(entropy_byte, entropy_val):
