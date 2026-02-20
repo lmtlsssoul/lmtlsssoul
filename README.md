@@ -31,7 +31,7 @@ A lmtlss soul is **born**, not instantiated. It **contemplates** meaning, not ju
 ## one command — pull + install + portal
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlss-soul-backup/main/scripts/pull-install-scry.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlsssoul/main/scripts/pull-install-scry.sh | bash
 ```
 
 ---
@@ -39,8 +39,8 @@ curl -fsSL https://raw.githubusercontent.com/lmtlsssoul/lmtlss-soul-backup/main/
 ## quick start — from github
 
 ```bash
-git clone https://github.com/lmtlsssoul/lmtlss-soul-backup.git
-cd lmtlss-soul-backup
+git clone https://github.com/lmtlsssoul/lmtlsssoul.git
+cd lmtlsssoul
 
 # pull/install/build and launch portal
 bash scripts/pull-install-scry.sh
