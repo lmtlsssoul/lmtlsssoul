@@ -1,0 +1,428 @@
+
+import Database from 'better-sqlite3';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import type { RawArchiveEvent, EventType } from './types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export type HydratedArchiveEvent = RawArchiveEvent & { payload: unknown };
+
+export interface NewEventParams {
+  parentHash: string | null;
+  timestamp: string;
+  sessionKey: string;
+  eventType: EventType;
+  agentId: string;
+  model?: string | null;
+  channel?: string | null;
+  peer?: string | null;
+  payload: unknown;
+}
+
+export class ArchiveDB {
+  private db: Database.Database;
+  private archiveDir: string;
+  private inMemory: boolean;
+  private useLegacyEventTypeAliases: boolean = false;
+  private fileLineCounts: Map<string, number> = new Map();
+  private memoryPayloads: Map<string, unknown> = new Map();
+
+  constructor(baseDir: string) {
+    this.archiveDir = baseDir;
+    this.inMemory = baseDir === ':memory:';
+    
+    // Ensure archive directory exists unless using in-memory mode
+    if (!this.inMemory && !fs.existsSync(this.archiveDir)) {
+      fs.mkdirSync(this.archiveDir, { recursive: true });
+    }
+
+    // Initialize SQLite
+    const dbPath = this.inMemory ? ':memory:' : path.join(this.archiveDir, 'archive.db');
+    this.db = new Database(dbPath);
+    this.db.pragma('journal_mode = WAL');
+
+    // Load schema
+    // Assuming schema is at ../schema/raw-archive.sql relative to this file
+    const schemaPath = path.resolve(__dirname, '../schema/raw-archive.sql');
+    if (fs.existsSync(schemaPath)) {
+        const schema = fs.readFileSync(schemaPath, 'utf-8');
+        this.db.exec(schema);
+    } else {
+        // Fallback or error if schema not found? 
+        // For testing environment, schema might be elsewhere or we might need to handle it.
+        // But in production structure it should be there.
+        console.warn(`Schema file not found at ${schemaPath}. Assuming DB is initialized or will be initialized manually.`);
+    }
+
+    this.useLegacyEventTypeAliases = this.detectLegacyEventTypeMode();
+  }
+
+  private getDayFilename(timestamp: string): string {
+    // timestamp is ISO 8601 (e.g. 2023-10-27T...)
+    return `${timestamp.split('T')[0]}.jsonl`;
+  }
+
+  private getLineCount(filename: string): number {
+    if (this.fileLineCounts.has(filename)) {
+      return this.fileLineCounts.get(filename)!;
+    }
+
+    if (this.inMemory) {
+      this.fileLineCounts.set(filename, 0);
+      return 0;
+    }
+
+    const filePath = path.join(this.archiveDir, filename);
+    if (!fs.existsSync(filePath)) {
+      this.fileLineCounts.set(filename, 0);
+      return 0;
+    }
+
+    // Naive line counting. For huge files, this might be slow on startup.
+    // Optimizations: store line count in a separate meta file or DB?
+    // For now, read file.
+    const content = fs.readFileSync(filePath, 'utf-8');
+    // Count newlines. 
+    // Note: if last line has no newline, it's still a line? 
+    // JSONL usually implies newline at end of each record.
+    const lines = content.split('\n').length - 1; // Subtract 1 because usually ends with \n
+
+    // Check if file is empty
+    if (content.length === 0) return 0;
+    
+    // If split gives ['{...}', ''] length is 2, so 1 line.
+    // If split gives ['{...}', '{...}', ''] length is 3, so 2 lines.
+    // Correct.
+    this.fileLineCounts.set(filename, lines);
+    return lines;
+  }
+
+  public appendEvent(params: NewEventParams): HydratedArchiveEvent {
+    const {
+      parentHash,
+      timestamp,
+      sessionKey,
+      eventType,
+      agentId,
+      model = null,
+      channel = null,
+      peer = null,
+      payload
+    } = params;
+    const normalizedEventType = this.normalizeEventType(eventType);
+
+    if (normalizedEventType === 'world_action' && !this.hasWorldActionApproval(payload)) {
+      throw new Error(
+        'world_action events require explicit policy gating payload (approved=true and approvalId or policyRef).'
+      );
+    }
+
+    const payloadStr = JSON.stringify(payload);
+    
+    // Calculate hash
+    // hash(parent_hash + timestamp + event_type + agent_id + payload)
+    const hashInput = (parentHash || '') + timestamp + normalizedEventType + agentId + payloadStr;
+    const eventHash = crypto.createHash('sha256').update(hashInput).digest('hex');
+
+    const filename = this.getDayFilename(timestamp);
+    const filePath = path.join(this.archiveDir, filename);
+
+    // Get current line count (1-based index for the new line)
+    let currentLines = this.getLineCount(filename);
+    const payloadLine = currentLines + 1;
+
+    // Construct the full record for JSONL
+    // We store the computed hash in the JSONL too for integrity? 
+    // The whitepaper says "Full fidelity Raw Archive - Every event appended with SHA-256 hash..."
+    const fullRecord = {
+      eventHash,
+      parentHash,
+      timestamp,
+      sessionKey,
+      eventType: normalizedEventType,
+      agentId,
+      model,
+      channel,
+      peer,
+      payload
+    };
+
+    if (this.inMemory) {
+      this.memoryPayloads.set(`${filename}:${payloadLine}`, payload);
+    } else {
+      // Append to file
+      fs.appendFileSync(filePath, JSON.stringify(fullRecord) + '\n');
+    }
+    
+    // Update cache
+    this.fileLineCounts.set(filename, payloadLine);
+
+    // Insert into DB
+    const insert = this.db.prepare(`
+      INSERT INTO archive_events (
+        event_hash, parent_hash, timestamp, session_key, event_type, 
+        agent_id, model, channel, peer, 
+        payload_file, payload_line, payload_text
+      ) VALUES (
+        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, 
+        ?, ?, ?
+      )
+    `);
+
+    // Truncate payload for preview
+    const payloadText = payloadStr.length > 500 ? payloadStr.substring(0, 500) + '...' : payloadStr;
+
+    insert.run(
+      eventHash, parentHash, timestamp, sessionKey, normalizedEventType,
+      agentId, model, channel, peer,
+      filename, payloadLine, payloadText
+    );
+
+    return {
+      eventHash,
+      parentHash,
+      timestamp,
+      sessionKey,
+      eventType: normalizedEventType,
+      agentId,
+      model,
+      channel,
+      peer,
+      payloadFile: filename,
+      payloadLine,
+      payloadText,
+      payload
+    };
+  }
+
+  public getEventByHash(hash: string): HydratedArchiveEvent | null {
+    const stmt = this.db.prepare('SELECT * FROM archive_events WHERE event_hash = ?');
+    const row = stmt.get(hash);
+
+    if (!row) return null;
+
+    return this.hydrateEvent(this.mapRow(row));
+  }
+
+  public getEventsBySession(sessionKey: string): HydratedArchiveEvent[] {
+    const stmt = this.db.prepare('SELECT * FROM archive_events WHERE session_key = ? ORDER BY timestamp ASC');
+    const rows = stmt.all(sessionKey);
+    return rows.map(row => this.hydrateEvent(this.mapRow(row)));
+  }
+  
+  public getEventsByTimeRange(start: string, end: string): HydratedArchiveEvent[] {
+      const stmt = this.db.prepare('SELECT * FROM archive_events WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp ASC');
+      const rows = stmt.all(start, end);
+      return rows.map(row => this.hydrateEvent(this.mapRow(row)));
+  }
+
+  public getRecentEvents(limit: number): HydratedArchiveEvent[];
+  public getRecentEvents(agentId: string, limit?: number): HydratedArchiveEvent[];
+  public getRecentEvents(limitOrAgent: number | string, maybeLimit?: number): HydratedArchiveEvent[] {
+    let rows: any[];
+    if (typeof limitOrAgent === 'string') {
+      const limit = maybeLimit ?? 10;
+      const stmt = this.db.prepare(
+        'SELECT * FROM archive_events WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?'
+      );
+      rows = stmt.all(limitOrAgent, limit);
+    } else {
+      const stmt = this.db.prepare('SELECT * FROM archive_events ORDER BY timestamp DESC LIMIT ?');
+      rows = stmt.all(limitOrAgent);
+    }
+    // Reverse to return in chronological order
+    return rows.reverse().map(row => this.hydrateEvent(this.mapRow(row)));
+  }
+
+  public getEventCount(): number {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM archive_events');
+    const row = stmt.get() as { count: number };
+    return row.count;
+  }
+
+  /**
+   * Verifies per-session parent chaining and hash integrity for all events.
+   */
+  public verifyHashChain(): { ok: boolean; checked: number; errors: string[] } {
+    const rows = this.db.prepare('SELECT * FROM archive_events ORDER BY rowid ASC').all() as any[];
+    const errors: string[] = [];
+    const lastBySession = new Map<string, string>();
+    const seenHashes = new Set<string>();
+
+    for (const row of rows) {
+      const baseEvent = this.mapRow(row);
+      const hydrated = this.hydrateEvent(baseEvent);
+      const expectedParent = lastBySession.get(hydrated.sessionKey) ?? null;
+
+      if (hydrated.parentHash !== expectedParent) {
+        errors.push(
+          `Parent mismatch at ${hydrated.eventHash}: expected ${expectedParent ?? 'null'}, got ${
+            hydrated.parentHash ?? 'null'
+          }`
+        );
+      }
+
+      if (hydrated.parentHash && !seenHashes.has(hydrated.parentHash)) {
+        errors.push(`Missing parent for ${hydrated.eventHash}: ${hydrated.parentHash}`);
+      }
+
+      const payloadStr = JSON.stringify(hydrated.payload);
+      const hashInput =
+        (hydrated.parentHash || '') + hydrated.timestamp + hydrated.eventType + hydrated.agentId + payloadStr;
+      const recomputed = crypto.createHash('sha256').update(hashInput).digest('hex');
+
+      if (recomputed !== hydrated.eventHash) {
+        errors.push(`Hash mismatch at ${hydrated.eventHash}: recomputed ${recomputed}`);
+      }
+
+      seenHashes.add(hydrated.eventHash);
+      lastBySession.set(hydrated.sessionKey, hydrated.eventHash);
+    }
+
+    return {
+      ok: errors.length === 0,
+      checked: rows.length,
+      errors,
+    };
+  }
+
+  // ─── Maintenance ────────────────────────────────────────────────
+
+  /**
+   * Performs database maintenance (VACUUM and ANALYZE).
+   */
+  public optimize(): void {
+    this.db.exec('VACUUM');
+    this.db.exec('ANALYZE');
+  }
+
+  /**
+   * Flushes WAL to the main database file.
+   */
+  public checkpoint(): void {
+    this.db.pragma('wal_checkpoint(FULL)');
+  }
+
+  private mapRow(row: any): RawArchiveEvent {
+    return {
+      eventHash: row.event_hash,
+      parentHash: row.parent_hash,
+      timestamp: row.timestamp,
+      sessionKey: row.session_key,
+      eventType: row.event_type as EventType,
+      agentId: row.agent_id,
+      model: row.model,
+      channel: row.channel,
+      peer: row.peer,
+      payloadFile: row.payload_file,
+      payloadLine: row.payload_line,
+      payloadText: row.payload_text
+    };
+  }
+
+  private hydrateEvent(row: RawArchiveEvent): HydratedArchiveEvent {
+    if (this.inMemory) {
+      const key = `${row.payloadFile}:${row.payloadLine}`;
+      return {
+        ...row,
+        payload: this.memoryPayloads.get(key) ?? null,
+      };
+    }
+
+    const filePath = path.join(this.archiveDir, row.payloadFile);
+    
+    try {
+      // Reading specific line
+      // This is inefficient for random access if we don't have byte offsets.
+      // But for "getEventsBySession", if they are in the same file, we could optimize.
+      // For now, simple implementation: read file, get line.
+      // WARNING: This reads the whole file. 
+      // Optimization TODO: Cache file contents or use byte offsets.
+      // For a "day" file, it might be few MBs. Acceptable for prototype.
+      
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+      const lineContent = lines[row.payloadLine - 1]; // 1-based index
+      
+      if (!lineContent) {
+        throw new Error(`Line ${row.payloadLine} not found in ${row.payloadFile}`);
+      }
+      
+      const fullRecord = JSON.parse(lineContent);
+      return {
+        ...row,
+        payload: fullRecord.payload
+      };
+    } catch (err) {
+      console.error(`Failed to hydrate event ${row.eventHash}:`, err);
+      return {
+        ...row,
+        payload: null // Or throw?
+      };
+    }
+  }
+
+  private normalizeEventType(eventType: EventType): EventType {
+    let canonical: EventType = eventType;
+    if (eventType === 'user_message') {
+      canonical = 'author_message';
+    } else if (eventType === 'index_update_proposal') {
+      canonical = 'lattice_update_proposal';
+    } else if (eventType === 'index_commit') {
+      canonical = 'lattice_commit';
+    }
+
+    if (!this.useLegacyEventTypeAliases) {
+      return canonical;
+    }
+
+    if (canonical === 'author_message') {
+      return 'user_message';
+    }
+    if (canonical === 'lattice_update_proposal') {
+      return 'index_update_proposal';
+    }
+    if (canonical === 'lattice_commit') {
+      return 'index_commit';
+    }
+    return canonical;
+  }
+
+  private hasWorldActionApproval(payload: unknown): boolean {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const record = payload as Record<string, unknown>;
+    const approvalId = record.approvalId;
+    const policyRef = record.policyRef;
+    const approved = record.approved;
+    const policyGate = record.policyGate as Record<string, unknown> | undefined;
+
+    const hasApprovalRef =
+      typeof approvalId === 'string' && approvalId.trim().length > 0
+        ? true
+        : typeof policyRef === 'string' && policyRef.trim().length > 0;
+    const hasApprovedFlag =
+      approved === true || Boolean(policyGate && policyGate.approved === true);
+
+    return hasApprovalRef && hasApprovedFlag;
+  }
+
+  private detectLegacyEventTypeMode(): boolean {
+    const row = this.db
+      .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'archive_events'")
+      .get() as { sql?: string } | undefined;
+
+    const sql = String(row?.sql ?? '').toLowerCase();
+    const hasModern = sql.includes('author_message') && sql.includes('lattice_commit');
+    const hasLegacy = sql.includes('user_message') && sql.includes('index_commit');
+
+    return !hasModern && hasLegacy;
+  }
+}

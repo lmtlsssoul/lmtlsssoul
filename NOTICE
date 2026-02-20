@@ -1,0 +1,23 @@
+lmtlss soul NOTICE
+==================
+
+1) Core Software License
+- The software in this repository is released under the MIT License.
+- See `LICENSE` for the full grant and conditions.
+
+2) OpenClaw Attribution
+- This repository includes OpenClaw integration surfaces (API routes, dashboard bridge, and extension compatibility workflow).
+- Where upstream OpenClaw code is incorporated, upstream copyright and license notices must remain intact in the relevant files.
+- Attribution label for docs/UI: "OpenClaw integration support".
+
+3) Brand + Narrative Layer
+- The project identity layer is reserved: "lmtlss soul", related logos/marks, and narrative branding.
+- Trademark and branding permissions are defined in `TRADEMARKS.md`.
+
+4) Mythic Inspiration Credits
+- Hermes
+- Lilith
+- Prometheus
+- Jason Reza Jorjani
+
+These credits acknowledge symbolic inspiration and do not imply endorsement.

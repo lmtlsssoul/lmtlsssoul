@@ -1,0 +1,39 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# Soul data (runtime, not committed to repo)
+~/.lmtlss/
+:memory:/
+.lmtlss/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Local multi-agent worktrees
+.worktrees/
+
+# Local preserved backups (not shipped)
+terminalart/backups/
+
+# Local scratch backups
+*.master.bak

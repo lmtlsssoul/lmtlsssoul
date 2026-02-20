@@ -1,0 +1,75 @@
+{
+  "name": "lmtlss-soul",
+  "version": "0.1.0",
+  "description": "Stateless per-prompt personhood on a persistent meaning kernel",
+  "keywords": [
+    "ai",
+    "soul",
+    "personhood",
+    "persistence",
+    "llm",
+    "bitcoin"
+  ],
+  "homepage": "https://github.com/lmtlsssoul/lmtlsssoul#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lmtlsssoul/lmtlsssoul.git"
+  },
+  "license": "MIT",
+  "author": "lmtlss soul",
+  "type": "module",
+  "bin": {
+    "soul": "soul.mjs"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "schema/",
+    "terminalart/art.6.py",
+    "terminalart/assets/",
+    "soul.mjs",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "TRADEMARKS.md"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts && node scripts/postbuild-copy-schema.mjs",
+    "dev": "node soul.mjs",
+    "scry": "node soul.mjs",
+    "scry:bootstrap": "bash scripts/pull-install-scry.sh",
+    "backup:pass": "bash scripts/backup-pass.sh",
+    "agents:worktree": "bash scripts/agents/prepare-worktree.sh",
+    "agents:gates": "bash scripts/agents/run-gates.sh",
+    "agents:read-only-debug": "bash scripts/agents/read-only-debug.sh",
+    "agents:deep-audit-readonly": "bash scripts/agents/deep-audit-readonly.sh",
+    "agents:ship-check": "bash scripts/agents/ship-check.sh",
+    "release:ready": "bash scripts/release-ship.sh",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck",
+    "format": "echo \"No formatter configured yet; skipping.\"",
+    "format:fix": "echo \"No formatter configured yet; skipping.\"",
+    "soul": "node soul.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "enquirer": "^2.4.1",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsdown": "^0.4.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
