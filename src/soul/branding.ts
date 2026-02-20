@@ -79,7 +79,7 @@ const TEXT: readonly string[] = [
 const TEXT_W = 52;
 
 // ── Crystal ball — concentric shade rings for 3D depth ────────────────────────
-// 9 rows × 20 chars. Shade tiers build inward: ░ → ▒ → ▓ → ◉ (soul-eye).
+// 9 rows × 20 chars. Shade tiers build inward: ░ → ▒ → ▓.
 // The sphere tapers at top/bottom (7 active chars) and is widest in the
 // middle (15 active chars), giving a true spherical silhouette.
 const SPHERE: readonly string[] = [
@@ -87,7 +87,7 @@ const SPHERE: readonly string[] = [
   '    ░▒▒▒▒▒▒▒▒▒░     ',  //  4sp + 1+9+1     + 5sp  = 20
   '   ░▒▒▓▓▓▓▓▓▓▒▒░    ',  //  3sp + 1+2+7+2+1 + 4sp  = 20
   '  ░▒▒▓▓▓▓▓▓▓▓▓▒▒░   ',  //  2sp + 1+2+9+2+1 + 3sp  = 20
-  '  ░▒▓▓▓▓▓◉▓▓▓▓▓▒░   ',  //  2sp + eye row   + 3sp  = 20
+  '  ░▒▓▓▓▓▓▓▓▓▓▓▓▒░   ',  //  2sp + core row  + 3sp  = 20
   '  ░▒▒▓▓▓▓▓▓▓▓▓▒▒░   ',  //  mirror of row 3
   '   ░▒▒▓▓▓▓▓▓▓▒▒░    ',  //  mirror of row 2
   '    ░▒▒▒▒▒▒▒▒▒░     ',  //  mirror of row 1
@@ -109,14 +109,12 @@ const TAGLINE = '    presence.';
 const _vdim = chalk.hex('#1b5a0c');  // ░ very dim green glow
 const _dim  = chalk.hex('#3a9a1c');  // ▒ medium glow
 const _full = soulColor;             // ▓ brand green
-const _eye  = soulColor.bold;        // ◉ soul-eye (brightest)
 
 function _renderOrbLineCh(line: string): string {
   return [...line].map(ch => {
     if (ch === '░') return _vdim(ch);
     if (ch === '▒') return _dim(ch);
     if (ch === '▓') return _full(ch);
-    if (ch === '◉') return _eye(ch);
     if ('▄▀▐▌█'.includes(ch)) return soulColor(ch);
     return ch;
   }).join('');
@@ -160,7 +158,7 @@ export function getBanner(): string {
  *
  * Animation — crystal ball ignition:
  *   The orb is dark on first render. It then flickers between dark and fully
- *   lit (░▒▓◉ in gradient green), simulating the ball powering up.
+ *   lit (░▒▓ in gradient green), simulating the ball powering up.
  *   After the flicker sequence it settles to a steady glow.
  *
  * Falls back to static getBanner() in non-TTY environments.
@@ -177,7 +175,6 @@ export async function printBanner(): Promise<void> {
   const B1   = '\x1b[38;2;28;90;14m';       // ░ lit outer glow
   const B2   = '\x1b[38;2;55;165;28m';      // ▒ lit mid glow
   const B3   = '\x1b[38;2;74;246;38m';      // ▓ lit inner = brand green
-  const BEYE = '\x1b[1;38;2;200;255;140m';  // ◉ soul-eye (brightest)
   const R    = '\x1b[0m';
   const HIDE = '\x1b[?25l';
   const SHOW = '\x1b[?25h';
@@ -186,14 +183,13 @@ export async function printBanner(): Promise<void> {
 
   // ── Orb line renderer: lit=false → all dark, lit=true → full gradient ────────
   function renderOrbLine(line: string, lit: boolean): string {
-    const [outer, mid, inner, eye, block] = lit
-      ? [B1, B2, B3, BEYE, B3]
-      : [B0, B0, B0, B0, B0];
+    const [outer, mid, inner, block] = lit
+      ? [B1, B2, B3, B3]
+      : [B0, B0, B0, B0];
     return [...line].map(ch => {
       if (ch === '░') return outer + ch + R;
       if (ch === '▒') return mid   + ch + R;
       if (ch === '▓') return inner + ch + R;
-      if (ch === '◉') return eye   + ch + R;
       if ('▄▀▐▌█'.includes(ch)) return block + ch + R;
       return ch;
     }).join('');
