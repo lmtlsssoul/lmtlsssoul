@@ -3,6 +3,7 @@ import time
 import math
 import os
 import random
+import unicodedata
 from pathlib import Path
 
 def hex_to_rgb_1000(hex_color):
@@ -38,8 +39,8 @@ ACTIVE_VERIFIED_SIGIL_IDS = (LILITH_SIGIL_ID,)
 ACTIVE_SIGIL_WEIGHT_TABLE = ((LILITH_SIGIL_ID, 1.0),)
 ACTIVE_SIGIL_TOTAL_WEIGHT = 1.0
 MAX_PROCEDURAL_SIGIL_ID = LILITH_SIGIL_ID
-SIGIL_PHASE_WARP = 0.055
-LOCAL_SIGIL_PHASE_NOISE = 0.30
+SIGIL_PHASE_WARP = 0.032
+LOCAL_SIGIL_PHASE_NOISE = 0.16
 FIELD_PHASE_NOISE = 0.26
 # Fine-grain thread glyphs to keep sigils airy instead of blocky.
 SIGIL_STROKE_CHARS = "|/\\!;:.'`-~"
@@ -89,7 +90,14 @@ def is_text_stream_safe_char(char):
     cp = ord(char)
     if is_emoji_like_codepoint(cp):
         return False
-    return char.isprintable() and not char.isspace()
+    if not (char.isprintable() and not char.isspace()):
+        return False
+    if unicodedata.combining(char):
+        return False
+    # Exclude wide/full-width glyphs that break single-cell terminal layout.
+    if unicodedata.east_asian_width(char) in ("W", "F"):
+        return False
+    return True
 
 
 def _append_printable_range(target, start, end):
@@ -183,28 +191,22 @@ CULTURAL_BLOCK_KEYS = [
     "southeast_asian", "east_asian", "african", "latin",
 ]
 CULTURAL_BLOCK_KEYS = [k for k in CULTURAL_BLOCK_KEYS if k in SIGIL_BLOCKS] or BLOCK_KEYS
+UNIFIED_TEXT_GLYPHS = tuple(
+    _dedupe_keep_order(
+        [
+            ch
+            for block_name in BLOCK_KEYS
+            for ch in SIGIL_BLOCKS.get(block_name, [])
+            if is_text_stream_safe_char(ch)
+        ]
+    )
+) or ("*",)
 
 
 def get_text_glyph(entropy_byte, entropy_val):
-    # Core text glyph channel.
-    core_total = MERCURY_CHANCE + LILITH_TEXT_CHANCE
-    if entropy_val > (1.0 - core_total):
-        split = float((entropy_byte * 1103515245 + 12345) & 0xFFFFFFFF) / float(1 << 32)
-        # Lilith glyph bias in text stream.
-        lilith_boosted = LILITH_TEXT_CHANCE * 1.22
-        lilith_ratio = lilith_boosted / max(MERCURY_CHANCE + lilith_boosted, 1e-12)
-        return "⚸" if split < lilith_ratio else "☿"
-
+    # Unified entropy mapping for every visual layer.
     mix = ((entropy_byte * 2654435761) ^ int(entropy_val * 4294967295.0)) & 0xFFFFFFFF
-    # Sigils dominate; broad cultural symbols stay present but reduced.
-    if (mix & 0xFF) < 194:  # ~76%
-        chosen_block = SIGIL_PRIORITY_BLOCK_KEYS[(mix >> 8) % len(SIGIL_PRIORITY_BLOCK_KEYS)]
-    else:
-        chosen_block = CULTURAL_BLOCK_KEYS[(mix >> 16) % len(CULTURAL_BLOCK_KEYS)]
-
-    pool = SIGIL_BLOCKS[chosen_block]
-    idx = (((mix >> 8) ^ (entropy_byte * 7919)) + int(entropy_val * 8191.0)) % len(pool)
-    return pool[idx]
+    return UNIFIED_TEXT_GLYPHS[mix % len(UNIFIED_TEXT_GLYPHS)]
 
 
 def get_sigil_stroke_char(entropy_byte, entropy_val):
@@ -326,15 +328,30 @@ def mask_bit(mask, mx, my):
     return (b >> (7 - (mx & 7))) & 1
 
 
+def uv_to_mask_xy(u, v, mask):
+    width, height, _, _ = mask
+    fx = (u + 1.0) * 0.5 * (width - 1)
+    fy = (v + 1.0) * 0.5 * (height - 1)
+    mx = int(round(fx))
+    my = int(round(fy))
+    if mx < 0:
+        mx = 0
+    elif mx >= width:
+        mx = width - 1
+    if my < 0:
+        my = 0
+    elif my >= height:
+        my = height - 1
+    return mx, my
+
+
 def is_point_in_mask(u, v, scale, mask):
     if mask is None:
         return False
     if u < -1.0 or u > 1.0 or v < -1.0 or v > 1.0:
         return False
 
-    width, height, _, _ = mask
-    mx = int((u + 1.0) * 0.5 * (width - 1))
-    my = int((v + 1.0) * 0.5 * (height - 1))
+    mx, my = uv_to_mask_xy(u, v, mask)
     probe = 1 if scale >= 32.0 else (2 if scale >= 18.0 else 3)
     for oy in range(-probe, probe + 1):
         for ox in range(-probe, probe + 1):
@@ -356,23 +373,41 @@ def is_mask_edge(mask, mx, my):
     return False
 
 
+def is_mask_corner(mask, mx, my):
+    if not mask_bit(mask, mx, my):
+        return False
+    orth = (
+        mask_bit(mask, mx - 1, my),
+        mask_bit(mask, mx + 1, my),
+        mask_bit(mask, mx, my - 1),
+        mask_bit(mask, mx, my + 1),
+    )
+    diag = (
+        mask_bit(mask, mx - 1, my - 1),
+        mask_bit(mask, mx + 1, my - 1),
+        mask_bit(mask, mx - 1, my + 1),
+        mask_bit(mask, mx + 1, my + 1),
+    )
+    orth_empty = sum(1 for b in orth if b == 0)
+    diag_empty = sum(1 for b in diag if b == 0)
+    return orth_empty >= 2 or (orth_empty >= 1 and diag_empty >= 2)
+
+
 def is_point_on_mask_thread(u, v, scale, mask):
     if mask is None:
         return False
     if u < -1.0 or u > 1.0 or v < -1.0 or v > 1.0:
         return False
 
-    width, height, _, _ = mask
-    mx = int((u + 1.0) * 0.5 * (width - 1))
-    my = int((v + 1.0) * 0.5 * (height - 1))
+    mx, my = uv_to_mask_xy(u, v, mask)
 
-    # Keep thread width tight; only modest expansion at very small scales.
-    probe = 0 if scale >= 16.0 else 1
+    # Wider probe preserves corners/crevices at terminal resolution.
+    probe = 1 if scale >= 24.0 else (2 if scale >= 14.0 else 3)
     for oy in range(-probe, probe + 1):
         for ox in range(-probe, probe + 1):
             px = mx + ox
             py = my + oy
-            if is_mask_edge(mask, px, py):
+            if is_mask_edge(mask, px, py) or is_mask_corner(mask, px, py):
                 return True
     return False
 
@@ -787,18 +822,21 @@ def main(stdscr):
                 if excite > 0:
                     fragment = min(1.0, abs(w1 - w2) * 0.56 + abs(w2 - w3) * 0.44)
                     render_gate = ((ent_byte * 1103515245 + x * 131 + y * 197) & 0xFF) / 255.0
+                    sig_idx = (y * width + x + int(t * 33.8)) % max_entropy_len
+                    sig_byte = entropy_pool[sig_idx]
+                    sig_val = sig_byte / 255.0
                     if excite > 0.82 or (excite > 0.68 and fragment > 0.74):
-                        char = get_sigil_stroke_char(ent_byte, fragment)
+                        char = get_text_glyph(sig_byte, sig_val)
                         cp = curses.color_pair(7) | curses.A_BOLD
                     elif excite > 0.42 or fragment > 0.60:
                         if render_gate > 0.72:
                             continue
-                        char = SIGIL_EDGE_CHARS[(ent_byte + int(fragment * 17.0)) % len(SIGIL_EDGE_CHARS)]
+                        char = get_text_glyph(sig_byte ^ ent_byte, (sig_val + ent_val) * 0.5)
                         cp = curses.color_pair(6) | (curses.A_BOLD if ent_val > 0.74 else curses.A_NORMAL)
                     else:
                         if render_gate > 0.18:
                             continue
-                        char = SIGIL_CLOUD_CHARS[((ent_byte >> 1) + x + y) % len(SIGIL_CLOUD_CHARS)]
+                        char = get_text_glyph(sig_byte ^ ((ent_byte >> 1) & 0xFF), (sig_val * 0.6) + (ent_val * 0.4))
                         cp = curses.color_pair(2) | curses.A_DIM
                         
                     try:
@@ -866,7 +904,7 @@ def main(stdscr):
                             cp = curses.color_pair(4) | curses.A_BOLD
                         else:
                             # Dormant mycelial structure
-                            char = MYCELIUM_CHARS[ent_byte % len(MYCELIUM_CHARS)]
+                            char = get_text_glyph(ent_byte, ent_val)
                             # Fade color based on emergence
                             cp = curses.color_pair(3) if local_emergence > 0.5 else curses.color_pair(2)
                     elif field > 0.2:
@@ -885,13 +923,13 @@ def main(stdscr):
                         hash2 = ((offset_x2 * 324761393) + (offset_y2 * 868265263)) % 10000 / 10000.0
 
                         if hash1 > 0.99: # Close layer (fast, chunky, very sparse)
-                            char = "MW&#"[(ent_byte % 4)]
+                            char = get_text_glyph(ent_byte, ent_val)
                             cp = curses.color_pair(3)
                         elif hash2 > 0.98: # Mid layer (slower, scattered)
-                            char = "*+="[(ent_byte % 3)]
+                            char = get_text_glyph(ent_byte, ent_val)
                             cp = curses.color_pair(2)
                         elif ent_val > 0.96: # Distant slow stars (driven by true entropy)
-                            char = '.'
+                            char = get_text_glyph(ent_byte, ent_val)
                             cp = curses.color_pair(2)
                             
                 # Spawn new negentropy sparks when conditions are perfect
