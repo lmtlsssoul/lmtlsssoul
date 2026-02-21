@@ -964,9 +964,9 @@ export class SoulBirthPortal {
   private async captureToolKeys(): Promise<void> {
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
-      heading: 'Connectors: select tools/channels/services and configure API key or OAuth details.',
+      heading: 'Connectors: select tools/services and configure API key or OAuth details.',
       existingSecrets: this.toolKeySecrets,
-      allowedCategories: ['tool', 'channel', 'service'],
+      allowedCategories: ['tool', 'service'],
     });
     this.applyCredentialSetupResult(result);
     const providerAuth = (this.config['providerAuthSetup'] as {
@@ -978,7 +978,7 @@ export class SoulBirthPortal {
     this.config['toolKeys'] = {
       providers: Array.isArray(providerAuth.providers) ? providerAuth.providers : [],
       tools: result.selected.tools,
-      channels: result.selected.channels,
+      channels: [],
       services: result.selected.services,
       count: Object.keys(this.toolKeySecrets).length,
       storage: 'state/tool-keys.json',
@@ -1005,6 +1005,23 @@ export class SoulBirthPortal {
     const channels = result.selected.channels;
     this.config['channels'] = channels;
     this.config['channelCatalogLastRefreshed'] = result.catalogLastRefreshed;
+
+    const currentToolKeys = (this.config['toolKeys'] as {
+      providers?: string[];
+      tools?: string[];
+      channels?: string[];
+      services?: string[];
+      count?: number;
+      storage?: string;
+      providerModelSelections?: Record<string, string[]>;
+      catalogLastRefreshed?: string;
+    } | undefined) ?? {};
+    this.config['toolKeys'] = {
+      ...currentToolKeys,
+      channels,
+      count: Object.keys(this.toolKeySecrets).length,
+      catalogLastRefreshed: result.catalogLastRefreshed || currentToolKeys.catalogLastRefreshed,
+    };
 
     if (channels.length === 0) {
       success('No channels selected for synchronization.');
@@ -1224,7 +1241,7 @@ export class SoulBirthPortal {
     await this.probeSubstrateConnections();
     log('---');
 
-    log('Step 3/9: Tool Keys & Search Connectors (Optional)');
+    log('Step 3/9: Tool Keys & Service Connectors (Optional)');
     await this.captureToolKeys();
     log('---');
 

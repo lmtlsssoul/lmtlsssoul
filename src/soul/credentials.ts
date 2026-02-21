@@ -139,6 +139,8 @@ const PROVIDER_ID_ALIASES: Record<string, string> = {
   'z-ai': 'zai',
   'google-gemini': 'google',
   gemini: 'google',
+  'google-generative-ai': 'google',
+  'google-ai-studio': 'google',
   'open-ai': 'openai',
   'open-ai-codex': 'openai-codex',
   'github-copilot': 'github-copilot',
@@ -233,6 +235,12 @@ const BUILTIN_CREDENTIALS: readonly CredentialEntry[] = [
     requirements: [
       { env: 'GOOGLE_API_KEY', label: 'API Key', secret: true },
       { env: 'GEMINI_API_KEY', label: 'Gemini API Key (optional)', secret: true, optional: true },
+      {
+        env: 'GOOGLE_GENERATIVE_AI_API_KEY',
+        label: 'Google Generative AI API Key (optional)',
+        secret: true,
+        optional: true,
+      },
     ],
     source: 'builtin',
   },
@@ -331,10 +339,164 @@ const BUILTIN_CREDENTIALS: readonly CredentialEntry[] = [
     label: 'Slack',
     description: 'Slack channel',
     authModes: ['oauth'],
-    requirements: [{ env: 'SLACK_BOT_TOKEN', label: 'Bot Token', secret: true }],
+    requirements: [
+      { env: 'SLACK_BOT_TOKEN', label: 'Bot Token', secret: true },
+      { env: 'SLACK_APP_TOKEN', label: 'App Token (optional)', secret: true, optional: true },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_discord',
+    category: 'channel',
+    label: 'Discord',
+    description: 'Discord bot channel',
+    authModes: ['api_key'],
+    requirements: [{ env: 'DISCORD_BOT_TOKEN', label: 'Bot Token', secret: true }],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_line',
+    category: 'channel',
+    label: 'LINE',
+    description: 'LINE Messaging API channel',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'LINE_CHANNEL_ACCESS_TOKEN', label: 'Channel Access Token', secret: true },
+      { env: 'LINE_CHANNEL_SECRET', label: 'Channel Secret', secret: true },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_irc',
+    category: 'channel',
+    label: 'IRC',
+    description: 'IRC channel integration',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'IRC_HOST', label: 'IRC Host', secret: false },
+      { env: 'IRC_NICK', label: 'IRC Nick', secret: false },
+      { env: 'IRC_PORT', label: 'IRC Port (optional)', secret: false, optional: true },
+      { env: 'IRC_PASSWORD', label: 'IRC Password (optional)', secret: true, optional: true },
+      {
+        env: 'IRC_NICKSERV_PASSWORD',
+        label: 'NickServ Password (optional)',
+        secret: true,
+        optional: true,
+      },
+      {
+        env: 'IRC_NICKSERV_REGISTER_EMAIL',
+        label: 'NickServ Register Email (optional)',
+        secret: false,
+        optional: true,
+      },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_twitch',
+    category: 'channel',
+    label: 'Twitch',
+    description: 'Twitch chat channel',
+    authModes: ['oauth'],
+    requirements: [
+      { env: 'OPENCLAW_TWITCH_ACCESS_TOKEN', label: 'Access Token', secret: true },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_googlechat',
+    category: 'channel',
+    label: 'Google Chat',
+    description: 'Google Chat channel',
+    authModes: ['api_key'],
+    requirements: [
+      {
+        env: 'GOOGLE_CHAT_SERVICE_ACCOUNT',
+        label: 'Service Account JSON (optional)',
+        secret: true,
+        optional: true,
+      },
+      {
+        env: 'GOOGLE_CHAT_SERVICE_ACCOUNT_FILE',
+        label: 'Service Account JSON File (optional)',
+        secret: false,
+        optional: true,
+      },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_mattermost',
+    category: 'channel',
+    label: 'Mattermost',
+    description: 'Mattermost channel',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'MATTERMOST_BOT_TOKEN', label: 'Bot Token', secret: true },
+      { env: 'MATTERMOST_URL', label: 'Mattermost URL', secret: false },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_feishu',
+    category: 'channel',
+    label: 'Feishu',
+    description: 'Feishu/Lark channel',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'FEISHU_APP_ID', label: 'App ID', secret: false },
+      { env: 'FEISHU_APP_SECRET', label: 'App Secret', secret: true },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_zalo',
+    category: 'channel',
+    label: 'Zalo',
+    description: 'Zalo bot channel',
+    authModes: ['api_key'],
+    requirements: [{ env: 'ZALO_BOT_TOKEN', label: 'Bot Token', secret: true }],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_zalouser',
+    category: 'channel',
+    label: 'Zalo User',
+    description: 'Zalo user session channel',
+    authModes: ['api_key'],
+    requirements: [{ env: 'ZCA_PROFILE', label: 'Profile (optional)', secret: false, optional: true }],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_signal',
+    category: 'channel',
+    label: 'Signal',
+    description: 'Signal channel',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'SIGNAL_ACCOUNT', label: 'Signal Account (E.164)', secret: false, optional: true },
+      { env: 'SIGNAL_BASE_URL', label: 'Signal Base URL (optional)', secret: false, optional: true },
+    ],
+    source: 'builtin',
+  },
+  {
+    id: 'channel_whatsapp',
+    category: 'channel',
+    label: 'WhatsApp',
+    description: 'WhatsApp channel',
+    authModes: ['api_key'],
+    requirements: [
+      { env: 'WHATSAPP_AUTH_DIR', label: 'Auth Directory (optional)', secret: false, optional: true },
+    ],
     source: 'builtin',
   },
 ];
+
+const BUILTIN_PROVIDER_ENVS = new Set(
+  BUILTIN_CREDENTIALS
+    .filter((entry) => entry.category === 'provider')
+    .flatMap((entry) => entry.requirements.map((requirement) => requirement.env))
+);
 
 export function getCredentialCatalogPath(stateDir: string = getStateDir()): string {
   return path.join(stateDir, 'credential-catalog.json');
@@ -843,6 +1005,16 @@ function dedupeEntries(entries: CredentialEntry[]): CredentialEntry[] {
       continue;
     }
 
+    if (
+      normalized.category === 'service' &&
+      normalized.requirements.length > 0 &&
+      normalized.requirements.every((requirement) => BUILTIN_PROVIDER_ENVS.has(requirement.env))
+    ) {
+      // Prevent generic duplicate service rows for provider credentials
+      // (for example Gemini/Google API keys already represented by provider entries).
+      continue;
+    }
+
     const requirementKey = normalized.requirements
       .map((value) => value.env)
       .sort()
@@ -1180,6 +1352,13 @@ function entryFromProviderId(providerId: string, source: 'remote' | 'discovered'
 }
 
 function inferCategory(env: string, provider: string | null): CredentialCategory {
+  if (
+    env.startsWith('GOOGLE_CHAT_') ||
+    env.startsWith('LINE_CHANNEL_') ||
+    env.startsWith('OPENCLAW_TWITCH_')
+  ) {
+    return 'channel';
+  }
   const prefix = (env.split('_')[0] ?? '').toUpperCase();
   if (CHANNEL_ENV_PREFIXES.has(prefix) || env.includes('BOT_TOKEN')) {
     return 'channel';
