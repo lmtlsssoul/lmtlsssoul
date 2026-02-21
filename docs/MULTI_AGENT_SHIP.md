@@ -27,10 +27,17 @@ bash scripts/agents/run-gates.sh
 ```
 
 This enforces:
-1. terminal art lock integrity (`terminalart/ART_LOCK.sha256`)
-2. `pnpm run typecheck`
-3. `pnpm run test`
-4. `pnpm run build`
+1. whitepaper consultation gate (`../whitepaper.pdf`, canonical local source)
+2. terminal art lock integrity (`terminalart/ART_LOCK.sha256`)
+3. `pnpm run typecheck`
+4. `pnpm run test`
+5. `pnpm run build`
+
+Manual whitepaper check:
+
+```bash
+pnpm run agents:vision-gate
+```
 
 ## 2.5) Read-only debug rail (Gemini)
 
@@ -40,9 +47,10 @@ pnpm run agents:read-only-debug
 
 This enforces:
 1. repository state snapshot pre-check
-2. terminal art lock integrity
-3. no-emit typecheck
-4. repository state equality post-check
+2. whitepaper consultation gate
+3. terminal art lock integrity
+4. no-emit typecheck
+5. repository state equality post-check
 
 ## 2.6) Deep audit rail (Gemini 3.1 Pro, read-only)
 
@@ -56,11 +64,12 @@ Primary references:
 3. `/home/eebee/lmtlss_soul/report.md`
 
 This enforces:
-1. terminal art lock integrity
-2. typecheck
-3. tests
-4. build
-5. unchanged git status before/after
+1. whitepaper consultation gate
+2. terminal art lock integrity
+3. typecheck
+4. tests
+5. build
+6. unchanged git status before/after
 
 ## 3) Validate ship payload
 

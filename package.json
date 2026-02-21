@@ -38,6 +38,8 @@
     "scry:bootstrap": "bash scripts/pull-install-scry.sh",
     "backup:pass": "bash scripts/backup-pass.sh",
     "agents:worktree": "bash scripts/agents/prepare-worktree.sh",
+    "agents:vision-gate": "bash scripts/agents/vision-gate.sh --refresh-and-verify",
+    "agents:vision-gate:verify": "bash scripts/agents/vision-gate.sh --verify-fresh",
     "agents:gates": "bash scripts/agents/run-gates.sh",
     "agents:read-only-debug": "bash scripts/agents/read-only-debug.sh",
     "agents:deep-audit-readonly": "bash scripts/agents/deep-audit-readonly.sh",

@@ -6,6 +6,7 @@ cd "$ROOT"
 
 BEFORE_STATUS="$(git status --porcelain=v1)"
 
+bash scripts/agents/vision-gate.sh --refresh-and-verify
 bash scripts/agents/verify-art-lock.sh
 pnpm run typecheck
 

@@ -42,5 +42,6 @@ Prepared agent worktree.
 Next:
 1) cd "${WORKTREE_PATH}"
 2) pnpm install
-3) bash scripts/agents/run-gates.sh
+3) bash scripts/agents/vision-gate.sh --refresh-and-verify
+4) bash scripts/agents/run-gates.sh
 OUT

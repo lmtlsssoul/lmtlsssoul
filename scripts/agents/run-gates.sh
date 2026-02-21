@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+bash scripts/agents/vision-gate.sh --refresh-and-verify
 bash scripts/agents/verify-art-lock.sh
 pnpm run typecheck
 pnpm run test

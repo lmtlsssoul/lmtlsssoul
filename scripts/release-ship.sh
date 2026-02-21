@@ -12,6 +12,7 @@ if ! git remote get-url release >/dev/null 2>&1; then
 fi
 
 echo "Running release gates..."
+bash scripts/agents/vision-gate.sh --refresh-and-verify
 pnpm run typecheck
 pnpm run test
 pnpm run build
