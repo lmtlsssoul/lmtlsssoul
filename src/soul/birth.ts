@@ -55,10 +55,10 @@ export class SoulBirthPortal {
   private toolKeySecrets: Record<string, string> = {};
 
   constructor() {
-    log('\nBirth Portal\n');
+    log('Birth Portal');
     log('This setup flow initializes lmtlss soul.');
     warn('Press Ctrl+C to cancel the ceremony.');
-    log('\n---\n');
+    log('---');
   }
 
   private async prompt(question: string, initial?: string): Promise<string> {
@@ -915,7 +915,7 @@ export class SoulBirthPortal {
       },
     ];
     success('Core memories initialized: birthday + astrology chart imprint.');
-    log('\n---\n');
+    log('---');
   }
 
   private formatTimezoneOffset(value: Date): string {
@@ -934,17 +934,17 @@ export class SoulBirthPortal {
     log('Step 1/9: Soul Structure & Identity Rails');
     await this.initializeCoreMemories();
     this.initializeSoulStructureRails();
-    log('\n---\n');
+    log('---');
 
     log('Step 2/9: Provider Connection & Authentication');
     await this.captureSubstrateConfig();
     await this.captureProviderAuthAndModels();
     await this.probeSubstrateConnections();
-    log('\n---\n');
+    log('---');
 
     log('Step 3/9: Tool Keys & Search Connectors (Optional)');
     await this.captureToolKeys();
-    log('\n---\n');
+    log('---');
 
     log('Step 4/9: Model Discovery');
     log('Scanning authenticated substrates...');
@@ -962,7 +962,7 @@ export class SoulBirthPortal {
     } else if (liveDiscovered.length === 0) {
       warn('No live models were reachable during this scan. Showing cached model list for role assignment.');
     }
-    log('\n---\n');
+    log('---');
 
     log('Step 5/9: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
@@ -1063,7 +1063,7 @@ export class SoulBirthPortal {
 
     this.config['roleAssignments'] = roleAssignments;
     success('Agent role assignments stored.');
-    log('\n---\n');
+    log('---');
 
     log('Step 6/9: Channel Synchronization');
     this.config['channels'] = await this.prompt(
@@ -1071,7 +1071,7 @@ export class SoulBirthPortal {
       ''
     );
     success('Channel config captured.');
-    log('\n---\n');
+    log('---');
 
     log('Step 7/9: Treasury & Wallet Policy');
     this.config['treasuryPolicy'] = await this.prompt(
@@ -1079,18 +1079,18 @@ export class SoulBirthPortal {
       '{}'
     );
     success('Treasury policy captured.');
-    log('\n---\n');
+    log('---');
 
     log('Step 8/9: Identity, Name & Objective');
     this.config['soulName'] = await this.prompt('Name this soul');
     this.config['soulObjective'] = await this.prompt('Define the primary objective');
     success(`Soul named "${String(this.config['soulName'])}" with objective "${String(this.config['soulObjective'])}".`);
-    log('\n---\n');
+    log('---');
 
     log('Step 9/9: Initialization');
     await this.initializeState();
     success('Soul initialization complete.');
-    log('\n---\n');
+    log('---');
 
     success('Birth Portal complete.');
     log(`Soul "${String(this.config['soulName'])}" is initialized.`);
