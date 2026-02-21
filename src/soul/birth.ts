@@ -165,7 +165,7 @@ export class SoulBirthPortal {
   private async promptSecret(question: string): Promise<string> {
     try {
       const response: { value: string } = await enquirer.prompt({
-        type: 'password',
+        type: 'input',
         name: 'value',
         message: question,
         ...ENQUIRER_THEME,

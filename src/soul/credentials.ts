@@ -1334,7 +1334,7 @@ async function promptInput(message: string, initial?: string): Promise<string> {
 
 async function promptSecret(message: string): Promise<string> {
   const response: { value: string } = await enquirer.prompt({
-    type: 'password',
+    type: 'input',
     name: 'value',
     message,
     ...ENQUIRER_THEME,
