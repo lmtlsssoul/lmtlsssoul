@@ -87,15 +87,30 @@ else
   INSTALL_DIR="${HOME}/.lmtlss/src"
   if [[ -d "$INSTALL_DIR" ]]; then
     log "Updating existing installation at ${INSTALL_DIR}..."
+    git -C "$INSTALL_DIR" fetch origin main --depth=1
+    git -C "$INSTALL_DIR" checkout -B main origin/main
+    git -C "$INSTALL_DIR" reset --hard origin/main
+    git -C "$INSTALL_DIR" clean -fdx
     cd "$INSTALL_DIR"
-    git pull origin main
   else
     log "Cloning lmtlss soul..."
     mkdir -p "${HOME}/.lmtlss"
-    git clone https://github.com/lmtlsssoul/lmtlsssoul.git "$INSTALL_DIR"
+    git clone --depth=1 --branch main https://github.com/lmtlsssoul/lmtlsssoul.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
   fi
 fi
+
+INSTALLED_COMMIT="$(git rev-parse --short HEAD)"
+INSTALLED_REF="$(git rev-parse --abbrev-ref HEAD)"
+INSTALLED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+cat > ".lmtlss-build.json" <<EOF
+{
+  "repo": "https://github.com/lmtlsssoul/lmtlsssoul.git",
+  "ref": "${INSTALLED_REF}",
+  "commit": "${INSTALLED_COMMIT}",
+  "installedAt": "${INSTALLED_AT}"
+}
+EOF
 
 # ── Install dependencies ──────────────────────────────────────────────────────
 log "Installing dependencies..."
@@ -147,6 +162,18 @@ else
   warn "'soul' not in PATH. Added to ~/.local/bin/soul"
   warn "Add to PATH: export PATH=\"\$HOME/.local/bin:\$PATH\""
 fi
+
+# Always pin a local launcher to the updated install path for deterministic updates.
+mkdir -p "${HOME}/.local/bin"
+cat > "${HOME}/.local/bin/soul" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec node "$(pwd)/soul.mjs" "\$@"
+EOF
+chmod +x "${HOME}/.local/bin/soul"
+ok "Pinned launcher: ${HOME}/.local/bin/soul -> $(pwd)/soul.mjs"
+dim "Installed ref: ${INSTALLED_REF}"
+dim "Installed commit: ${INSTALLED_COMMIT}"
 
 # ── Setup Ollama (optional) ───────────────────────────────────────────────────
 echo ""

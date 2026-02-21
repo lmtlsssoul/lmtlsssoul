@@ -22,6 +22,7 @@ import { loadToolKeys, persistToolKeys, runCredentialSetupMenu } from '../soul/c
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import readline from 'node:readline';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -132,9 +133,17 @@ export async function main() {
 
       const graph = new GraphDB(stateDir);
       const archive = new ArchiveDB(stateDir);
+      const buildInfo = resolveBuildInfo();
 
       log('--- Soul Status ---');
       console.log(`State Dir: ${stateDir}`);
+      if (buildInfo) {
+        console.log(`Build Ref: ${buildInfo.ref}`);
+        console.log(`Build Commit: ${buildInfo.commit}`);
+        if (buildInfo.installedAt) {
+          console.log(`Build Installed At: ${buildInfo.installedAt}`);
+        }
+      }
       console.log(`Daemon: ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
       console.log(`Gateway: ${gatewayHealth.ok ? 'healthy' : 'unreachable'}`);
       if (gatewayHealth.detail) {
@@ -704,6 +713,35 @@ function resolveTerminalArtEntrypoint(): string {
   }
 
   throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.9.py).');
+}
+
+function resolveBuildInfo(): { ref: string; commit: string; installedAt?: string } | null {
+  const cwdCandidate = path.resolve(process.cwd(), '.lmtlss-build.json');
+  const homeCandidate = path.resolve(os.homedir(), '.lmtlss/src/.lmtlss-build.json');
+  const candidates = [cwdCandidate, homeCandidate];
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+    try {
+      const parsed = JSON.parse(fs.readFileSync(candidate, 'utf-8')) as {
+        ref?: unknown;
+        commit?: unknown;
+        installedAt?: unknown;
+      };
+      const ref = typeof parsed.ref === 'string' && parsed.ref.trim() ? parsed.ref.trim() : 'unknown';
+      const commit = typeof parsed.commit === 'string' && parsed.commit.trim() ? parsed.commit.trim() : 'unknown';
+      const installedAt = typeof parsed.installedAt === 'string' && parsed.installedAt.trim()
+        ? parsed.installedAt.trim()
+        : undefined;
+      return { ref, commit, installedAt };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
 
 function enterTerminalArtViewport(): () => void {

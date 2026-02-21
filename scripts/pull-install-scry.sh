@@ -4,6 +4,8 @@ set -euo pipefail
 REPO_URL="${SOUL_REPO_URL:-https://github.com/lmtlsssoul/lmtlsssoul.git}"
 REPO_REF="${SOUL_REPO_REF:-main}"
 INSTALL_DIR="${SOUL_INSTALL_DIR:-$HOME/.lmtlss/src}"
+LAUNCHER_DIR="${HOME}/.local/bin"
+LAUNCHER_PATH="${LAUNCHER_DIR}/soul"
 
 require_cmd() {
   local cmd="$1"
@@ -56,6 +58,18 @@ else
 fi
 
 cd "$INSTALL_DIR"
+INSTALLED_COMMIT="$(git rev-parse --short HEAD)"
+INSTALLED_REF="$(git rev-parse --abbrev-ref HEAD)"
+INSTALLED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+cat > "${INSTALL_DIR}/.lmtlss-build.json" <<EOF
+{
+  "repo": "${REPO_URL}",
+  "ref": "${INSTALLED_REF}",
+  "commit": "${INSTALLED_COMMIT}",
+  "installedAt": "${INSTALLED_AT}"
+}
+EOF
 
 if [[ "$PKG_MGR" == "pnpm" ]]; then
   pnpm install --frozen-lockfile || pnpm install
@@ -64,6 +78,18 @@ else
   npm install
   npm run build
 fi
+
+mkdir -p "$LAUNCHER_DIR"
+cat > "$LAUNCHER_PATH" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec node "${INSTALL_DIR}/soul.mjs" "\$@"
+EOF
+chmod +x "$LAUNCHER_PATH"
+
+echo "Installed ref: ${INSTALLED_REF}"
+echo "Installed commit: ${INSTALLED_COMMIT}"
+echo "Launcher pinned: ${LAUNCHER_PATH} -> ${INSTALL_DIR}/soul.mjs"
 
 # Launch directly when already attached to a TTY.
 if [[ -t 0 && -t 1 && -t 2 ]]; then
