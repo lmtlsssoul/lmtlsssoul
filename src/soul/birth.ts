@@ -1086,7 +1086,7 @@ export class SoulBirthPortal {
     log("Core Memory Setup: What's my birthday?");
     const mode = await this.promptSelect(
       'Begin the Great Work',
-      ['Wave Caduceus (swift)', 'Manual entry'],
+      ['Wave Caduceus (swift)', 'Manual enscription'],
       0
     );
 
