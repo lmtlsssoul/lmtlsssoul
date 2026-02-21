@@ -742,6 +742,8 @@ export class SoulBirthPortal {
   }
 
   public async startGenesis(): Promise<Record<string, unknown>> {
+    await this.initializeCoreMemories();
+
     log('Step 1/8: Substrate Connection & Authentication');
     await this.captureSubstrateConfig();
     log('Step 2 is independent from Step 1 probe results.');
@@ -886,10 +888,9 @@ export class SoulBirthPortal {
     success('Treasury policy captured.');
     log('\n---\n');
 
-    log('Step 7/8: Identity, Name, Objective & Core Memories');
+    log('Step 7/8: Identity, Name & Objective');
     this.config['soulName'] = await this.prompt('Name this soul');
     this.config['soulObjective'] = await this.prompt('Define the primary objective');
-    await this.initializeCoreMemories();
     success(`Soul named "${String(this.config['soulName'])}" with objective "${String(this.config['soulObjective'])}".`);
     log('\n---\n');
 
