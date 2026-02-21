@@ -32,6 +32,7 @@ export type CredentialCatalogState = {
   lastRefreshed: string;
   entries: CredentialEntry[];
   sources: string[];
+  providerModelHints?: Record<string, string[]>;
 };
 
 export type CredentialSetupResult = {
@@ -54,10 +55,89 @@ const DEFAULT_CREDENTIAL_CATEGORIES: CredentialCategory[] = [
 ];
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const OPENCLAW_DOCS_RAW_BASE = 'https://raw.githubusercontent.com/OpenClaw/openclaw/main/docs';
 const DEFAULT_REMOTE_CATALOG_TEXT_URLS = [
-  'https://raw.githubusercontent.com/OpenClaw/openclaw/main/docs/concepts/model-providers.md',
-  'https://raw.githubusercontent.com/OpenClaw/openclaw/main/docs/tools/web.md',
+  `${OPENCLAW_DOCS_RAW_BASE}/providers/index.md`,
+  `${OPENCLAW_DOCS_RAW_BASE}/concepts/model-providers.md`,
+  `${OPENCLAW_DOCS_RAW_BASE}/tools/index.md`,
+  `${OPENCLAW_DOCS_RAW_BASE}/tools/web.md`,
 ];
+const REMOTE_DISCOVERY_MAX_URLS = 96;
+
+const CHANNEL_ENV_PREFIXES = new Set([
+  'TELEGRAM',
+  'SLACK',
+  'DISCORD',
+  'WHATSAPP',
+  'SIGNAL',
+  'MSTEAMS',
+  'GOOGLECHAT',
+  'IRC',
+  'LINE',
+  'MATTERMOST',
+  'FEISHU',
+  'ZALO',
+  'TWITCH',
+]);
+
+const TOOL_ENV_PREFIXES = new Set([
+  'BRAVE',
+  'SERPER',
+  'TAVILY',
+  'SERPAPI',
+  'FIRECRAWL',
+  'GITHUB',
+  'EXA',
+  'PERPLEXITY',
+  'JINA',
+  'BROWSERBASE',
+  'PLAYWRIGHT',
+  'WOLFRAM',
+  'COHERE',
+  'NOTION',
+  'PINECONE',
+  'WEAVIATE',
+  'QDRANT',
+  'MILVUS',
+  'ELASTIC',
+]);
+
+const PROVIDER_ID_ALIASES: Record<string, string> = {
+  'x.ai': 'xai',
+  'x-ai': 'xai',
+  zai: 'zai',
+  'z.ai': 'zai',
+  'z-ai': 'zai',
+  'google-gemini': 'google',
+  gemini: 'google',
+  'open-ai': 'openai',
+  'open-ai-codex': 'openai-codex',
+  'github-copilot': 'github-copilot',
+  'vercel-ai-gateway': 'vercel-ai-gateway',
+  'cloudflare-ai-gateway': 'cloudflare-ai-gateway',
+};
+
+const NON_PROVIDER_SLUGS = new Set([
+  'providers',
+  'models',
+  'model',
+  'tools',
+  'tool',
+  'index',
+  'overview',
+  'concepts',
+  'gateway',
+  'help',
+  'docs',
+  'openclaw',
+  'api',
+]);
+
+type RemoteCatalogDiscovery = {
+  entries: CredentialEntry[];
+  providerModelHints: Record<string, string[]>;
+  fetchedUrls: string[];
+};
 
 const BUILTIN_CREDENTIALS: readonly CredentialEntry[] = [
   // Providers
@@ -308,18 +388,22 @@ export async function refreshCredentialCatalog(
   existing?: CredentialCatalogState
 ): Promise<CredentialCatalogState> {
   const discovered = discoverCredentialEntriesFromSource();
-  const remote = await discoverCredentialEntriesFromRemoteText();
+  const remoteDiscovery = await discoverCredentialEntriesFromRemoteText();
 
-  const deduped = dedupeEntries([...BUILTIN_CREDENTIALS, ...discovered, ...remote]);
+  const deduped = dedupeEntries([...BUILTIN_CREDENTIALS, ...discovered, ...remoteDiscovery.entries]);
   const next: CredentialCatalogState = {
     lastRefreshed: new Date().toISOString(),
     entries: deduped,
     sources: [
       'builtin',
       'local_source_scan',
-      ...(remote.length > 0 ? ['remote_text_scan'] : []),
+      ...(remoteDiscovery.entries.length > 0 ? ['remote_text_scan'] : []),
       ...(existing?.sources ?? []),
-    ],
+    ].concat(remoteDiscovery.fetchedUrls.map((url) => `remote:${url}`)),
+    providerModelHints:
+      Object.keys(remoteDiscovery.providerModelHints).length > 0
+        ? remoteDiscovery.providerModelHints
+        : (existing?.providerModelHints ?? {}),
   };
   saveCredentialCatalog(next, stateDir);
   return next;
@@ -410,10 +494,14 @@ export async function runCredentialSetupMenu(options?: {
       }
 
       if (entry.category === 'provider') {
-        selected.providers.add(entry.provider ?? entry.label);
         const providerId = normalizeProviderId(entry.provider ?? entry.label);
+        selected.providers.add(providerId ?? entry.provider ?? entry.label);
         if (providerId) {
-          const modelSelections = await selectModelsForProvider(providerId, stateDir);
+          const modelSelections = await selectModelsForProvider(
+            providerId,
+            stateDir,
+            catalog.providerModelHints
+          );
           if (modelSelections.length > 0) {
             providerModelSelections[providerId] = modelSelections;
           }
@@ -452,16 +540,16 @@ export async function runProviderCredentialSetupMenu(options?: {
   const grouped = groupByCategory(catalog.entries);
   const allowSet = new Set(
     (options?.providerAllowlist ?? [])
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean)
+      .map((value) => normalizeProviderId(value))
+      .filter((value): value is string => Boolean(value))
   );
 
   const providerEntries = grouped.provider.filter((entry) => {
     if (allowSet.size === 0) {
       return true;
     }
-    const provider = (entry.provider ?? '').trim().toLowerCase();
-    return provider.length > 0 && allowSet.has(provider);
+    const provider = normalizeProviderId(entry.provider ?? entry.label);
+    return typeof provider === 'string' && provider.length > 0 && allowSet.has(provider);
   });
   const secrets: Record<string, string> = {
     ...(options?.existingSecrets ?? {}),
@@ -504,12 +592,16 @@ export async function runProviderCredentialSetupMenu(options?: {
       continue;
     }
 
-    selectedProviders.add(entry.provider ?? entry.label);
     const providerId = normalizeProviderId(entry.provider ?? entry.label);
+    selectedProviders.add(providerId ?? entry.provider ?? entry.label);
     if (!providerId) {
       continue;
     }
-    const modelSelections = await selectModelsForProvider(providerId, stateDir);
+    const modelSelections = await selectModelsForProvider(
+      providerId,
+      stateDir,
+      catalog.providerModelHints
+    );
     if (modelSelections.length > 0) {
       providerModelSelections[providerId] = modelSelections;
     }
@@ -528,8 +620,12 @@ export async function runProviderCredentialSetupMenu(options?: {
   };
 }
 
-async function selectModelsForProvider(provider: SubstrateId, stateDir: string): Promise<string[]> {
-  const models = await getProviderModels(provider, stateDir);
+async function selectModelsForProvider(
+  provider: string,
+  stateDir: string,
+  providerHints?: Record<string, string[]>
+): Promise<string[]> {
+  const models = await getProviderModels(provider, stateDir, providerHints);
   if (models.length === 0) {
     return [];
   }
@@ -539,7 +635,12 @@ async function selectModelsForProvider(provider: SubstrateId, stateDir: string):
   );
 }
 
-async function getProviderModels(provider: SubstrateId, stateDir: string): Promise<string[]> {
+async function getProviderModels(
+  provider: string,
+  stateDir: string,
+  providerHints?: Record<string, string[]>
+): Promise<string[]> {
+  const normalizedProvider = normalizeProviderId(provider) ?? provider.trim().toLowerCase();
   let registry = loadRegistryState(stateDir);
   if (!registry || isStale(registry.lastRefreshed, ONE_DAY_MS)) {
     try {
@@ -550,10 +651,13 @@ async function getProviderModels(provider: SubstrateId, stateDir: string): Promi
     }
   }
 
-  const models = (registry?.models ?? [])
-    .filter((model) => model.substrate === provider && !model.stale)
+  const substrateId = toSubstrateId(normalizedProvider);
+  const liveModels = (registry?.models ?? [])
+    .filter((model) => substrateId != null && model.substrate === substrateId && !model.stale)
     .map((model) => model.modelId);
-  return Array.from(new Set(models)).sort((a, b) => a.localeCompare(b));
+  const hintedModels = providerHints?.[normalizedProvider] ?? [];
+
+  return Array.from(new Set([...liveModels, ...hintedModels])).sort((a, b) => a.localeCompare(b));
 }
 
 async function configureCredentialEntry(
@@ -691,6 +795,7 @@ function entryToChoiceLabel(entry: CredentialEntry): string {
 function dedupeEntries(entries: CredentialEntry[]): CredentialEntry[] {
   const byId = new Map<string, CredentialEntry>();
   const byRequirement = new Map<string, string>();
+  const byProvider = new Map<string, string>();
 
   for (const entry of entries) {
     const normalized = normalizeEntry(entry);
@@ -704,6 +809,27 @@ function dedupeEntries(entries: CredentialEntry[]): CredentialEntry[] {
       .join('|');
     if (requirementKey && byRequirement.has(requirementKey)) {
       continue;
+    }
+
+    if (normalized.category === 'provider') {
+      const providerKey = normalizeProviderId(normalized.provider ?? normalized.label);
+      if (providerKey) {
+        const existingId = byProvider.get(providerKey);
+        if (existingId) {
+          const existing = byId.get(existingId);
+          const existingIsBuiltin = existing?.source === 'builtin';
+          const incomingIsBuiltin = normalized.source === 'builtin';
+          if (existingIsBuiltin && !incomingIsBuiltin) {
+            continue;
+          }
+          if (incomingIsBuiltin) {
+            byId.delete(existingId);
+          } else {
+            continue;
+          }
+        }
+        byProvider.set(providerKey, normalized.id);
+      }
     }
 
     byId.set(normalized.id, normalized);
@@ -772,24 +898,41 @@ function discoverCredentialEntriesFromSource(): CredentialEntry[] {
   return discovered;
 }
 
-async function discoverCredentialEntriesFromRemoteText(): Promise<CredentialEntry[]> {
+async function discoverCredentialEntriesFromRemoteText(): Promise<RemoteCatalogDiscovery> {
   const urls = resolveRemoteCatalogTextUrls();
   if (urls.length === 0) {
-    return [];
+    return {
+      entries: [],
+      providerModelHints: {},
+      fetchedUrls: [],
+    };
   }
 
   const envNames = new Set<string>();
-  for (const url of urls) {
+  const providerIds = new Set<string>();
+  const providerModelHints = new Map<string, Set<string>>();
+  const fetchedUrls = new Set<string>();
+  const queue: string[] = [...urls];
+  const seen = new Set<string>();
+
+  while (queue.length > 0 && seen.size < REMOTE_DISCOVERY_MAX_URLS) {
+    const candidate = queue.shift() ?? '';
+    const url = normalizeRemoteCatalogUrl(candidate);
+    if (!url || seen.has(url)) {
+      continue;
+    }
+    seen.add(url);
+
     try {
       const text = await requestText(url);
-      const matches = text.matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g);
-      for (const match of matches) {
-        const token = match[1]?.trim().toUpperCase();
-        if (!token) {
-          continue;
-        }
-        if (looksCredentialLike(token)) {
-          envNames.add(token);
+      fetchedUrls.add(url);
+      collectCredentialEnvTokensFromText(text, envNames);
+      collectProviderIdsFromText(text, providerIds);
+      collectProviderModelHintsFromText(text, providerModelHints);
+      const linkedUrls = extractLinkedRemoteCatalogUrls(text);
+      for (const linkedUrl of linkedUrls) {
+        if (!seen.has(linkedUrl)) {
+          queue.push(linkedUrl);
         }
       }
     } catch {
@@ -801,7 +944,33 @@ async function discoverCredentialEntriesFromRemoteText(): Promise<CredentialEntr
   for (const env of envNames) {
     remote.push(entryFromEnvName(env, 'remote'));
   }
-  return remote;
+
+  const builtinProviders = new Set(
+    BUILTIN_CREDENTIALS
+      .filter((entry) => entry.category === 'provider')
+      .map((entry) => normalizeProviderId(entry.provider ?? entry.label))
+      .filter((value): value is string => Boolean(value))
+  );
+  for (const providerId of providerIds) {
+    if (builtinProviders.has(providerId)) {
+      continue;
+    }
+    remote.push(entryFromProviderId(providerId, 'remote'));
+  }
+
+  const providerModelHintsObject: Record<string, string[]> = {};
+  for (const [providerId, models] of providerModelHints.entries()) {
+    if (models.size === 0) {
+      continue;
+    }
+    providerModelHintsObject[providerId] = Array.from(models).sort((a, b) => a.localeCompare(b));
+  }
+
+  return {
+    entries: remote,
+    providerModelHints: providerModelHintsObject,
+    fetchedUrls: Array.from(fetchedUrls),
+  };
 }
 
 function resolveRemoteCatalogTextUrls(): string[] {
@@ -810,9 +979,103 @@ function resolveRemoteCatalogTextUrls(): string[] {
     .map((value) => value.trim())
     .filter(Boolean);
   if (configured.length > 0) {
-    return configured;
+    return configured
+      .map((value) => normalizeRemoteCatalogUrl(value))
+      .filter((value): value is string => Boolean(value));
   }
   return DEFAULT_REMOTE_CATALOG_TEXT_URLS;
+}
+
+function normalizeRemoteCatalogUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const normalizedPath = trimmed.replace(/^\/+/, '');
+  if (!normalizedPath.endsWith('.md')) {
+    return `${OPENCLAW_DOCS_RAW_BASE}/${normalizedPath}.md`;
+  }
+  return `${OPENCLAW_DOCS_RAW_BASE}/${normalizedPath}`;
+}
+
+function collectCredentialEnvTokensFromText(text: string, envNames: Set<string>): void {
+  const matches = text.matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g);
+  for (const match of matches) {
+    const token = match[1]?.trim().toUpperCase();
+    if (!token) {
+      continue;
+    }
+    if (looksCredentialLike(token)) {
+      envNames.add(token);
+    }
+  }
+}
+
+function collectProviderIdsFromText(text: string, providerIds: Set<string>): void {
+  const providerFromLabelMatches = text.matchAll(/Provider:\s*`([^`]+)`/gi);
+  for (const match of providerFromLabelMatches) {
+    const normalized = normalizeProviderId(match[1] ?? '');
+    if (normalized && isLikelyProviderId(normalized)) {
+      providerIds.add(normalized);
+    }
+  }
+
+  const providerFromLinkMatches = text.matchAll(/\/providers\/([a-z0-9][a-z0-9.-]*)/gi);
+  for (const match of providerFromLinkMatches) {
+    const normalized = normalizeProviderId(match[1] ?? '');
+    if (normalized && isLikelyProviderId(normalized)) {
+      providerIds.add(normalized);
+    }
+  }
+}
+
+function collectProviderModelHintsFromText(text: string, providerModelHints: Map<string, Set<string>>): void {
+  const modelRefMatches = text.matchAll(/`([a-z0-9][a-z0-9.-]{1,63})\/([a-z0-9][a-z0-9._:+-]{1,255})`/gi);
+  for (const match of modelRefMatches) {
+    const providerId = normalizeProviderId(match[1] ?? '');
+    const modelId = (match[2] ?? '').trim();
+    if (!providerId || !modelId || !isLikelyProviderId(providerId)) {
+      continue;
+    }
+    const bucket = providerModelHints.get(providerId) ?? new Set<string>();
+    bucket.add(modelId);
+    providerModelHints.set(providerId, bucket);
+  }
+}
+
+function extractLinkedRemoteCatalogUrls(text: string): string[] {
+  const out = new Set<string>();
+  const linkMatches = text.matchAll(/\[[^\]]+\]\((\/[^)]+)\)/g);
+  for (const match of linkMatches) {
+    const rawLink = match[1] ?? '';
+    const link = rawLink.split('#')[0]?.split('?')[0]?.trim() ?? '';
+    if (!link.startsWith('/')) {
+      continue;
+    }
+    const segments = link.replace(/^\/+/, '').split('/').filter(Boolean);
+    const root = segments[0] ?? '';
+    if (root !== 'providers' && root !== 'tools') {
+      continue;
+    }
+    const slug = segments[1];
+    const suffix = slug ? `${root}/${slug}.md` : `${root}/index.md`;
+    out.add(`${OPENCLAW_DOCS_RAW_BASE}/${suffix}`);
+  }
+  return Array.from(out);
+}
+
+function isLikelyProviderId(providerId: string): boolean {
+  const normalized = providerId.trim().toLowerCase();
+  if (!normalized || normalized.length < 2) {
+    return false;
+  }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(normalized)) {
+    return false;
+  }
+  return !NON_PROVIDER_SLUGS.has(normalized);
 }
 
 function entryFromEnvName(env: string, source: 'remote' | 'discovered'): CredentialEntry {
@@ -825,7 +1088,14 @@ function entryFromEnvName(env: string, source: 'remote' | 'discovered'): Credent
   return {
     id: `${source}_${env.toLowerCase()}`,
     category,
-    label: category === 'provider' ? label : `${label} ${category === 'tool' ? 'Tool' : 'Service'}`,
+    label:
+      category === 'provider'
+        ? label
+        : category === 'tool'
+        ? `${label} Tool`
+        : category === 'channel'
+        ? `${label} Channel`
+        : `${label} Service`,
     provider: category === 'provider' ? (provider ?? undefined) : undefined,
     description: `Discovered from ${source === 'remote' ? 'remote catalog scan' : 'local source scan'}`,
     authModes,
@@ -840,21 +1110,77 @@ function entryFromEnvName(env: string, source: 'remote' | 'discovered'): Credent
   };
 }
 
-function inferCategory(env: string, provider: SubstrateId | null): CredentialCategory {
-  if (provider) {
-    return 'provider';
-  }
-  if (env.includes('BOT_TOKEN') || env.includes('SLACK') || env.includes('DISCORD') || env.includes('TELEGRAM')) {
+function entryFromProviderId(providerId: string, source: 'remote' | 'discovered'): CredentialEntry {
+  const normalizedProvider = normalizeProviderId(providerId) ?? providerId.trim().toLowerCase();
+  const envToken = normalizeEnvToken(normalizedProvider);
+
+  return {
+    id: `${source}_provider_${normalizedProvider}`,
+    category: 'provider',
+    label: toTitleCase(normalizedProvider.replace(/-/g, '_')),
+    provider: normalizedProvider,
+    description: `Discovered provider catalog entry (${source === 'remote' ? 'remote scan' : 'local scan'})`,
+    authModes: ['api_key', 'oauth'],
+    requirements: [
+      {
+        env: `${envToken}_API_KEY`,
+        label: 'API Key',
+        secret: true,
+        optional: true,
+      },
+      {
+        env: `${envToken}_OAUTH_TOKEN`,
+        label: 'OAuth Token',
+        secret: true,
+        optional: true,
+      },
+    ],
+    source,
+  };
+}
+
+function inferCategory(env: string, provider: string | null): CredentialCategory {
+  const prefix = (env.split('_')[0] ?? '').toUpperCase();
+  if (CHANNEL_ENV_PREFIXES.has(prefix) || env.includes('BOT_TOKEN')) {
     return 'channel';
   }
-  if (env.includes('BRAVE') || env.includes('SERPER') || env.includes('TAVILY') || env.includes('GITHUB')) {
+  if (TOOL_ENV_PREFIXES.has(prefix)) {
     return 'tool';
+  }
+  if (provider) {
+    return 'provider';
   }
   return 'service';
 }
 
-function normalizeProviderId(value: string): SubstrateId | null {
-  const normalized = value.trim().toLowerCase();
+function normalizeProviderId(value: string): string | null {
+  const lowered = value
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, '-')
+    .replace(/\.+/g, '.')
+    .replace(/[^a-z0-9.-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!lowered) {
+    return null;
+  }
+
+  const alias = PROVIDER_ID_ALIASES[lowered];
+  const normalized = alias ?? lowered;
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(normalized)) {
+    return null;
+  }
+  if (NON_PROVIDER_SLUGS.has(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+function toSubstrateId(value: string): SubstrateId | null {
+  const normalized = normalizeProviderId(value);
+  if (!normalized) {
+    return null;
+  }
   if (normalized === 'openai') return 'openai';
   if (normalized === 'anthropic') return 'anthropic';
   if (normalized === 'xai') return 'xai';

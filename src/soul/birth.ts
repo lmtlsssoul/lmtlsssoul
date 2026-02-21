@@ -305,8 +305,6 @@ export class SoulBirthPortal {
       [
         'Auto detect (recommended)',
         'Manual substrate selection',
-        'Import from existing birth-config.json',
-        'Manual JSON entry (advanced)',
       ],
       0
     );
@@ -328,65 +326,13 @@ export class SoulBirthPortal {
       success(`Substrate config captured (${selected.join(', ')}).`);
       return;
     }
-
-    if (choice === 'Import from existing birth-config.json') {
-      const importPath = await this.prompt(
-        'Path to existing birth-config.json',
-        path.join(getStateDir(), 'birth-config.json')
-      );
-
-      try {
-        const raw = fs.readFileSync(importPath, 'utf-8');
-        const parsed = JSON.parse(raw) as Record<string, unknown>;
-        const imported = parsed.substrateConfig;
-        if (imported && typeof imported === 'object' && !Array.isArray(imported)) {
-          this.config['substrateConfig'] = imported;
-          success(`Imported substrate config from ${importPath}.`);
-          return;
-        }
-        warn('No usable substrateConfig found in that file; falling back to auto setup.');
-      } catch (err) {
-        warn(`Could not import substrate config (${err instanceof Error ? err.message : 'unknown error'}).`);
-        warn('Falling back to auto setup.');
-      }
-
-      this.config['substrateConfig'] = {
-        ...(await this.buildAutoSubstrateConfig()),
-        mode: 'auto',
-      };
-      success('Substrate config auto-initialized from runtime profile.');
-      return;
-    }
-
-    const rawManual = await this.prompt('Enter substrate config JSON', '{}');
-    try {
-      this.config['substrateConfig'] = this.parseJsonObject(rawManual, 'Substrate config');
-      success('Substrate config captured.');
-    } catch (err) {
-      warn(err instanceof Error ? err.message : 'Invalid substrate JSON.');
-      warn('Falling back to auto setup.');
-      this.config['substrateConfig'] = {
-        ...(await this.buildAutoSubstrateConfig()),
-        mode: 'auto',
-      };
-      success('Substrate config auto-initialized from runtime profile.');
-    }
+    warn('Unknown setup selection. Falling back to auto detection.');
+    this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
+    success('Substrate config auto-initialized from runtime profile.');
   }
 
   private buildAutoEnabledSubstrates(): SubstrateId[] {
-    const enabled: SubstrateId[] = ['ollama'];
-
-    if ((process.env.OPENAI_API_KEY ?? '').trim()) {
-      enabled.push('openai');
-    }
-    if ((process.env.ANTHROPIC_API_KEY ?? '').trim() || (process.env.ANTHROPIC_OAUTH_TOKEN ?? '').trim()) {
-      enabled.push('anthropic');
-    }
-    if ((process.env.XAI_API_KEY ?? '').trim()) {
-      enabled.push('xai');
-    }
-
-    return enabled;
+    return ['ollama', 'openai', 'anthropic', 'xai'];
   }
 
   private async promptSubstrateSelection(defaults: SubstrateId[]): Promise<SubstrateId[]> {
@@ -479,6 +425,140 @@ export class SoulBirthPortal {
     }
 
     return base;
+  }
+
+  private async detectAutoBirthGeoProfile(currentTime: Date): Promise<{
+    location: string;
+    latitude: number;
+    longitude: number;
+    timezoneLabel?: string;
+    timezoneOffset?: string;
+  } | null> {
+    const endpoints = [
+      { provider: 'ipapi', url: 'https://ipapi.co/json/' },
+      { provider: 'ipinfo', url: 'https://ipinfo.io/json' },
+    ];
+
+    for (const endpoint of endpoints) {
+      const payload = await this.fetchJson(endpoint.url, 1500);
+      if (!payload) {
+        continue;
+      }
+
+      const coordinates = this.readCoordinates(payload);
+      if (!coordinates) {
+        continue;
+      }
+
+      const city = this.readString(payload, ['city']);
+      const region = this.readString(payload, ['region', 'region_name']);
+      const country = this.readString(payload, ['country_name', 'country']);
+      const timezoneLabel = this.readString(payload, ['timezone']) ?? undefined;
+      const timezoneOffset = timezoneLabel
+        ? this.resolveTimezoneOffsetFromIana(timezoneLabel, currentTime) ?? undefined
+        : undefined;
+      const locationParts = [city, region, country].filter((value): value is string => Boolean(value));
+      const location = locationParts.length > 0
+        ? locationParts.join(', ')
+        : `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)} (${endpoint.provider})`;
+
+      return {
+        location,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        timezoneLabel,
+        timezoneOffset,
+      };
+    }
+
+    return null;
+  }
+
+  private readCoordinates(payload: Record<string, unknown>): { latitude: number; longitude: number } | null {
+    const directLatitude = this.readNumber(payload, ['latitude', 'lat']);
+    const directLongitude = this.readNumber(payload, ['longitude', 'lon', 'lng']);
+    if (directLatitude != null && directLongitude != null) {
+      if (directLatitude >= -90 && directLatitude <= 90 && directLongitude >= -180 && directLongitude <= 180) {
+        return {
+          latitude: directLatitude,
+          longitude: directLongitude,
+        };
+      }
+    }
+
+    const loc = this.readString(payload, ['loc']);
+    if (!loc) {
+      return null;
+    }
+    const parts = loc.split(',').map((value) => value.trim());
+    if (parts.length !== 2) {
+      return null;
+    }
+    const latitude = Number(parts[0]);
+    const longitude = Number(parts[1]);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return null;
+    }
+    return { latitude, longitude };
+  }
+
+  private readNumber(payload: Record<string, unknown>, keys: string[]): number | null {
+    for (const key of keys) {
+      const value = payload[key];
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+      }
+      if (typeof value === 'string') {
+        const parsed = Number(value.trim());
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  }
+
+  private resolveTimezoneOffsetFromIana(timezone: string, at: Date): string | null {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZoneName: 'shortOffset',
+      });
+      const part = formatter.formatToParts(at).find((entry) => entry.type === 'timeZoneName')?.value ?? '';
+      if (!part) {
+        return null;
+      }
+      if (part === 'GMT' || part === 'UTC') {
+        return 'Z';
+      }
+      const match = part.match(/(?:GMT|UTC)([+-]\d{1,2})(?::?(\d{2}))?/i);
+      if (!match) {
+        return null;
+      }
+      const signedHour = Number(match[1]);
+      if (!Number.isFinite(signedHour)) {
+        return null;
+      }
+      const minute = match[2] ? Number(match[2]) : 0;
+      if (!Number.isFinite(minute)) {
+        return null;
+      }
+      const sign = signedHour >= 0 ? '+' : '-';
+      const hh = String(Math.abs(signedHour)).padStart(2, '0');
+      const mm = String(Math.abs(minute)).padStart(2, '0');
+      if (hh === '00' && mm === '00') {
+        return 'Z';
+      }
+      return `${sign}${hh}:${mm}`;
+    } catch {
+      return null;
+    }
   }
 
   private async fetchJson(url: string, timeoutMs: number): Promise<Record<string, unknown> | null> {
@@ -659,7 +739,6 @@ export class SoulBirthPortal {
       stateDir: getStateDir(),
       heading: 'Provider auth + models: select provider(s), configure API key/OAuth, then choose models.',
       existingSecrets: this.toolKeySecrets,
-      providerAllowlist: this.getEnabledSubstratesFromConfig(),
     });
     this.applyCredentialSetupResult(result);
 
@@ -737,7 +816,18 @@ export class SoulBirthPortal {
       birthLatitude = 0;
       birthLongitude = 0;
       birthLocation = `Auto runtime profile (${birthTimezoneLabel})`;
-      success('Auto core memory seeded from system clock and timezone.');
+
+      const geoProfile = await this.detectAutoBirthGeoProfile(now);
+      if (geoProfile) {
+        birthLatitude = geoProfile.latitude;
+        birthLongitude = geoProfile.longitude;
+        birthLocation = geoProfile.location;
+        birthTimezoneLabel = geoProfile.timezoneLabel ?? birthTimezoneLabel;
+        normalizedTimezone = geoProfile.timezoneOffset ?? normalizedTimezone;
+        success('Auto core memory seeded from system clock + IP geo profile.');
+      } else {
+        success('Auto core memory seeded from system clock and timezone.');
+      }
     } else {
       birthDate = await this.promptValidated(
         'Enter birthdate to encode (YYYY-MM-DD)',
@@ -838,9 +928,8 @@ export class SoulBirthPortal {
   }
 
   public async startGenesis(): Promise<Record<string, unknown>> {
-    await this.initializeCoreMemories();
-
     log('Step 1/9: Soul Structure & Identity Rails');
+    await this.initializeCoreMemories();
     this.initializeSoulStructureRails();
     log('\n---\n');
 
