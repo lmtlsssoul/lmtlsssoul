@@ -623,14 +623,6 @@ export class SoulBirthPortal {
   }
 
   private async captureToolKeys(): Promise<void> {
-    const providerResult = await runProviderCredentialSetupMenu({
-      stateDir: getStateDir(),
-      heading: 'Providers: select provider(s), choose API key/OAuth, then select relevant models.',
-      existingSecrets: this.toolKeySecrets,
-      providerAllowlist: this.getEnabledSubstratesFromConfig(),
-    });
-    this.applyCredentialSetupResult(providerResult);
-
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
       heading: 'Connectors: select tools/channels/services and configure API key or OAuth details.',
@@ -638,38 +630,21 @@ export class SoulBirthPortal {
       allowedCategories: ['tool', 'channel', 'service'],
     });
     this.applyCredentialSetupResult(result);
-
-    const providerModelSelections: Record<string, string[]> = {
-      ...providerResult.providerModelSelections,
-      ...result.providerModelSelections,
-    };
-
-    const providers = new Set<string>([
-      ...providerResult.selected.providers,
-      ...result.selected.providers,
-    ]);
-    const tools = new Set<string>([
-      ...providerResult.selected.tools,
-      ...result.selected.tools,
-    ]);
-    const channels = new Set<string>([
-      ...providerResult.selected.channels,
-      ...result.selected.channels,
-    ]);
-    const services = new Set<string>([
-      ...providerResult.selected.services,
-      ...result.selected.services,
-    ]);
+    const providerAuth = (this.config['providerAuthSetup'] as {
+      providers?: string[];
+      providerModelSelections?: Record<string, string[]>;
+      catalogLastRefreshed?: string;
+    } | undefined) ?? {};
 
     this.config['toolKeys'] = {
-      providers: Array.from(providers),
-      tools: Array.from(tools),
-      channels: Array.from(channels),
-      services: Array.from(services),
+      providers: Array.isArray(providerAuth.providers) ? providerAuth.providers : [],
+      tools: result.selected.tools,
+      channels: result.selected.channels,
+      services: result.selected.services,
       count: Object.keys(this.toolKeySecrets).length,
       storage: 'state/tool-keys.json',
-      providerModelSelections,
-      catalogLastRefreshed: result.catalogLastRefreshed || providerResult.catalogLastRefreshed,
+      providerModelSelections: providerAuth.providerModelSelections ?? {},
+      catalogLastRefreshed: result.catalogLastRefreshed || providerAuth.catalogLastRefreshed,
     };
 
     if (Object.keys(this.toolKeySecrets).length === 0) {
@@ -700,6 +675,33 @@ export class SoulBirthPortal {
     this.toolKeySecrets = { ...result.secrets };
     for (const [env, value] of Object.entries(result.secrets)) {
       process.env[env] = value;
+    }
+  }
+
+  private initializeSoulStructureRails(): void {
+    const stateDir = getStateDir();
+    fs.mkdirSync(stateDir, { recursive: true });
+
+    const birthday = this.config['birthday'] as {
+      date?: string;
+      time?: string;
+      timezoneOffset?: string;
+      location?: string;
+    } | undefined;
+
+    this.config['soulRails'] = {
+      protocol: 'birth.v1',
+      stateDir,
+      graphStore: path.join(stateDir, 'soul-graph.sqlite'),
+      archiveDir: path.join(stateDir, 'archive'),
+      capsulePath: path.join(stateDir, 'SOUL.md'),
+      identitySeedReady: Boolean(birthday?.date),
+      seededAt: new Date().toISOString(),
+    };
+
+    success('Soul rails prepared: lattice + archive + capsule scaffolding.');
+    if (birthday?.date) {
+      success(`Birthdata attached to core identity memory (${birthday.date} ${birthday.time ?? ''} ${birthday.timezoneOffset ?? ''}).`);
     }
   }
 
@@ -838,17 +840,21 @@ export class SoulBirthPortal {
   public async startGenesis(): Promise<Record<string, unknown>> {
     await this.initializeCoreMemories();
 
-    log('Step 1/8: Substrate Connection & Authentication');
+    log('Step 1/9: Soul Structure & Identity Rails');
+    this.initializeSoulStructureRails();
+    log('\n---\n');
+
+    log('Step 2/9: Provider Connection & Authentication');
     await this.captureSubstrateConfig();
     await this.captureProviderAuthAndModels();
     await this.probeSubstrateConnections();
     log('\n---\n');
 
-    log('Step 2/8: Tool Keys & Search Connectors (Optional)');
+    log('Step 3/9: Tool Keys & Search Connectors (Optional)');
     await this.captureToolKeys();
     log('\n---\n');
 
-    log('Step 3/8: Model Discovery');
+    log('Step 4/9: Model Discovery');
     log('Scanning authenticated substrates...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
@@ -866,7 +872,7 @@ export class SoulBirthPortal {
     }
     log('\n---\n');
 
-    log('Step 4/8: Agent Role Assignment');
+    log('Step 5/9: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
     const assignmentCandidates = liveDiscovered.length > 0 ? liveDiscovered : discovered;
     const bySubstrate = new Map<string, Array<{ modelId: string; stale: boolean }>>();
@@ -967,7 +973,7 @@ export class SoulBirthPortal {
     success('Agent role assignments stored.');
     log('\n---\n');
 
-    log('Step 5/8: Channel Synchronization');
+    log('Step 6/9: Channel Synchronization');
     this.config['channels'] = await this.prompt(
       'Enter channels to sync (comma separated, optional)',
       ''
@@ -975,7 +981,7 @@ export class SoulBirthPortal {
     success('Channel config captured.');
     log('\n---\n');
 
-    log('Step 6/8: Treasury & Wallet Policy');
+    log('Step 7/9: Treasury & Wallet Policy');
     this.config['treasuryPolicy'] = await this.prompt(
       'Enter treasury policy (JSON, optional)',
       '{}'
@@ -983,13 +989,13 @@ export class SoulBirthPortal {
     success('Treasury policy captured.');
     log('\n---\n');
 
-    log('Step 7/8: Identity, Name & Objective');
+    log('Step 8/9: Identity, Name & Objective');
     this.config['soulName'] = await this.prompt('Name this soul');
     this.config['soulObjective'] = await this.prompt('Define the primary objective');
     success(`Soul named "${String(this.config['soulName'])}" with objective "${String(this.config['soulObjective'])}".`);
     log('\n---\n');
 
-    log('Step 8/8: Initialization');
+    log('Step 9/9: Initialization');
     await this.initializeState();
     success('Soul initialization complete.');
     log('\n---\n');
