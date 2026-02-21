@@ -48,7 +48,16 @@ vi.mock('../soul/birth.ts', () => ({
 
 vi.mock('enquirer', () => ({
   default: {
-    prompt: vi.fn(() => Promise.resolve({ value: 'Open Birth Portal' })),
+    prompt: vi.fn((options?: { message?: string }) => {
+      const message = options?.message ?? '';
+      if (message.includes('Scrying terminal controls')) {
+        return Promise.resolve({ value: 'Open Birth Portal' });
+      }
+      if (message.includes('Soul command menu')) {
+        return Promise.resolve({ value: 'Exit' });
+      }
+      return Promise.resolve({ value: '' });
+    }),
   },
 }));
 

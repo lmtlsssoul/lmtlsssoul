@@ -334,10 +334,9 @@ export async function main() {
       launchTerminalArt(options.python);
     });
 
-  // Hard fast-path: plain `soul` should only open the scrying terminal
-  // and should not parse/enter other program flows.
+  // Root portal flow: plain `soul` opens scrying, then shows command menu.
   if (process.argv.slice(2).length === 0) {
-    await launchTerminalArtBlocking();
+    await runRootPortalMenu();
     return;
   }
 
@@ -713,6 +712,175 @@ async function runBirthPreludeMenu(pythonOverride?: string): Promise<void> {
     }
     break;
   }
+}
+
+async function runRootPortalMenu(): Promise<void> {
+  const green = (value: string): string => `\u001b[32m${value}\u001b[39m`;
+  const red = (value: string): string => `\u001b[31m${value}\u001b[39m`;
+  const menuChoices = [
+    'Press ENTER to scry',
+    'Open Birth Portal',
+    'Open Chat',
+    'Show Status',
+    'Configure Credentials',
+    'Scan Models',
+    'Start Daemon',
+    'Stop Daemon',
+    'Run Another Soul Command',
+    'Show Help',
+    'Exit',
+  ];
+
+  while (true) {
+    await launchTerminalArtBlocking();
+    const response: { value: string } = await enquirer.prompt({
+      type: 'select',
+      name: 'value',
+      message: 'Soul command menu',
+      promptLine: false,
+      pointer: {
+        on: '\u001b[31m▸\u001b[39m',
+        off: ' ',
+      },
+      styles: {
+        primary: green,
+        em: red,
+      },
+      choices: menuChoices,
+      initial: 0,
+    } as never);
+
+    const choice = response.value;
+    if (choice === 'Press ENTER to scry') {
+      continue;
+    }
+    if (choice === 'Open Birth Portal') {
+      await runSoulSubcommand(['birth']);
+      continue;
+    }
+    if (choice === 'Open Chat') {
+      await runSoulSubcommand(['chat']);
+      continue;
+    }
+    if (choice === 'Show Status') {
+      await runSoulSubcommand(['status']);
+      continue;
+    }
+    if (choice === 'Configure Credentials') {
+      await runSoulSubcommand(['config']);
+      continue;
+    }
+    if (choice === 'Scan Models') {
+      await runSoulSubcommand(['models', 'scan']);
+      continue;
+    }
+    if (choice === 'Start Daemon') {
+      await runSoulSubcommand(['start']);
+      continue;
+    }
+    if (choice === 'Stop Daemon') {
+      await runSoulSubcommand(['stop']);
+      continue;
+    }
+    if (choice === 'Show Help') {
+      await runSoulSubcommand(['--help']);
+      continue;
+    }
+    if (choice === 'Run Another Soul Command') {
+      const custom = await promptRawSoulCommand(green, red);
+      if (!custom) {
+        continue;
+      }
+      const customArgs = splitCommandArgs(custom);
+      if (customArgs.length === 0) {
+        continue;
+      }
+      await runSoulSubcommand(customArgs);
+      continue;
+    }
+    break;
+  }
+}
+
+async function promptRawSoulCommand(
+  green: (value: string) => string,
+  red: (value: string) => string
+): Promise<string> {
+  const response: { value: string } = await enquirer.prompt({
+    type: 'input',
+    name: 'value',
+    message: 'Enter soul arguments (example: gateway status --port 3000)',
+    styles: {
+      primary: green,
+      em: red,
+    },
+  } as never);
+  return response.value.trim();
+}
+
+function splitCommandArgs(raw: string): string[] {
+  const args: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | null = null;
+  let escaping = false;
+
+  for (const ch of raw) {
+    if (escaping) {
+      current += ch;
+      escaping = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escaping = true;
+      continue;
+    }
+    if ((ch === '"' || ch === "'")) {
+      if (quote === null) {
+        quote = ch;
+        continue;
+      }
+      if (quote === ch) {
+        quote = null;
+        continue;
+      }
+      current += ch;
+      continue;
+    }
+    if (/\s/.test(ch) && quote === null) {
+      if (current.length > 0) {
+        args.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += ch;
+  }
+
+  if (current.length > 0) {
+    args.push(current);
+  }
+  return args;
+}
+
+async function runSoulSubcommand(args: string[]): Promise<void> {
+  const entrypoint = resolveDaemonEntrypoint();
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(process.execPath, [entrypoint, ...args], {
+      stdio: 'inherit',
+      env: process.env,
+    });
+    child.on('error', reject);
+    child.on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+      if ((code ?? 0) === 0 && signal === null) {
+        resolve();
+        return;
+      }
+      const joined = args.join(' ');
+      const detail = signal ? `signal ${signal}` : `code ${code ?? -1}`;
+      warn(`Command "soul ${joined}" exited with ${detail}.`);
+      resolve();
+    });
+  });
 }
 
 function spawnTerminalArtProcess(pythonOverride?: string) {
