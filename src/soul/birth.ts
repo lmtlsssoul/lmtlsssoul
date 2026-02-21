@@ -649,6 +649,7 @@ export class SoulBirthPortal {
       lastCheckedAt: string;
       modelCount?: number;
     }>> = {};
+    let connectedCount = 0;
 
     log('Running substrate authentication probe...');
     for (const substrate of enabled) {
@@ -677,12 +678,11 @@ export class SoulBirthPortal {
 
         statuses[substrate] = statusWithModels;
         if (statusWithModels.ok) {
+          connectedCount += 1;
           const modelDetail = typeof statusWithModels.modelCount === 'number'
             ? `; ${statusWithModels.modelCount} model(s) visible`
             : '';
           success(`[${substrate}] connected (${statusWithModels.detail ?? 'reachable'}${modelDetail})`);
-        } else {
-          warn(`[${substrate}] not ready (${statusWithModels.detail ?? 'missing credentials or unreachable'})`);
         }
       } catch (err) {
         const detail = err instanceof Error ? err.message : String(err);
@@ -691,8 +691,11 @@ export class SoulBirthPortal {
           detail,
           lastCheckedAt: new Date().toISOString(),
         };
-        warn(`[${substrate}] probe failed (${detail})`);
       }
+    }
+
+    if (connectedCount === 0) {
+      log('No substrate connections detected in this probe.');
     }
 
     this.config['substrateAuth'] = {
@@ -778,7 +781,7 @@ export class SoulBirthPortal {
       seededAt: new Date().toISOString(),
     };
 
-    success('Soul rails prepared: lattice + archive + capsule scaffolding.');
+    success('Soul materializing...');
     if (birthday?.date) {
       success(`Birthdata attached to core identity memory (${birthday.date} ${birthday.time ?? ''} ${birthday.timezoneOffset ?? ''}).`);
     }

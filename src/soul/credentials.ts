@@ -54,7 +54,6 @@ const DEFAULT_CREDENTIAL_CATEGORIES: CredentialCategory[] = [
   'service',
 ];
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const OPENCLAW_DOCS_RAW_BASE = 'https://raw.githubusercontent.com/OpenClaw/openclaw/main/docs';
 const DEFAULT_REMOTE_CATALOG_TEXT_URLS = [
   `${OPENCLAW_DOCS_RAW_BASE}/providers/index.md`,
@@ -377,9 +376,7 @@ export function saveCredentialCatalog(state: CredentialCatalogState, stateDir: s
 
 export async function ensureCredentialCatalog(stateDir: string = getStateDir()): Promise<CredentialCatalogState> {
   const current = loadCredentialCatalog(stateDir);
-  if (current && !isStale(current.lastRefreshed, ONE_DAY_MS)) {
-    return current;
-  }
+  // Always refresh on menu load; keep previous state as fallback seed.
   return refreshCredentialCatalog(stateDir, current ?? undefined);
 }
 
@@ -389,8 +386,8 @@ export async function refreshCredentialCatalog(
 ): Promise<CredentialCatalogState> {
   const discovered = discoverCredentialEntriesFromSource();
   const remoteDiscovery = await discoverCredentialEntriesFromRemoteText();
-
-  const deduped = dedupeEntries([...BUILTIN_CREDENTIALS, ...discovered, ...remoteDiscovery.entries]);
+  const previousEntries = existing?.entries ?? [];
+  const deduped = dedupeEntries([...BUILTIN_CREDENTIALS, ...discovered, ...remoteDiscovery.entries, ...previousEntries]);
   const next: CredentialCatalogState = {
     lastRefreshed: new Date().toISOString(),
     entries: deduped,
@@ -642,13 +639,11 @@ async function getProviderModels(
 ): Promise<string[]> {
   const normalizedProvider = normalizeProviderId(provider) ?? provider.trim().toLowerCase();
   let registry = loadRegistryState(stateDir);
-  if (!registry || isStale(registry.lastRefreshed, ONE_DAY_MS)) {
-    try {
-      registry = await refreshModelRegistry(registry ?? undefined);
-      saveRegistryState(registry, stateDir);
-    } catch {
-      // Keep old data if refresh fails.
-    }
+  try {
+    registry = await refreshModelRegistry(registry ?? undefined);
+    saveRegistryState(registry, stateDir);
+  } catch {
+    // Keep old data if refresh fails.
   }
 
   const substrateId = toSubstrateId(normalizedProvider);
@@ -1211,14 +1206,6 @@ function normalizeEnvToken(raw: string): string {
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '') || 'CUSTOM';
-}
-
-function isStale(iso: string, maxAgeMs: number): boolean {
-  const ts = new Date(iso).getTime();
-  if (!Number.isFinite(ts)) {
-    return true;
-  }
-  return Date.now() - ts > maxAgeMs;
 }
 
 function* walkFiles(dir: string): Generator<string> {
