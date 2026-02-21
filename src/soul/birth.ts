@@ -369,10 +369,13 @@ export class SoulBirthPortal {
   }
 
   private async captureToolKeys(): Promise<void> {
-    const choices = TOOL_KEY_OPTIONS.map((item) => `${item.label} (${item.env}) — ${item.purpose}`);
-    const selected = await this.promptMultiSelect('Select tool keys to configure now (optional)', choices);
+    const configureNow = await this.promptSelect(
+      'Configure tool keys now?',
+      ['Yes — configure now', 'No — skip for now'],
+      0
+    );
 
-    if (selected.length === 0) {
+    if (configureNow.startsWith('No')) {
       this.config['toolKeys'] = {
         providers: [],
         count: 0,
@@ -382,11 +385,37 @@ export class SoulBirthPortal {
       return;
     }
 
-    for (const selectedLabel of selected) {
-      const option = TOOL_KEY_OPTIONS.find((item) => selectedLabel.startsWith(item.label));
-      if (!option) {
-        continue;
+    for (const option of TOOL_KEY_OPTIONS) {
+      const existing = (process.env[option.env] ?? '').trim();
+      if (existing) {
+        const mode = await this.promptSelect(
+          `Configure ${option.label} (${option.env}) — ${option.purpose}`,
+          [
+            'Use existing environment value',
+            'Enter a new value',
+            'Skip',
+          ],
+          0
+        );
+
+        if (mode.startsWith('Use existing')) {
+          this.toolKeySecrets[option.env] = existing;
+          continue;
+        }
+        if (mode === 'Skip') {
+          continue;
+        }
+      } else {
+        const include = await this.promptSelect(
+          `Configure ${option.label} (${option.env}) — ${option.purpose}`,
+          ['Yes', 'Skip'],
+          1
+        );
+        if (include !== 'Yes') {
+          continue;
+        }
       }
+
       const value = await this.promptSecret(`Enter ${option.env} (leave blank to skip)`);
       if (!value) {
         continue;
