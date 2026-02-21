@@ -15,6 +15,11 @@ import {
   type AstrologyChart,
 } from './astrology.ts';
 import { runCredentialSetupMenu } from './credentials.ts';
+import { OpenaiAdapter } from '../substrate/openai.ts';
+import { AnthropicAdapter } from '../substrate/anthropic.ts';
+import { XaiAdapter } from '../substrate/xai.ts';
+import { OllamaAdapter } from '../substrate/ollama.ts';
+import type { SubstrateId } from '../substrate/types.ts';
 
 const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
   UTC: 'Z',
@@ -306,6 +311,7 @@ export class SoulBirthPortal {
         enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
       };
       success('Substrate config auto-initialized.');
+      await this.probeSubstrateConnections();
       return;
     }
 
@@ -322,6 +328,7 @@ export class SoulBirthPortal {
         if (imported && typeof imported === 'object' && !Array.isArray(imported)) {
           this.config['substrateConfig'] = imported;
           success(`Imported substrate config from ${importPath}.`);
+          await this.probeSubstrateConnections();
           return;
         }
         warn('No usable substrateConfig found in that file; falling back to auto setup.');
@@ -335,6 +342,7 @@ export class SoulBirthPortal {
         enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
       };
       success('Substrate config auto-initialized.');
+      await this.probeSubstrateConnections();
       return;
     }
 
@@ -342,6 +350,7 @@ export class SoulBirthPortal {
     try {
       this.config['substrateConfig'] = this.parseJsonObject(rawManual, 'Substrate config');
       success('Substrate config captured.');
+      await this.probeSubstrateConnections();
     } catch (err) {
       warn(err instanceof Error ? err.message : 'Invalid substrate JSON.');
       warn('Falling back to auto setup.');
@@ -350,7 +359,74 @@ export class SoulBirthPortal {
         enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
       };
       success('Substrate config auto-initialized.');
+      await this.probeSubstrateConnections();
     }
+  }
+
+  private getEnabledSubstratesFromConfig(): SubstrateId[] {
+    const configured = this.config['substrateConfig'] as
+      | { enabledSubstrates?: unknown }
+      | undefined;
+    const raw = Array.isArray(configured?.enabledSubstrates)
+      ? configured.enabledSubstrates
+      : ['ollama', 'openai', 'anthropic', 'xai'];
+
+    const parsed = raw
+      .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
+      .filter((value): value is SubstrateId =>
+        value === 'ollama' || value === 'openai' || value === 'anthropic' || value === 'xai'
+      );
+
+    const deduped: SubstrateId[] = [];
+    for (const substrate of parsed) {
+      if (!deduped.includes(substrate)) {
+        deduped.push(substrate);
+      }
+    }
+    return deduped.length > 0 ? deduped : ['ollama', 'openai', 'anthropic', 'xai'];
+  }
+
+  private async probeSubstrateConnections(): Promise<void> {
+    const adapters = {
+      ollama: new OllamaAdapter(),
+      openai: new OpenaiAdapter(),
+      anthropic: new AnthropicAdapter(),
+      xai: new XaiAdapter(),
+    } as const;
+
+    const enabled = this.getEnabledSubstratesFromConfig();
+    const statuses: Partial<Record<SubstrateId, { ok: boolean; detail?: string; lastCheckedAt: string }>> = {};
+
+    log('Running substrate authentication probe...');
+    for (const substrate of enabled) {
+      const adapter = adapters[substrate];
+      if (!adapter) {
+        continue;
+      }
+      try {
+        const status = await adapter.health();
+        statuses[substrate] = status;
+        if (status.ok) {
+          success(`[${substrate}] connected (${status.detail ?? 'reachable'})`);
+        } else {
+          warn(`[${substrate}] not ready (${status.detail ?? 'missing credentials or unreachable'})`);
+        }
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        statuses[substrate] = {
+          ok: false,
+          detail,
+          lastCheckedAt: new Date().toISOString(),
+        };
+        warn(`[${substrate}] probe failed (${detail})`);
+      }
+    }
+
+    this.config['substrateAuth'] = {
+      probedAt: new Date().toISOString(),
+      enabled,
+      statuses,
+    };
   }
 
   private async captureToolKeys(): Promise<void> {

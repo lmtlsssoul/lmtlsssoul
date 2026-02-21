@@ -365,7 +365,11 @@ export async function runCredentialSetupMenu(options?: {
       continue;
     }
 
-    const category = topChoice.toLowerCase().split(' ')[0] as CredentialCategory;
+    const category = resolveCategoryChoice(topChoice);
+    if (!category) {
+      warn(`Unknown credential category selection: "${topChoice}"`);
+      continue;
+    }
     const entries = grouped[category] ?? [];
     if (entries.length === 0) {
       warn(`No entries available in category "${category}" right now.`);
@@ -807,6 +811,15 @@ function* walkFiles(dir: string): Generator<string> {
       yield fullPath;
     }
   }
+}
+
+function resolveCategoryChoice(choice: string): CredentialCategory | null {
+  const normalized = choice.trim().toLowerCase();
+  if (normalized.startsWith('providers')) return 'provider';
+  if (normalized.startsWith('tools')) return 'tool';
+  if (normalized.startsWith('channels')) return 'channel';
+  if (normalized.startsWith('services')) return 'service';
+  return null;
 }
 
 async function requestText(url: string, timeoutMs: number = 10000): Promise<string> {
