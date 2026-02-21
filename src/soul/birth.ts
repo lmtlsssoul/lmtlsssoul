@@ -996,7 +996,7 @@ export class SoulBirthPortal {
   private async captureChannelSynchronization(): Promise<void> {
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
-      heading: 'Communion: select channels and configure required credentials.',
+      heading: 'Correspondence: select channels and configure required credentials.',
       existingSecrets: this.toolKeySecrets,
       allowedCategories: ['channel'],
     });
@@ -1229,7 +1229,7 @@ export class SoulBirthPortal {
     this.initializeSoulStructureRails();
     log('---');
 
-    log('Step 2/9: Mind Substrate');
+    log('Step 2/9: All is Mind');
     await this.captureSubstrateConfig();
     if (this.substrateSetupMode === 'manual') {
       await this.captureProviderAuthAndModels();
@@ -1379,7 +1379,7 @@ export class SoulBirthPortal {
     success('Machine Elf role assignments stored.');
     log('---');
 
-    log('Step 6/9: Communion');
+    log('Step 6/9: Correspondence');
     await this.captureChannelSynchronization();
     log('---');
 
