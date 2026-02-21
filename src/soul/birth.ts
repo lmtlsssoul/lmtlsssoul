@@ -99,7 +99,7 @@ export class SoulBirthPortal {
   }) {
     this.preloadedAutoBootstrap = options?.preloadedAutoBootstrap ?? null;
     if (!options?.silent) {
-      log('Birth Portal');
+      log('Incarnation Portal');
       log('This setup flow initializes lmtlss soul.');
       warn('Press Ctrl+C to cancel the ceremony.');
       log('---');
@@ -123,8 +123,8 @@ export class SoulBirthPortal {
       log('');
       return response.value.trim();
     } catch {
-      error('Birth Portal cancelled.');
-      throw new Error('Birth Portal cancelled');
+      error('Incarnation Portal cancelled.');
+      throw new Error('Incarnation Portal cancelled');
     }
   }
 
@@ -141,8 +141,8 @@ export class SoulBirthPortal {
       log('');
       return response.value;
     } catch {
-      error('Birth Portal cancelled.');
-      throw new Error('Birth Portal cancelled');
+      error('Incarnation Portal cancelled.');
+      throw new Error('Incarnation Portal cancelled');
     }
   }
 
@@ -158,8 +158,8 @@ export class SoulBirthPortal {
       log('');
       return Array.isArray(response.value) ? response.value : [];
     } catch {
-      error('Birth Portal cancelled.');
-      throw new Error('Birth Portal cancelled');
+      error('Incarnation Portal cancelled.');
+      throw new Error('Incarnation Portal cancelled');
     }
   }
 
@@ -174,8 +174,8 @@ export class SoulBirthPortal {
       log('');
       return response.value.trim();
     } catch {
-      error('Birth Portal cancelled.');
-      throw new Error('Birth Portal cancelled');
+      error('Incarnation Portal cancelled.');
+      throw new Error('Incarnation Portal cancelled');
     }
   }
 
@@ -1404,10 +1404,10 @@ export class SoulBirthPortal {
     success('Incarnation complete.');
     log('---');
 
-    success('Birth Portal complete.');
+    success('Incarnation Portal complete.');
     log(`Soul "${String(this.config['soulName'])}" is initialized.`);
-    log("Run 'soul start' to activate runtime services.");
-    log("Run 'soul chat' for an interactive terminal conversation.");
+    log("Run 'soul kindle' (alias: soul start) to activate runtime services.");
+    log("Run 'soul commune' (alias: soul chat) for interactive terminal communion.");
     return this.config;
   }
 

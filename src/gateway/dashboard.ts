@@ -300,7 +300,7 @@ tr:hover td { background: var(--bg3); }
       <span class="header-tagline">presence.</span>
     </div>
     <div class="header-meta">
-      <div id="hdr-status">● connecting...</div>
+      <div id="hdr-status">● attuning...</div>
       <div id="hdr-time" style="margin-top:2px"></div>
     </div>
   </header>
@@ -311,7 +311,7 @@ tr:hover td { background: var(--bg3); }
     <!-- ── Sidebar ── -->
     <aside class="sidebar">
       <div class="widget">
-        <div class="widget-title">Soul State</div>
+        <div class="widget-title">Incarnation State</div>
         <div class="widget-body">
           <div class="stat">
             <span class="stat-label">Daemon</span>
@@ -330,7 +330,7 @@ tr:hover td { background: var(--bg3); }
             <span class="stat-value" id="stat-events">—</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Born</span>
+            <span class="stat-label">Incarnated</span>
             <span class="stat-value" id="stat-born">—</span>
           </div>
         </div>
@@ -351,13 +351,13 @@ tr:hover td { background: var(--bg3); }
       </div>
 
       <div class="widget">
-        <div class="widget-title">Commands</div>
+        <div class="widget-title">Invocations</div>
         <div class="widget-body" style="font-size:11px;color:var(--green-dim);line-height:1.8">
-          <div>soul birth</div>
-          <div>soul start</div>
-          <div>soul stop</div>
-          <div>soul status</div>
-          <div>soul chat</div>
+          <div>soul incarnate (soul birth)</div>
+          <div>soul kindle (soul start)</div>
+          <div>soul still (soul stop)</div>
+          <div>soul omens (soul status)</div>
+          <div>soul commune (soul chat)</div>
           <div>soul models scan</div>
           <div>soul archive verify</div>
           <div>soul reflect</div>
@@ -516,13 +516,13 @@ async function loadStatus() {
     const res = await fetch('/api/status');
     const data = await res.json();
 
-    $('stat-daemon').textContent = data.daemon ? '● running' : '○ stopped';
+    $('stat-daemon').textContent = data.daemon ? '● active' : '○ dormant';
     $('stat-gateway').textContent = '● online';
     $('stat-nodes').textContent = data.nodes ?? '—';
     $('stat-events').textContent = data.events ?? '—';
     $('stat-born').textContent = data.born ? '✓' : '—';
 
-    $('hdr-status').textContent = '● ' + (data.soulName ?? 'soul') + ' online';
+    $('hdr-status').textContent = '● ' + (data.soulName ?? 'soul') + ' attuned';
 
     if (data.roles) {
       const roles = data.roles;
@@ -535,13 +535,13 @@ async function loadStatus() {
     if (data.substrates) {
       $('substrates-panel').innerHTML = Object.entries(data.substrates).map(([sub, count]) =>
         '<div class="stat"><span class="stat-label">' + esc(sub) + '</span>' +
-        '<span class="stat-value">' + count + ' models</span></div>'
+        '<span class="stat-value">' + count + ' minds</span></div>'
       ).join('');
     }
 
     $('footer-right').textContent = 'nodes:' + (data.nodes ?? 0) + ' events:' + (data.events ?? 0);
   } catch (e) {
-    $('hdr-status').textContent = '○ gateway offline';
+    $('hdr-status').textContent = '○ gateway dormant';
   }
 }
 
@@ -568,7 +568,7 @@ async function sendChat() {
 
   state.chatBusy = true;
   btn.disabled = true;
-  btn.textContent = 'Thinking...';
+  btn.textContent = 'Divining...';
   input.value = '';
 
   appendMessage('author', text);
@@ -576,7 +576,7 @@ async function sendChat() {
   // Thinking indicator
   const thinking = document.createElement('div');
   thinking.className = 'msg msg-system';
-  thinking.innerHTML = '<div class="msg-body"><span class="spinner"></span> processing...</div>';
+  thinking.innerHTML = '<div class="msg-body"><span class="spinner"></span> transmuting...</div>';
   $('chat-messages').appendChild(thinking);
   $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
 
@@ -592,11 +592,11 @@ async function sendChat() {
     if (data.reply) {
       appendMessage('soul', data.reply);
     } else if (data.error) {
-      appendMessage('system', 'Error: ' + data.error);
+      appendMessage('system', 'Dissonance: ' + data.error);
     }
   } catch (e) {
     $('chat-messages').removeChild(thinking);
-    appendMessage('system', 'Connection error. Is the soul daemon running? (soul start)');
+    appendMessage('system', 'Connection error. Is the daemon (the other kind) active? (soul kindle)');
   }
 
   state.chatBusy = false;

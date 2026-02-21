@@ -154,7 +154,7 @@ describe('CLI entrypoint', () => {
   it('reports status command', async () => {
     process.argv.push('status');
     await main();
-    expect(log).toHaveBeenCalledWith('--- Soul Status ---');
+    expect(log).toHaveBeenCalledWith('--- Soul Omens ---');
   });
 
   it('toggles grownup mode on and persists state', async () => {

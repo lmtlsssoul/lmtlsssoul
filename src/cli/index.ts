@@ -63,7 +63,8 @@ export async function main() {
   registerTreasuryCommands(program);
 
   program.command('birth')
-    .description('Start the soul Birth Portal')
+    .alias('incarnate')
+    .description('Open the soul Incarnation Portal')
     .option('--python <binary>', 'Python runtime binary for the scry portal prelude')
     .action(async (options: { python?: string }) => {
       await launchTerminalArtBlocking(options.python);
@@ -73,7 +74,8 @@ export async function main() {
     });
 
   program.command('start')
-    .description('Start the soul daemon (the other kind)')
+    .alias('kindle')
+    .description('Kindle the soul daemon (the other kind)')
     .option('-p, --port <port>', 'Gateway port', '3000')
     .option('-H, --host <host>', 'Gateway host', '127.0.0.1')
     .action(async (options: { port: string; host: string }) => {
@@ -108,7 +110,8 @@ export async function main() {
     });
 
   program.command('stop')
-    .description('Stop the soul daemon (the other kind)')
+    .alias('still')
+    .description('Still the soul daemon (the other kind)')
     .action(async () => {
       const state = readDaemonState();
       if (!state) {
@@ -127,7 +130,8 @@ export async function main() {
     });
 
   program.command('status')
-    .description('Show soul status')
+    .alias('omens')
+    .description('Read soul omens')
     .action(async () => {
       const stateDir = getStateDir();
       const state = readDaemonState();
@@ -140,7 +144,7 @@ export async function main() {
       const archive = new ArchiveDB(stateDir);
       const buildInfo = resolveBuildInfo();
 
-      log('--- Soul Status ---');
+      log('--- Soul Omens ---');
       console.log(`State Dir: ${stateDir}`);
       if (buildInfo) {
         console.log(`Build Ref: ${buildInfo.ref}`);
@@ -320,7 +324,8 @@ export async function main() {
     });
 
   program.command('chat')
-    .description('Open an interactive terminal conversation with the soul')
+    .alias('commune')
+    .description('Open an interactive terminal communion with the soul')
     .option('--peer <name>', 'Your name (peer identity)', 'author')
     .option('--channel <channel>', 'Channel label', 'terminal')
     .action(async (options: { peer: string; channel: string }) => {
@@ -399,7 +404,7 @@ async function runInteractiveChat(peer: string, channel: string): Promise<void> 
   const stateDir = getStateDir();
 
   if (!fs.existsSync(path.join(stateDir, 'birth-config.json'))) {
-    error('Soul not yet born. Run "soul birth" first.');
+    error('Soul not yet incarnated. Run "soul birth" first.');
     process.exit(1);
   }
 
@@ -701,7 +706,7 @@ async function runBirthPreludeMenu(pythonOverride?: string): Promise<void> {
       },
       choices: [
         'Press ENTER to scry',
-        'Open Birth Portal',
+        'Open Incarnation Portal',
       ],
       initial: 0,
     } as never);
@@ -719,7 +724,7 @@ async function runRootPortalMenu(): Promise<void> {
   const red = (value: string): string => `\u001b[31m${value}\u001b[39m`;
   const menuChoices = [
     'Press ENTER to scry',
-    'Open Birth Portal',
+    'Open Incarnation Portal',
     'Open Communion',
     'Read State',
     'Configure Initiations',
@@ -757,7 +762,7 @@ async function runRootPortalMenu(): Promise<void> {
       await launchTerminalArtBlocking();
       continue;
     }
-    if (choice === 'Open Birth Portal') {
+    if (choice === 'Open Incarnation Portal') {
       await runSoulSubcommand(['birth']);
       continue;
     }
