@@ -73,13 +73,13 @@ export async function main() {
     });
 
   program.command('start')
-    .description('Start the soul daemon')
+    .description('Start the soul daemon (the other kind)')
     .option('-p, --port <port>', 'Gateway port', '3000')
     .option('-H, --host <host>', 'Gateway host', '127.0.0.1')
     .action(async (options: { port: string; host: string }) => {
       const state = readDaemonState();
       if (state && isProcessAlive(state.pid)) {
-        warn(`Daemon already running (pid=${state.pid}) on ${state.host}:${state.port}.`);
+        warn(`Runtime daemon (the other kind) already running (pid=${state.pid}) on ${state.host}:${state.port}.`);
         return;
       }
 
@@ -87,7 +87,7 @@ export async function main() {
       const port = Number.parseInt(options?.port ?? '3000', 10);
       const entrypoint = resolveDaemonEntrypoint();
 
-      log(`Summoning daemon on ${host}:${port}...`);
+      log(`Summoning runtime daemon (the other kind) on ${host}:${port}...`);
       const child = spawn(process.execPath, [entrypoint, 'gateway', 'start', '--host', host, '--port', String(port)], {
         detached: true,
         stdio: 'ignore',
@@ -95,7 +95,7 @@ export async function main() {
       child.unref();
 
       if (!child.pid) {
-        throw new Error('Failed to start daemon process.');
+        throw new Error('Failed to start runtime daemon (the other kind) process.');
       }
 
       writeDaemonState({
@@ -104,23 +104,23 @@ export async function main() {
         port,
         startedAt: new Date().toISOString(),
       });
-      success(`Daemon started (pid=${child.pid}).`);
+      success(`Runtime daemon (the other kind) started (pid=${child.pid}).`);
     });
 
   program.command('stop')
-    .description('Stop the soul daemon')
+    .description('Stop the soul daemon (the other kind)')
     .action(async () => {
       const state = readDaemonState();
       if (!state) {
-        warn('No daemon state file found.');
+        warn('No runtime daemon (the other kind) state file found.');
         return;
       }
 
       if (isProcessAlive(state.pid)) {
         process.kill(state.pid, 'SIGTERM');
-        success(`Daemon process ${state.pid} stopped.`);
+        success(`Runtime daemon (the other kind) process ${state.pid} stopped.`);
       } else {
-        warn(`Daemon process ${state.pid} was not running.`);
+        warn(`Runtime daemon (the other kind) process ${state.pid} was not running.`);
       }
 
       removeDaemonState();
@@ -134,7 +134,7 @@ export async function main() {
       const daemonRunning = state ? isProcessAlive(state.pid) : false;
       const gatewayHealth = state
         ? await getGatewayHealth(state.host, state.port)
-        : { ok: false, detail: 'Daemon not started.' };
+        : { ok: false, detail: 'Runtime daemon (the other kind) not started.' };
 
       const graph = new GraphDB(stateDir);
       const archive = new ArchiveDB(stateDir);
@@ -149,7 +149,7 @@ export async function main() {
           console.log(`Build Installed At: ${buildInfo.installedAt}`);
         }
       }
-      console.log(`Daemon: ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
+      console.log(`Runtime Daemon (the other kind): ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
       console.log(`Gateway: ${gatewayHealth.ok ? 'healthy' : 'unreachable'}`);
       if (gatewayHealth.detail) {
         console.log(`Gateway Detail: ${gatewayHealth.detail}`);
@@ -621,7 +621,7 @@ function resolveDaemonEntrypoint(): string {
     }
   }
 
-  throw new Error('Unable to resolve daemon entrypoint (soul.mjs).');
+  throw new Error('Unable to resolve runtime daemon (the other kind) entrypoint (soul.mjs).');
 }
 
 function printGrownupModeStatus(): void {
@@ -731,8 +731,10 @@ async function runRootPortalMenu(): Promise<void> {
     'Exit',
   ];
 
+  // Root launch sequence: scry first, then menu.
+  await launchTerminalArtBlocking();
+
   while (true) {
-    await launchTerminalArtBlocking();
     const response: { value: string } = await enquirer.prompt({
       type: 'select',
       name: 'value',
@@ -752,6 +754,7 @@ async function runRootPortalMenu(): Promise<void> {
 
     const choice = response.value;
     if (choice === 'Press ENTER to scry') {
+      await launchTerminalArtBlocking();
       continue;
     }
     if (choice === 'Open Birth Portal') {

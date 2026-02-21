@@ -121,7 +121,7 @@ describe('CLI entrypoint', () => {
       const entrypoint = (spawnedArgs as string[])[0];
       expect(path.basename(entrypoint)).toBe('soul.mjs');
       expect(fs.existsSync(entrypoint)).toBe(true);
-      expect(success).toHaveBeenCalledWith(expect.stringContaining('Daemon started'));
+      expect(success).toHaveBeenCalledWith(expect.stringContaining('Runtime daemon (the other kind) started'));
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(unrelatedDir, { recursive: true, force: true });
@@ -148,7 +148,7 @@ describe('CLI entrypoint', () => {
     process.argv.push('stop');
     await main();
     expect(killSpy).toHaveBeenCalled();
-    expect(success).toHaveBeenCalledWith(expect.stringContaining('Daemon process'));
+    expect(success).toHaveBeenCalledWith(expect.stringContaining('Runtime daemon (the other kind) process'));
   });
 
   it('reports status command', async () => {
