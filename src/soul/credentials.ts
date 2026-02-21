@@ -46,6 +46,13 @@ export type CredentialSetupResult = {
   catalogLastRefreshed: string;
 };
 
+const DEFAULT_CREDENTIAL_CATEGORIES: CredentialCategory[] = [
+  'provider',
+  'tool',
+  'channel',
+  'service',
+];
+
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_REMOTE_CATALOG_TEXT_URLS = [
   'https://raw.githubusercontent.com/OpenClaw/openclaw/main/docs/concepts/model-providers.md',
@@ -322,10 +329,12 @@ export async function runCredentialSetupMenu(options?: {
   stateDir?: string;
   heading?: string;
   existingSecrets?: Record<string, string>;
+  allowedCategories?: CredentialCategory[];
 }): Promise<CredentialSetupResult> {
   const stateDir = options?.stateDir ?? getStateDir();
   const catalog = await ensureCredentialCatalog(stateDir);
   const grouped = groupByCategory(catalog.entries);
+  const allowedCategories = normalizeAllowedCategories(options?.allowedCategories);
   const secrets: Record<string, string> = {
     ...(options?.existingSecrets ?? {}),
   };
@@ -342,14 +351,19 @@ export async function runCredentialSetupMenu(options?: {
     console.log(options.heading);
   }
 
+  const categoryChoiceMap = new Map<string, CredentialCategory>();
+  const categoryChoices: string[] = [];
+  for (const category of allowedCategories) {
+    const label = categoryMenuLabel(category, grouped[category].length);
+    categoryChoiceMap.set(label, category);
+    categoryChoices.push(label);
+  }
+
   while (true) {
     const topChoice = await promptSelect(
       'Credential setup menu',
       [
-        `Providers (${grouped.provider.length})`,
-        `Tools (${grouped.tool.length})`,
-        `Channels (${grouped.channel.length})`,
-        `Services (${grouped.service.length})`,
+        ...categoryChoices,
         'Add custom credential',
         'Done',
       ],
@@ -365,7 +379,7 @@ export async function runCredentialSetupMenu(options?: {
       continue;
     }
 
-    const category = resolveCategoryChoice(topChoice);
+    const category = categoryChoiceMap.get(topChoice) ?? null;
     if (!category) {
       warn(`Unknown credential category selection: "${topChoice}"`);
       continue;
@@ -421,6 +435,93 @@ export async function runCredentialSetupMenu(options?: {
       tools: Array.from(selected.tools),
       channels: Array.from(selected.channels),
       services: Array.from(selected.services),
+    },
+    providerModelSelections,
+    catalogLastRefreshed: catalog.lastRefreshed,
+  };
+}
+
+export async function runProviderCredentialSetupMenu(options?: {
+  stateDir?: string;
+  heading?: string;
+  existingSecrets?: Record<string, string>;
+  providerAllowlist?: string[];
+}): Promise<CredentialSetupResult> {
+  const stateDir = options?.stateDir ?? getStateDir();
+  const catalog = await ensureCredentialCatalog(stateDir);
+  const grouped = groupByCategory(catalog.entries);
+  const allowSet = new Set(
+    (options?.providerAllowlist ?? [])
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  const providerEntries = grouped.provider.filter((entry) => {
+    if (allowSet.size === 0) {
+      return true;
+    }
+    const provider = (entry.provider ?? '').trim().toLowerCase();
+    return provider.length > 0 && allowSet.has(provider);
+  });
+  const secrets: Record<string, string> = {
+    ...(options?.existingSecrets ?? {}),
+  };
+  const selectedProviders = new Set<string>();
+  const providerModelSelections: Record<string, string[]> = {};
+
+  if (options?.heading) {
+    console.log(options.heading);
+  }
+
+  if (providerEntries.length === 0) {
+    warn('No provider entries available right now.');
+    return {
+      secrets,
+      selected: {
+        providers: [],
+        tools: [],
+        channels: [],
+        services: [],
+      },
+      providerModelSelections,
+      catalogLastRefreshed: catalog.lastRefreshed,
+    };
+  }
+
+  const selectedLabels = await promptMultiSelectWithFallback(
+    'Select providers to configure',
+    providerEntries.map((entry) => entryToChoiceLabel(entry))
+  );
+
+  for (const label of selectedLabels) {
+    const entry = providerEntries.find((candidate) => entryToChoiceLabel(candidate) === label);
+    if (!entry) {
+      continue;
+    }
+
+    const configured = await configureCredentialEntry(entry, secrets);
+    if (!configured) {
+      continue;
+    }
+
+    selectedProviders.add(entry.provider ?? entry.label);
+    const providerId = normalizeProviderId(entry.provider ?? entry.label);
+    if (!providerId) {
+      continue;
+    }
+    const modelSelections = await selectModelsForProvider(providerId, stateDir);
+    if (modelSelections.length > 0) {
+      providerModelSelections[providerId] = modelSelections;
+    }
+  }
+
+  return {
+    secrets,
+    selected: {
+      providers: Array.from(selectedProviders),
+      tools: [],
+      channels: [],
+      services: [],
     },
     providerModelSelections,
     catalogLastRefreshed: catalog.lastRefreshed,
@@ -820,6 +921,29 @@ function resolveCategoryChoice(choice: string): CredentialCategory | null {
   if (normalized.startsWith('channels')) return 'channel';
   if (normalized.startsWith('services')) return 'service';
   return null;
+}
+
+function normalizeAllowedCategories(input?: CredentialCategory[]): CredentialCategory[] {
+  const source = Array.isArray(input) && input.length > 0
+    ? input
+    : DEFAULT_CREDENTIAL_CATEGORIES;
+  const out: CredentialCategory[] = [];
+  for (const category of source) {
+    if (!DEFAULT_CREDENTIAL_CATEGORIES.includes(category)) {
+      continue;
+    }
+    if (!out.includes(category)) {
+      out.push(category);
+    }
+  }
+  return out.length > 0 ? out : DEFAULT_CREDENTIAL_CATEGORIES;
+}
+
+function categoryMenuLabel(category: CredentialCategory, count: number): string {
+  if (category === 'provider') return `Providers (${count})`;
+  if (category === 'tool') return `Tools (${count})`;
+  if (category === 'channel') return `Channels (${count})`;
+  return `Services (${count})`;
 }
 
 async function requestText(url: string, timeoutMs: number = 10000): Promise<string> {

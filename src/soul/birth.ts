@@ -15,7 +15,11 @@ import {
   formatAstrologyIdentityImprint,
   type AstrologyChart,
 } from './astrology.ts';
-import { runCredentialSetupMenu } from './credentials.ts';
+import {
+  runCredentialSetupMenu,
+  runProviderCredentialSetupMenu,
+  type CredentialSetupResult,
+} from './credentials.ts';
 import { OpenaiAdapter } from '../substrate/openai.ts';
 import { AnthropicAdapter } from '../substrate/anthropic.ts';
 import { XaiAdapter } from '../substrate/xai.ts';
@@ -310,7 +314,6 @@ export class SoulBirthPortal {
     if (choice === 'Auto detect (recommended)') {
       this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
       success('Substrate config auto-initialized from runtime profile.');
-      await this.probeSubstrateConnections();
       return;
     }
 
@@ -323,7 +326,6 @@ export class SoulBirthPortal {
         enabledSubstrates: selected,
       };
       success(`Substrate config captured (${selected.join(', ')}).`);
-      await this.probeSubstrateConnections();
       return;
     }
 
@@ -340,7 +342,6 @@ export class SoulBirthPortal {
         if (imported && typeof imported === 'object' && !Array.isArray(imported)) {
           this.config['substrateConfig'] = imported;
           success(`Imported substrate config from ${importPath}.`);
-          await this.probeSubstrateConnections();
           return;
         }
         warn('No usable substrateConfig found in that file; falling back to auto setup.');
@@ -354,7 +355,6 @@ export class SoulBirthPortal {
         mode: 'auto',
       };
       success('Substrate config auto-initialized from runtime profile.');
-      await this.probeSubstrateConnections();
       return;
     }
 
@@ -362,7 +362,6 @@ export class SoulBirthPortal {
     try {
       this.config['substrateConfig'] = this.parseJsonObject(rawManual, 'Substrate config');
       success('Substrate config captured.');
-      await this.probeSubstrateConnections();
     } catch (err) {
       warn(err instanceof Error ? err.message : 'Invalid substrate JSON.');
       warn('Falling back to auto setup.');
@@ -371,7 +370,6 @@ export class SoulBirthPortal {
         mode: 'auto',
       };
       success('Substrate config auto-initialized from runtime profile.');
-      await this.probeSubstrateConnections();
     }
   }
 
@@ -625,32 +623,83 @@ export class SoulBirthPortal {
   }
 
   private async captureToolKeys(): Promise<void> {
+    const providerResult = await runProviderCredentialSetupMenu({
+      stateDir: getStateDir(),
+      heading: 'Providers: select provider(s), choose API key/OAuth, then select relevant models.',
+      existingSecrets: this.toolKeySecrets,
+      providerAllowlist: this.getEnabledSubstratesFromConfig(),
+    });
+    this.applyCredentialSetupResult(providerResult);
+
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
-      heading: 'Select credentials by category/provider and configure API key or OAuth details.',
+      heading: 'Connectors: select tools/channels/services and configure API key or OAuth details.',
       existingSecrets: this.toolKeySecrets,
+      allowedCategories: ['tool', 'channel', 'service'],
     });
+    this.applyCredentialSetupResult(result);
 
-    this.toolKeySecrets = { ...result.secrets };
-    for (const [env, value] of Object.entries(result.secrets)) {
-      process.env[env] = value;
-    }
+    const providerModelSelections: Record<string, string[]> = {
+      ...providerResult.providerModelSelections,
+      ...result.providerModelSelections,
+    };
+
+    const providers = new Set<string>([
+      ...providerResult.selected.providers,
+      ...result.selected.providers,
+    ]);
+    const tools = new Set<string>([
+      ...providerResult.selected.tools,
+      ...result.selected.tools,
+    ]);
+    const channels = new Set<string>([
+      ...providerResult.selected.channels,
+      ...result.selected.channels,
+    ]);
+    const services = new Set<string>([
+      ...providerResult.selected.services,
+      ...result.selected.services,
+    ]);
 
     this.config['toolKeys'] = {
-      providers: result.selected.providers,
-      tools: result.selected.tools,
-      channels: result.selected.channels,
-      services: result.selected.services,
+      providers: Array.from(providers),
+      tools: Array.from(tools),
+      channels: Array.from(channels),
+      services: Array.from(services),
       count: Object.keys(this.toolKeySecrets).length,
       storage: 'state/tool-keys.json',
-      providerModelSelections: result.providerModelSelections,
-      catalogLastRefreshed: result.catalogLastRefreshed,
+      providerModelSelections,
+      catalogLastRefreshed: result.catalogLastRefreshed || providerResult.catalogLastRefreshed,
     };
 
     if (Object.keys(this.toolKeySecrets).length === 0) {
       success('No tool keys configured right now.');
     } else {
       success(`Captured ${Object.keys(this.toolKeySecrets).length} credential value(s).`);
+    }
+  }
+
+  private async captureProviderAuthAndModels(): Promise<void> {
+    const result = await runProviderCredentialSetupMenu({
+      stateDir: getStateDir(),
+      heading: 'Provider auth + models: select provider(s), configure API key/OAuth, then choose models.',
+      existingSecrets: this.toolKeySecrets,
+      providerAllowlist: this.getEnabledSubstratesFromConfig(),
+    });
+    this.applyCredentialSetupResult(result);
+
+    this.config['providerAuthSetup'] = {
+      providers: result.selected.providers,
+      providerModelSelections: result.providerModelSelections,
+      catalogLastRefreshed: result.catalogLastRefreshed,
+      count: Object.keys(this.toolKeySecrets).length,
+    };
+  }
+
+  private applyCredentialSetupResult(result: CredentialSetupResult): void {
+    this.toolKeySecrets = { ...result.secrets };
+    for (const [env, value] of Object.entries(result.secrets)) {
+      process.env[env] = value;
     }
   }
 
@@ -791,6 +840,8 @@ export class SoulBirthPortal {
 
     log('Step 1/8: Substrate Connection & Authentication');
     await this.captureSubstrateConfig();
+    await this.captureProviderAuthAndModels();
+    await this.probeSubstrateConnections();
     log('\n---\n');
 
     log('Step 2/8: Tool Keys & Search Connectors (Optional)');
