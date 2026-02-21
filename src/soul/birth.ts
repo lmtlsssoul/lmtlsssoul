@@ -460,7 +460,7 @@ export class SoulBirthPortal {
   }
 
   private async initializeCoreMemories(): Promise<void> {
-    log('Core Memory Setup: Birthday');
+    log("Core Memory Setup: What's my birthday?");
     const birthDate = await this.promptValidated(
       'Enter birthdate to encode (YYYY-MM-DD)',
       (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
