@@ -46,6 +46,12 @@ vi.mock('../soul/birth.ts', () => ({
   })),
 }));
 
+vi.mock('enquirer', () => ({
+  default: {
+    prompt: vi.fn(() => Promise.resolve({ value: 'Open Birth Portal' })),
+  },
+}));
+
 describe('CLI entrypoint', () => {
   const originalArgv = process.argv;
   const originalStateDir = process.env.LMTLSS_STATE_DIR;

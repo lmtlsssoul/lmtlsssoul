@@ -59,12 +59,25 @@ export class SoulBirthPortal {
   private toolKeySecrets: Record<string, string> = {};
   private substrateSetupMode: 'auto' | 'manual' = 'auto';
   private autoAssignedModelRef: string | null = null;
+  private preloadedAutoBootstrap: Promise<Record<string, unknown>> | null = null;
+  private resolvedAutoBootstrap: Record<string, unknown> | null = null;
 
-  constructor() {
-    log('Birth Portal');
-    log('This setup flow initializes lmtlss soul.');
-    warn('Press Ctrl+C to cancel the ceremony.');
-    log('---');
+  constructor(options?: {
+    silent?: boolean;
+    preloadedAutoBootstrap?: Promise<Record<string, unknown>> | null;
+  }) {
+    this.preloadedAutoBootstrap = options?.preloadedAutoBootstrap ?? null;
+    if (!options?.silent) {
+      log('Birth Portal');
+      log('This setup flow initializes lmtlss soul.');
+      warn('Press Ctrl+C to cancel the ceremony.');
+      log('---');
+    }
+  }
+
+  public static startAutoBootstrapTask(): Promise<Record<string, unknown>> {
+    const worker = new SoulBirthPortal({ silent: true });
+    return worker.bootstrapAutoLocalModel();
   }
 
   private async prompt(question: string, initial?: string): Promise<string> {
@@ -319,7 +332,7 @@ export class SoulBirthPortal {
       this.substrateSetupMode = 'auto';
       this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
       this.config['substrateSetupMode'] = 'auto';
-      const bootstrap = await this.bootstrapAutoLocalModel();
+      const bootstrap = await this.resolveAutoBootstrap();
       this.config['autoBootstrap'] = bootstrap;
       if (bootstrap.ready) {
         this.autoAssignedModelRef = AUTO_DEFAULT_OLLAMA_MODEL_REF;
@@ -403,6 +416,24 @@ export class SoulBirthPortal {
       enabledSubstrates: this.buildAutoEnabledSubstrates(),
       autoDetection: await this.detectRuntimeContext(),
     };
+  }
+
+  private async resolveAutoBootstrap(): Promise<Record<string, unknown>> {
+    if (this.resolvedAutoBootstrap) {
+      return this.resolvedAutoBootstrap;
+    }
+    if (this.preloadedAutoBootstrap) {
+      try {
+        const resolved = await this.preloadedAutoBootstrap;
+        this.resolvedAutoBootstrap = resolved;
+        return resolved;
+      } catch (err) {
+        warn(`Preloaded auto bootstrap failed (${err instanceof Error ? err.message : String(err)}). Retrying inline...`);
+      }
+    }
+    const inline = await this.bootstrapAutoLocalModel();
+    this.resolvedAutoBootstrap = inline;
+    return inline;
   }
 
   private async bootstrapAutoLocalModel(): Promise<Record<string, unknown>> {

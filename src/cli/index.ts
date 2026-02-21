@@ -1,4 +1,5 @@
 import { Command, CommanderError } from 'commander';
+import enquirer from 'enquirer';
 import { getBanner, printBanner, log, error, success, warn } from '../soul/branding.ts';
 import { SoulBirthPortal } from '../soul/birth.ts';
 import { scanForModels, setModelForRole } from '../soul/models-scan.ts';
@@ -53,6 +54,8 @@ export async function main() {
       if (thisCommand.args[0] === 'help') return;
       const vargs = ['-V', '--version'];
       if (vargs.includes(thisCommand.args[0])) return;
+      const argv = process.argv.slice(2);
+      if (argv.length === 0 || argv[0] === 'art') return;
       await printBanner();
     });
 
@@ -63,6 +66,7 @@ export async function main() {
     .option('--python <binary>', 'Python runtime binary for the scry portal prelude')
     .action(async (options: { python?: string }) => {
       await launchTerminalArtBlocking(options.python);
+      await runBirthPreludeMenu(options.python);
       const birthPortal = new SoulBirthPortal();
       await birthPortal.startGenesis();
     });
@@ -669,6 +673,27 @@ async function launchTerminalArtBlocking(pythonOverride?: string): Promise<void>
       reject(new Error(`Terminal art exited unexpectedly with code ${exitCode}${viaSignal}.`));
     });
   });
+}
+
+async function runBirthPreludeMenu(pythonOverride?: string): Promise<void> {
+  while (true) {
+    const response: { value: string } = await enquirer.prompt({
+      type: 'select',
+      name: 'value',
+      message: 'Scrying terminal controls',
+      choices: [
+        'Press ENTER to scry',
+        'Open Birth Portal',
+      ],
+      initial: 0,
+    } as never);
+
+    if (response.value === 'Press ENTER to scry') {
+      await launchTerminalArtBlocking(pythonOverride);
+      continue;
+    }
+    break;
+  }
 }
 
 function spawnTerminalArtProcess(pythonOverride?: string) {
