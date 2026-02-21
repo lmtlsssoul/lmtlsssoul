@@ -354,15 +354,15 @@ export class SoulBirthPortal {
 
   private async captureSubstrateConfig(): Promise<void> {
     const choice = await this.promptSelect(
-      'Choose substrate setup mode',
+      'Choose mind substrate mode',
       [
-        'Auto local bootstrap (recommended)',
+        'Eidolon (recommended)',
         'Manual provider/model setup',
       ],
       0
     );
 
-    if (choice === 'Auto local bootstrap (recommended)') {
+    if (choice === 'Eidolon (recommended)') {
       this.substrateSetupMode = 'auto';
       this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
       this.config['substrateSetupMode'] = 'auto';
@@ -373,12 +373,12 @@ export class SoulBirthPortal {
         this.config['providerAuthSetup'] = {
           providers: ['ollama'],
           providerModelSelections: { ollama: [AUTO_DEFAULT_OLLAMA_MODEL_ID] },
-          mode: 'auto_default_local',
+          mode: 'eidolon_default_local',
           count: Object.keys(this.toolKeySecrets).length,
           catalogLastRefreshed: new Date().toISOString(),
         };
       }
-      success('Substrate config auto-initialized from runtime profile.');
+      success('Mind substrate initialized via Eidolon profile.');
       return;
     }
 
@@ -396,11 +396,11 @@ export class SoulBirthPortal {
       success(`Substrate config captured (${selected.join(', ')}).`);
       return;
     }
-    warn('Unknown setup selection. Falling back to auto detection.');
+    warn('Unknown setup selection. Falling back to Eidolon.');
     this.substrateSetupMode = 'auto';
     this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
     this.config['substrateSetupMode'] = 'auto';
-    success('Substrate config auto-initialized from runtime profile.');
+    success('Mind substrate initialized via Eidolon profile.');
   }
 
   private buildAutoEnabledSubstrates(): SubstrateId[] {
@@ -472,7 +472,7 @@ export class SoulBirthPortal {
 
   private async bootstrapAutoLocalModel(): Promise<Record<string, unknown>> {
     const report: Record<string, unknown> = {
-      mode: 'auto_local_bootstrap',
+      mode: 'eidolon_auto_bootstrap',
       modelId: AUTO_DEFAULT_OLLAMA_MODEL_ID,
       modelRef: AUTO_DEFAULT_OLLAMA_MODEL_REF,
       startedAt: new Date().toISOString(),
@@ -524,7 +524,7 @@ export class SoulBirthPortal {
     report['completedAt'] = new Date().toISOString();
 
     if (modelReady) {
-      success(`Auto local default model ready (${AUTO_DEFAULT_OLLAMA_MODEL_REF}).`);
+      success(`Eidolon default model ready (${AUTO_DEFAULT_OLLAMA_MODEL_REF}).`);
     } else {
       warn(`Could not confirm model "${AUTO_DEFAULT_OLLAMA_MODEL_ID}" after pull attempt.`);
     }
@@ -996,7 +996,7 @@ export class SoulBirthPortal {
   private async captureChannelSynchronization(): Promise<void> {
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
-      heading: 'Channel sync: select channels and configure required credentials.',
+      heading: 'Communion: select channels and configure required credentials.',
       existingSecrets: this.toolKeySecrets,
       allowedCategories: ['channel'],
     });
@@ -1224,28 +1224,28 @@ export class SoulBirthPortal {
   }
 
   public async startGenesis(): Promise<Record<string, unknown>> {
-    log('Step 1/9: Soul Structure & Identity Rails');
+    log('Step 1/9: Soul Imprint');
     await this.initializeCoreMemories();
     this.initializeSoulStructureRails();
     log('---');
 
-    log('Step 2/9: Provider Connection & Authentication');
+    log('Step 2/9: Mind Substrate');
     await this.captureSubstrateConfig();
     if (this.substrateSetupMode === 'manual') {
       await this.captureProviderAuthAndModels();
     } else if (this.autoAssignedModelRef) {
-      success(`Auto mode default model assigned (${this.autoAssignedModelRef}).`);
+      success(`Eidolon default model assigned (${this.autoAssignedModelRef}).`);
     } else {
-      warn('Auto mode could not finalize local default model. You can retry in manual mode.');
+      warn('Eidolon mode could not finalize local default model. You can retry in manual mode.');
     }
     await this.probeSubstrateConnections();
     log('---');
 
-    log('Step 3/9: Tool Keys & Service Connectors (Optional)');
+    log('Step 3/9: Instrumentation');
     await this.captureToolKeys();
     log('---');
 
-    log('Step 4/9: Model Discovery');
+    log('Step 4/9: Mindstrum');
     log('Scanning authenticated substrates...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
@@ -1263,7 +1263,7 @@ export class SoulBirthPortal {
     }
     log('---');
 
-    log('Step 5/9: Agent Role Assignment');
+    log('Step 5/9: Daemons');
     const roleAssignments: Record<string, string> = {};
     const assignmentCandidates = liveDiscovered.length > 0 ? liveDiscovered : discovered;
     const bySubstrate = new Map<string, Array<{ modelId: string; stale: boolean }>>();
@@ -1379,7 +1379,7 @@ export class SoulBirthPortal {
     success('Agent role assignments stored.');
     log('---');
 
-    log('Step 6/9: Channel Synchronization');
+    log('Step 6/9: Communion');
     await this.captureChannelSynchronization();
     log('---');
 
