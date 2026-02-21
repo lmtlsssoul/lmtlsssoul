@@ -602,6 +602,7 @@ export async function refreshCredentialCatalog(
 export async function runCredentialSetupMenu(options?: {
   stateDir?: string;
   heading?: string;
+  menuPrompt?: string;
   existingSecrets?: Record<string, string>;
   allowedCategories?: CredentialCategory[];
 }): Promise<CredentialSetupResult> {
@@ -635,10 +636,10 @@ export async function runCredentialSetupMenu(options?: {
 
   while (true) {
     const topChoice = await promptSelect(
-      'Credential setup menu',
+      options?.menuPrompt ?? 'Initiation',
       [
         ...categoryChoices,
-        'Add custom credential',
+        'Add custom initiation',
         'Done',
       ],
       0
@@ -648,14 +649,14 @@ export async function runCredentialSetupMenu(options?: {
       break;
     }
 
-    if (topChoice === 'Add custom credential') {
+    if (topChoice === 'Add custom initiation') {
       await configureCustomCredential(secrets);
       continue;
     }
 
     const category = categoryChoiceMap.get(topChoice) ?? null;
     if (!category) {
-      warn(`Unknown credential category selection: "${topChoice}"`);
+      warn(`Unknown initiation category selection: "${topChoice}"`);
       continue;
     }
     const entries = grouped[category] ?? [];
@@ -963,7 +964,7 @@ async function configureCustomCredential(secrets: Record<string, string>): Promi
     secrets[env] = value.trim();
     return;
   }
-  const mode = await promptSelect('Custom credential auth type', ['Secret value', 'Plain value'], 0);
+  const mode = await promptSelect('Custom initiation auth type', ['Secret value', 'Plain value'], 0);
   const value = mode === 'Secret value'
     ? await promptSecret(`Enter ${env}`)
     : await promptInput(`Enter ${env}`);

@@ -966,6 +966,7 @@ export class SoulBirthPortal {
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
       heading: 'Connectors: select tools/services and configure API key or OAuth details.',
+      menuPrompt: 'Initiation',
       existingSecrets: this.toolKeySecrets,
       allowedCategories: ['tool', 'service'],
     });
@@ -990,14 +991,14 @@ export class SoulBirthPortal {
     if (Object.keys(this.toolKeySecrets).length === 0) {
       success('No tool keys configured right now.');
     } else {
-      success(`Captured ${Object.keys(this.toolKeySecrets).length} credential value(s).`);
+      success(`Captured ${Object.keys(this.toolKeySecrets).length} initiation value(s).`);
     }
   }
 
   private async captureChannelSynchronization(): Promise<void> {
     const result = await runCredentialSetupMenu({
       stateDir: getStateDir(),
-      heading: 'Correspondence: select channels and configure required credentials.',
+      heading: 'Correspondence: select channels and configure required initiations.',
       existingSecrets: this.toolKeySecrets,
       allowedCategories: ['channel'],
     });

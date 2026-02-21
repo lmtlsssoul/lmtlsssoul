@@ -314,7 +314,7 @@ export async function main() {
     });
 
   program.command('config')
-    .description('Open interactive credentials configuration (same menu as Birth Step 2)')
+    .description('Open interactive initiations configuration (same menu as Birth Step 2)')
     .action(async () => {
       await runCredentialsConfigFlow();
     });
@@ -364,12 +364,12 @@ async function runCredentialsConfigFlow(): Promise<void> {
   const existingSecrets = loadToolKeys(stateDir);
   const result = await runCredentialSetupMenu({
     stateDir,
-    heading: 'Credentials Config: provider/tool/channel catalog (daily refreshed).',
+    heading: 'Initiations Config: provider/tool/channel catalog (daily refreshed).',
     existingSecrets,
   });
 
   const persisted = persistToolKeys(result.secrets, stateDir);
-  success(`Credential store updated at ${persisted.path} (${persisted.count} key(s)).`);
+  success(`Initiations store updated at ${persisted.path} (${persisted.count} key(s)).`);
 
   const birthConfigPath = path.join(stateDir, 'birth-config.json');
   if (fs.existsSync(birthConfigPath)) {
@@ -722,7 +722,7 @@ async function runRootPortalMenu(): Promise<void> {
     'Open Birth Portal',
     'Open Chat',
     'Show Status',
-    'Configure Credentials',
+    'Configure Initiations',
     'Scan Minds',
     'Start Daemon (the other kind)',
     'Stop Daemon (the other kind)',
@@ -769,7 +769,7 @@ async function runRootPortalMenu(): Promise<void> {
       await runSoulSubcommand(['status']);
       continue;
     }
-    if (choice === 'Configure Credentials') {
+    if (choice === 'Configure Initiations') {
       await runSoulSubcommand(['config']);
       continue;
     }
