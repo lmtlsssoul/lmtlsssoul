@@ -679,12 +679,13 @@ function enterTerminalArtViewport(): () => void {
   out.write('\x1b[?25l');
 
   if (supportsWindowOps) {
-    // Best-effort fullscreen/maximize + edge pin (terminal window ops).
+    // Best-effort fullscreen/maximize using terminal window ops.
+    // Avoid aggressive geometry/move commands that can place some terminals offscreen.
     out.write('\x1b[?1049h');   // alternate screen buffer
-    out.write('\x1b[8;999;999t'); // resize text area to max supported
+    out.write('\x1b[2J');       // clear viewport
+    out.write('\x1b[H');        // cursor home
     out.write('\x1b[9;1t');     // maximize window
     out.write('\x1b[10;1t');    // request fullscreen mode where supported
-    out.write('\x1b[3;0;0t');   // move top-left
   }
 
   return () => {

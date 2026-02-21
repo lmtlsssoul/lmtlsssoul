@@ -734,6 +734,7 @@ def is_point_in_sigil(x, y, sig, t, phase_noise, is_layered_render=False):
 def main(stdscr):
     # Hide cursor
     curses.curs_set(0)
+    stdscr.keypad(True)
     stdscr.nodelay(1)
     # Drop any buffered shell keypress (e.g., launch Enter) so fullscreen
     # only collapses on deliberate input after render begins.
@@ -792,6 +793,14 @@ def main(stdscr):
 
     while True:
         t = time.time() - t0
+        # Keep ncurses dimensions aligned with the live terminal window size.
+        # This prevents offscreen drawing when terminals toggle fullscreen.
+        try:
+            curses.update_lines_cols()
+            curses.resize_term(0, 0)
+        except curses.error:
+            pass
+
         height, width = stdscr.getmaxyx()
         
         if height < 10 or width < 40:
@@ -1212,7 +1221,11 @@ def main(stdscr):
 
         key = stdscr.getch()
         if key == curses.KEY_RESIZE:
-            pass
+            try:
+                curses.update_lines_cols()
+                curses.resize_term(0, 0)
+            except curses.error:
+                pass
         elif key != -1:
             if time.time() >= startup_key_guard_until:
                 break
