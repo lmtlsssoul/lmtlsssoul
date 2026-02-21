@@ -830,7 +830,7 @@ function resolveTerminalArtLaunchCommand(
 ): { command: string; args: string[] } {
   // Keep display awake while the scrying terminal runs.
   // Linux systemd-inhibit path.
-  if (process.platform === 'linux' && commandExists('systemd-inhibit')) {
+  if (canUseSystemdInhibit()) {
     return {
       command: 'systemd-inhibit',
       args: [
@@ -855,6 +855,7 @@ function resolveTerminalArtLaunchCommand(
 }
 
 let fullscreenRequested = false;
+let systemdInhibitAvailable: boolean | null = null;
 
 function requestNativeFullscreen(): void {
   if (fullscreenRequested) {
@@ -868,6 +869,44 @@ function requestNativeFullscreen(): void {
     spawnSync('xdotool', ['key', '--clearmodifiers', 'F11'], {
       stdio: 'ignore',
     });
+  }
+}
+
+function canUseSystemdInhibit(): boolean {
+  if (process.platform !== 'linux') {
+    return false;
+  }
+  if (isWslEnvironment()) {
+    return false;
+  }
+  if (systemdInhibitAvailable != null) {
+    return systemdInhibitAvailable;
+  }
+  if (!commandExists('systemd-inhibit')) {
+    systemdInhibitAvailable = false;
+    return false;
+  }
+
+  // Guard against environments where the binary exists but cannot connect
+  // to a running systemd/logind session bus.
+  const probe = spawnSync(
+    'systemd-inhibit',
+    ['--what=idle:sleep', '--mode=block', '--why=lmtlss soul probe', 'true'],
+    { stdio: 'ignore', timeout: 1500 }
+  );
+  systemdInhibitAvailable = (probe.status ?? 1) === 0;
+  return systemdInhibitAvailable;
+}
+
+function isWslEnvironment(): boolean {
+  if (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP) {
+    return true;
+  }
+  try {
+    const content = fs.readFileSync('/proc/version', 'utf8').toLowerCase();
+    return content.includes('microsoft');
+  } catch {
+    return false;
   }
 }
 
