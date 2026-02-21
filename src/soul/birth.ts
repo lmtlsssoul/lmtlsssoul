@@ -1385,12 +1385,12 @@ export class SoulBirthPortal {
     await this.captureChannelSynchronization();
     log('---');
 
-    log('Step 7/9: Exchange');
+    log('Step 7/9: Transmutation');
     this.config['treasuryPolicy'] = await this.prompt(
-      'Enter exchange policy (JSON, optional)',
+      'Enter transmutation policy (JSON, optional)',
       '{}'
     );
-    success('Exchange policy captured.');
+    success('Transmutation policy captured.');
     log('---');
 
     log('Step 8/9: True Name & Will');
