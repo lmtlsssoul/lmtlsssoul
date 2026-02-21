@@ -102,6 +102,7 @@ Reference: `docs/MULTI_AGENT_SHIP.md`
 | `soul status` | show soul state — nodes, events, daemon, gateway |
 | `soul models scan` | discover models from all substrates (ollama, openai, anthropic, xai) |
 | `soul models set <role> <model>` | assign a model to an agent role (`<substrate>:<modelId>`) |
+| `soul config` | open interactive credentials config (same catalog menu as Birth Step 2) |
 | `soul reflect` | trigger immediate reflection pass |
 | `soul art` | launch the integrated terminal field renderer (python3 runtime required) |
 | `soul archive verify` | verify archive sha-256 hash-chain integrity |

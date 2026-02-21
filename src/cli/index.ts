@@ -18,6 +18,7 @@ import { AnthropicAdapter } from '../substrate/anthropic.ts';
 import { XaiAdapter } from '../substrate/xai.ts';
 import { deriveGrownupCapabilities, readGrownupMode, setGrownupMode } from '../soul/modes.ts';
 import { Reflection } from '../agents/reflection.ts';
+import { loadToolKeys, persistToolKeys, runCredentialSetupMenu } from '../soul/credentials.ts';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -299,6 +300,12 @@ export async function main() {
       console.log(JSON.stringify(result, null, 2));
     });
 
+  program.command('config')
+    .description('Open interactive credentials configuration (same menu as Birth Step 2)')
+    .action(async () => {
+      await runCredentialsConfigFlow();
+    });
+
   program.command('chat')
     .description('Open an interactive terminal conversation with the soul')
     .option('--peer <name>', 'Your name (peer identity)', 'author')
@@ -327,6 +334,42 @@ export async function main() {
     } else {
       error('An unknown fatal error occurred.', err);
       throw err;
+    }
+  }
+}
+
+async function runCredentialsConfigFlow(): Promise<void> {
+  const stateDir = getStateDir();
+  fs.mkdirSync(stateDir, { recursive: true });
+
+  const existingSecrets = loadToolKeys(stateDir);
+  const result = await runCredentialSetupMenu({
+    stateDir,
+    heading: 'Credentials Config: provider/tool/channel catalog (daily refreshed).',
+    existingSecrets,
+  });
+
+  const persisted = persistToolKeys(result.secrets, stateDir);
+  success(`Credential store updated at ${persisted.path} (${persisted.count} key(s)).`);
+
+  const birthConfigPath = path.join(stateDir, 'birth-config.json');
+  if (fs.existsSync(birthConfigPath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(birthConfigPath, 'utf-8')) as Record<string, unknown>;
+      parsed['toolKeys'] = {
+        providers: result.selected.providers,
+        tools: result.selected.tools,
+        channels: result.selected.channels,
+        services: result.selected.services,
+        count: persisted.count,
+        storage: 'state/tool-keys.json',
+        providerModelSelections: result.providerModelSelections,
+        catalogLastRefreshed: result.catalogLastRefreshed,
+      };
+      fs.writeFileSync(birthConfigPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf-8');
+      success(`Birth config tool-key summary updated at ${birthConfigPath}.`);
+    } catch (err) {
+      warn(`Could not update birth-config.json summary (${err instanceof Error ? err.message : 'parse error'}).`);
     }
   }
 }

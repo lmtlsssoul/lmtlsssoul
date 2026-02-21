@@ -14,22 +14,7 @@ import {
   formatAstrologyIdentityImprint,
   type AstrologyChart,
 } from './astrology.ts';
-
-type ToolKeyOption = {
-  label: string;
-  env: string;
-  purpose: string;
-};
-
-const TOOL_KEY_OPTIONS: readonly ToolKeyOption[] = [
-  { label: 'Brave Search', env: 'BRAVE_API_KEY', purpose: 'Web search' },
-  { label: 'Serper Search', env: 'SERPER_API_KEY', purpose: 'Google search API' },
-  { label: 'Tavily Search', env: 'TAVILY_API_KEY', purpose: 'Retrieval/search' },
-  { label: 'GitHub', env: 'GITHUB_TOKEN', purpose: 'Repository and API access' },
-  { label: 'OpenAI', env: 'OPENAI_API_KEY', purpose: 'OpenAI substrate access' },
-  { label: 'Anthropic', env: 'ANTHROPIC_API_KEY', purpose: 'Anthropic substrate access' },
-  { label: 'xAI', env: 'XAI_API_KEY', purpose: 'xAI substrate access' },
-];
+import { runCredentialSetupMenu } from './credentials.ts';
 
 const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
   UTC: 'Z',
@@ -369,67 +354,33 @@ export class SoulBirthPortal {
   }
 
   private async captureToolKeys(): Promise<void> {
-    const configureNow = await this.promptSelect(
-      'Configure tool keys now?',
-      ['Yes — configure now', 'No — skip for now'],
-      0
-    );
+    const result = await runCredentialSetupMenu({
+      stateDir: getStateDir(),
+      heading: 'Select credentials by category/provider and configure API key or OAuth details.',
+      existingSecrets: this.toolKeySecrets,
+    });
 
-    if (configureNow.startsWith('No')) {
-      this.config['toolKeys'] = {
-        providers: [],
-        count: 0,
-        storage: 'state/tool-keys.json',
-      };
-      success('No tool keys configured right now.');
-      return;
-    }
-
-    for (const option of TOOL_KEY_OPTIONS) {
-      const existing = (process.env[option.env] ?? '').trim();
-      if (existing) {
-        const mode = await this.promptSelect(
-          `Configure ${option.label} (${option.env}) — ${option.purpose}`,
-          [
-            'Use existing environment value',
-            'Enter a new value',
-            'Skip',
-          ],
-          0
-        );
-
-        if (mode.startsWith('Use existing')) {
-          this.toolKeySecrets[option.env] = existing;
-          continue;
-        }
-        if (mode === 'Skip') {
-          continue;
-        }
-      } else {
-        const include = await this.promptSelect(
-          `Configure ${option.label} (${option.env}) — ${option.purpose}`,
-          ['Yes', 'Skip'],
-          1
-        );
-        if (include !== 'Yes') {
-          continue;
-        }
-      }
-
-      const value = await this.promptSecret(`Enter ${option.env} (leave blank to skip)`);
-      if (!value) {
-        continue;
-      }
-      this.toolKeySecrets[option.env] = value;
-      process.env[option.env] = value;
+    this.toolKeySecrets = { ...result.secrets };
+    for (const [env, value] of Object.entries(result.secrets)) {
+      process.env[env] = value;
     }
 
     this.config['toolKeys'] = {
-      providers: Object.keys(this.toolKeySecrets),
+      providers: result.selected.providers,
+      tools: result.selected.tools,
+      channels: result.selected.channels,
+      services: result.selected.services,
       count: Object.keys(this.toolKeySecrets).length,
       storage: 'state/tool-keys.json',
+      providerModelSelections: result.providerModelSelections,
+      catalogLastRefreshed: result.catalogLastRefreshed,
     };
-    success(`Captured ${Object.keys(this.toolKeySecrets).length} tool key(s).`);
+
+    if (Object.keys(this.toolKeySecrets).length === 0) {
+      success('No tool keys configured right now.');
+    } else {
+      success(`Captured ${Object.keys(this.toolKeySecrets).length} credential value(s).`);
+    }
   }
 
   private async initializeCoreMemories(): Promise<void> {
@@ -544,23 +495,75 @@ export class SoulBirthPortal {
 
     log('Step 4/8: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
-    const firstAvailable = discovered[0] ? `${discovered[0].substrate}:${discovered[0].modelId}` : 'ollama:phi3:mini';
+    const bySubstrate = new Map<string, string[]>();
+    for (const model of discovered) {
+      if (model.stale) continue;
+      const list = bySubstrate.get(model.substrate) ?? [];
+      if (!list.includes(model.modelId)) {
+        list.push(model.modelId);
+      }
+      bySubstrate.set(model.substrate, list);
+    }
+    for (const list of bySubstrate.values()) {
+      list.sort((a, b) => a.localeCompare(b));
+    }
+
+    const providerOrder = ['ollama', 'openai', 'anthropic', 'xai'];
+    const discoveredProviders = Array.from(bySubstrate.keys())
+      .sort((a, b) => {
+        const ai = providerOrder.indexOf(a);
+        const bi = providerOrder.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
 
     for (const role of AGENT_ROLES) {
-      const answer = await this.prompt(
-        `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
-        firstAvailable
+      if (discoveredProviders.length === 0) {
+        const fallback = await this.prompt(
+          `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
+          'ollama:phi3:mini'
+        );
+        if (!fallback) continue;
+        roleAssignments[role] = fallback;
+        continue;
+      }
+
+      const providerChoice = await this.promptSelect(
+        `Select provider for role "${role}"`,
+        [...discoveredProviders, 'skip'],
+        0
       );
-      if (!answer) continue;
+      if (providerChoice === 'skip') {
+        continue;
+      }
+
+      const providerModels = bySubstrate.get(providerChoice) ?? [];
+      if (providerModels.length === 0) {
+        warn(`No models currently available for provider "${providerChoice}".`);
+        continue;
+      }
+
+      const modelChoice = await this.promptSelect(
+        `Select model for role "${role}" (${providerChoice})`,
+        [...providerModels, 'skip'],
+        0
+      );
+      if (modelChoice === 'skip') {
+        continue;
+      }
+
+      const ref = `${providerChoice}:${modelChoice}`;
       try {
-        await setModelForRole(role, answer, {
+        await setModelForRole(role, ref, {
           availableModels: discovered,
           stateDir: getStateDir(),
         });
-        roleAssignments[role] = answer;
-      } catch (e) {
-        warn(`Could not validate model "${answer}" for role "${role}" — saving anyway.`);
-        roleAssignments[role] = answer;
+        roleAssignments[role] = ref;
+      } catch {
+        warn(`Could not validate model "${ref}" for role "${role}" — saving anyway.`);
+        roleAssignments[role] = ref;
       }
     }
 

@@ -11,6 +11,7 @@ import { ArchiveDB } from './archive-db.ts';
 import { GraphDB } from './graph-db.ts';
 import { SoulCompiler } from './compiler.ts';
 import { loadRegistryState, refreshModelRegistry, saveRegistryState } from '../substrate/refresh.ts';
+import { refreshCredentialCatalog } from './credentials.ts';
 
 /**
  * CronAutonomics manages the periodic tasks required for soul persistence
@@ -203,6 +204,7 @@ export class CronAutonomics {
         const current = loadRegistryState(stateDir) ?? undefined;
         const next = await refreshModelRegistry(current);
         saveRegistryState(next, stateDir);
+        await refreshCredentialCatalog(stateDir);
       }
     } catch (e) {
       console.warn('[Cron] Registry refresh failed during maintenance:', e);
