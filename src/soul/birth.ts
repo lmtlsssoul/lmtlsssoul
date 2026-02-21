@@ -1129,8 +1129,9 @@ export class SoulBirthPortal {
   }
 
   private async captureProtocolAgreement(): Promise<void> {
+    const agreementStatement = 'I understand and agree that I am solely responsible for my implementation of the entire lmtlss soul protocol and all of its intended and unintended consequences.';
     const choice = await this.promptSelect(
-      'I understand and agree to the entire lmtlss soul protocol and all its reach.',
+      agreementStatement,
       ['Agree and continue', 'Cancel incarnation'],
       0
     );
@@ -1142,7 +1143,7 @@ export class SoulBirthPortal {
     this.config['protocolAgreement'] = {
       accepted: true,
       acceptedAt: new Date().toISOString(),
-      statement: 'I understand and agree to the entire lmtlss soul protocol and all its reach.',
+      statement: agreementStatement,
     };
     success('Protocol agreement sealed.');
   }
