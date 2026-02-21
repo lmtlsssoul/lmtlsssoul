@@ -1,6 +1,7 @@
 import enquirer from 'enquirer';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { log, success, error, warn } from './branding.ts';
 import { scanForModels, setModelForRole } from './models-scan.ts';
 import { AGENT_ROLES, getStateDir } from './types.ts';
@@ -298,19 +299,30 @@ export class SoulBirthPortal {
     const choice = await this.promptSelect(
       'Choose substrate setup mode',
       [
-        'Auto setup (recommended)',
+        'Auto detect (recommended)',
+        'Manual substrate selection',
         'Import from existing birth-config.json',
-        'Manual JSON entry',
+        'Manual JSON entry (advanced)',
       ],
       0
     );
 
-    if (choice === 'Auto setup (recommended)') {
+    if (choice === 'Auto detect (recommended)') {
+      this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
+      success('Substrate config auto-initialized from runtime profile.');
+      await this.probeSubstrateConnections();
+      return;
+    }
+
+    if (choice === 'Manual substrate selection') {
+      const selected = await this.promptSubstrateSelection(
+        ['ollama', 'openai', 'anthropic', 'xai']
+      );
       this.config['substrateConfig'] = {
-        mode: 'auto',
-        enabledSubstrates: this.buildAutoEnabledSubstrates(),
+        mode: 'manual',
+        enabledSubstrates: selected,
       };
-      success('Substrate config auto-initialized.');
+      success(`Substrate config captured (${selected.join(', ')}).`);
       await this.probeSubstrateConnections();
       return;
     }
@@ -338,10 +350,10 @@ export class SoulBirthPortal {
       }
 
       this.config['substrateConfig'] = {
+        ...(await this.buildAutoSubstrateConfig()),
         mode: 'auto',
-        enabledSubstrates: this.buildAutoEnabledSubstrates(),
       };
-      success('Substrate config auto-initialized.');
+      success('Substrate config auto-initialized from runtime profile.');
       await this.probeSubstrateConnections();
       return;
     }
@@ -355,10 +367,10 @@ export class SoulBirthPortal {
       warn(err instanceof Error ? err.message : 'Invalid substrate JSON.');
       warn('Falling back to auto setup.');
       this.config['substrateConfig'] = {
+        ...(await this.buildAutoSubstrateConfig()),
         mode: 'auto',
-        enabledSubstrates: this.buildAutoEnabledSubstrates(),
       };
-      success('Substrate config auto-initialized.');
+      success('Substrate config auto-initialized from runtime profile.');
       await this.probeSubstrateConnections();
     }
   }
@@ -377,6 +389,148 @@ export class SoulBirthPortal {
     }
 
     return enabled;
+  }
+
+  private async promptSubstrateSelection(defaults: SubstrateId[]): Promise<SubstrateId[]> {
+    const all: SubstrateId[] = ['ollama', 'openai', 'anthropic', 'xai'];
+    const selected = new Set<SubstrateId>(defaults);
+
+    while (true) {
+      const choices = all.map((substrate) => `${selected.has(substrate) ? '[x]' : '[ ]'} ${substrate}`);
+      choices.push('Done');
+      const pick = await this.promptSelect(
+        'Select enabled substrates (toggle entries, then Done)',
+        choices,
+        0
+      );
+
+      if (pick === 'Done') {
+        break;
+      }
+
+      const substrate = pick.slice(4).trim().toLowerCase() as SubstrateId;
+      if (!all.includes(substrate)) {
+        continue;
+      }
+      if (selected.has(substrate)) {
+        selected.delete(substrate);
+      } else {
+        selected.add(substrate);
+      }
+    }
+
+    const out = all.filter((substrate) => selected.has(substrate));
+    if (out.length > 0) {
+      return out;
+    }
+
+    warn('No substrates selected. Defaulting to ollama.');
+    return ['ollama'];
+  }
+
+  private async buildAutoSubstrateConfig(): Promise<Record<string, unknown>> {
+    return {
+      mode: 'auto',
+      enabledSubstrates: this.buildAutoEnabledSubstrates(),
+      autoDetection: await this.detectRuntimeContext(),
+    };
+  }
+
+  private async detectRuntimeContext(): Promise<Record<string, unknown>> {
+    const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'unknown';
+    const base: Record<string, unknown> = {
+      detectedAt: new Date().toISOString(),
+      platform: process.platform,
+      release: os.release(),
+      arch: process.arch,
+      timezone: localTimezone,
+      utcOffsetMinutes: -new Date().getTimezoneOffset(),
+      isWsl: process.platform === 'linux' && os.release().toLowerCase().includes('microsoft'),
+    };
+
+    const endpoints = [
+      { provider: 'ipapi', url: 'https://ipapi.co/json/' },
+      { provider: 'ipinfo', url: 'https://ipinfo.io/json' },
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const payload = await this.fetchJson(endpoint.url, 1500);
+        if (!payload) {
+          continue;
+        }
+
+        const country = this.readString(payload, ['country_name', 'country']);
+        const region = this.readString(payload, ['region', 'region_name']);
+        const city = this.readString(payload, ['city']);
+        const timezone = this.readString(payload, ['timezone']);
+        const ip = this.readString(payload, ['ip']);
+
+        base['networkContext'] = {
+          provider: endpoint.provider,
+          country: country ?? null,
+          region: region ?? null,
+          city: city ?? null,
+          timezone: timezone ?? null,
+          ipHint: ip ? this.maskIp(ip) : null,
+        };
+        return base;
+      } catch {
+        // Silent by design: auto mode should never block on network hints.
+      }
+    }
+
+    return base;
+  }
+
+  private async fetchJson(url: string, timeoutMs: number): Promise<Record<string, unknown> | null> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const parsed = await response.json();
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return null;
+      }
+      return parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private readString(payload: Record<string, unknown>, keys: string[]): string | null {
+    for (const key of keys) {
+      const value = payload[key];
+      if (typeof value === 'string' && value.trim().length > 0) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
+
+  private maskIp(ip: string): string {
+    const value = ip.trim();
+    if (!value) {
+      return '';
+    }
+    if (value.includes(':')) {
+      const parts = value.split(':').filter(Boolean);
+      if (parts.length <= 2) return 'ipv6';
+      return `${parts[0]}:${parts[1]}:*:*`;
+    }
+    const parts = value.split('.');
+    if (parts.length !== 4) {
+      return 'ip';
+    }
+    return `${parts[0]}.${parts[1]}.x.x`;
   }
 
   private getEnabledSubstratesFromConfig(): SubstrateId[] {
