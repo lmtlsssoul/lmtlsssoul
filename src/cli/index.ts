@@ -74,8 +74,8 @@ export async function main() {
     });
 
   program.command('start')
-    .alias('kindle')
-    .description('Kindle the soul daemon (the other kind)')
+    .alias('ignite')
+    .description('Ignite the soul daemon (the other kind)')
     .option('-p, --port <port>', 'Gateway port', '3000')
     .option('-H, --host <host>', 'Gateway host', '127.0.0.1')
     .action(async (options: { port: string; host: string }) => {

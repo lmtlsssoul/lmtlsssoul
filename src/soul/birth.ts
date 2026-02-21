@@ -1547,7 +1547,7 @@ export class SoulBirthPortal {
 
     success('Incarnation Portal complete.');
     log(`Soul "${this.normalizeIdentityText(this.config['soulName'], 'unnamed')}" is born.`);
-    log("Run 'soul kindle' (alias: soul start) to activate runtime services.");
+    log("Run 'soul ignite' (alias: soul start) to activate runtime services.");
     log("Run 'soul commune' (alias: soul chat) for interactive terminal communion.");
     return this.config;
   }

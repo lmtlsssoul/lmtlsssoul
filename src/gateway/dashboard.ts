@@ -354,7 +354,7 @@ tr:hover td { background: var(--bg3); }
         <div class="widget-title">Invocations</div>
         <div class="widget-body" style="font-size:11px;color:var(--green-dim);line-height:1.8">
           <div>soul incarnate (soul birth)</div>
-          <div>soul kindle (soul start)</div>
+          <div>soul ignite (soul start)</div>
           <div>soul still (soul stop)</div>
           <div>soul vessel (soul omens / soul status)</div>
           <div>soul commune (soul chat)</div>
@@ -596,7 +596,7 @@ async function sendChat() {
     }
   } catch (e) {
     $('chat-messages').removeChild(thinking);
-    appendMessage('system', 'Connection error. Is the daemon (the other kind) active? (soul kindle)');
+    appendMessage('system', 'Connection error. Is the daemon (the other kind) active? (soul ignite)');
   }
 
   state.chatBusy = false;
