@@ -659,6 +659,12 @@ async function configureCredentialEntry(
   entry: CredentialEntry,
   secrets: Record<string, string>
 ): Promise<boolean> {
+  const providerId = normalizeProviderId(entry.provider ?? entry.label);
+  if (entry.category === 'provider' && providerId === 'ollama') {
+    // Local Ollama defaults should not prompt for API/base-url before model selection.
+    return true;
+  }
+
   let mode: CredentialAuthMode | null = null;
   if (entry.authModes.length === 1) {
     mode = entry.authModes[0] ?? null;

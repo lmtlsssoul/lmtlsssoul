@@ -2,6 +2,7 @@ import enquirer from 'enquirer';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn, spawnSync } from 'node:child_process';
 import { log, success, error, warn } from './branding.ts';
 import { scanForModels, setModelForRole } from './models-scan.ts';
 import { AGENT_ROLES, getStateDir } from './types.ts';
@@ -50,9 +51,14 @@ const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
   AEDT: '+11:00',
 };
 
+const AUTO_DEFAULT_OLLAMA_MODEL_ID = 'silk/eidolon-1.0:0.5b';
+const AUTO_DEFAULT_OLLAMA_MODEL_REF = `ollama:${AUTO_DEFAULT_OLLAMA_MODEL_ID}`;
+
 export class SoulBirthPortal {
   private config: Record<string, unknown> = {};
   private toolKeySecrets: Record<string, string> = {};
+  private substrateSetupMode: 'auto' | 'manual' = 'auto';
+  private autoAssignedModelRef: string | null = null;
 
   constructor() {
     log('Birth Portal');
@@ -303,19 +309,34 @@ export class SoulBirthPortal {
     const choice = await this.promptSelect(
       'Choose substrate setup mode',
       [
-        'Auto detect (recommended)',
-        'Manual substrate selection',
+        'Auto local bootstrap (recommended)',
+        'Manual provider/model setup',
       ],
       0
     );
 
-    if (choice === 'Auto detect (recommended)') {
+    if (choice === 'Auto local bootstrap (recommended)') {
+      this.substrateSetupMode = 'auto';
       this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
+      this.config['substrateSetupMode'] = 'auto';
+      const bootstrap = await this.bootstrapAutoLocalModel();
+      this.config['autoBootstrap'] = bootstrap;
+      if (bootstrap.ready) {
+        this.autoAssignedModelRef = AUTO_DEFAULT_OLLAMA_MODEL_REF;
+        this.config['providerAuthSetup'] = {
+          providers: ['ollama'],
+          providerModelSelections: { ollama: [AUTO_DEFAULT_OLLAMA_MODEL_ID] },
+          mode: 'auto_default_local',
+          count: Object.keys(this.toolKeySecrets).length,
+          catalogLastRefreshed: new Date().toISOString(),
+        };
+      }
       success('Substrate config auto-initialized from runtime profile.');
       return;
     }
 
-    if (choice === 'Manual substrate selection') {
+    if (choice === 'Manual provider/model setup') {
+      this.substrateSetupMode = 'manual';
       const selected = await this.promptSubstrateSelection(
         ['ollama', 'openai', 'anthropic', 'xai']
       );
@@ -323,16 +344,20 @@ export class SoulBirthPortal {
         mode: 'manual',
         enabledSubstrates: selected,
       };
+      this.config['substrateSetupMode'] = 'manual';
+      this.autoAssignedModelRef = null;
       success(`Substrate config captured (${selected.join(', ')}).`);
       return;
     }
     warn('Unknown setup selection. Falling back to auto detection.');
+    this.substrateSetupMode = 'auto';
     this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
+    this.config['substrateSetupMode'] = 'auto';
     success('Substrate config auto-initialized from runtime profile.');
   }
 
   private buildAutoEnabledSubstrates(): SubstrateId[] {
-    return ['ollama', 'openai', 'anthropic', 'xai'];
+    return ['ollama'];
   }
 
   private async promptSubstrateSelection(defaults: SubstrateId[]): Promise<SubstrateId[]> {
@@ -378,6 +403,172 @@ export class SoulBirthPortal {
       enabledSubstrates: this.buildAutoEnabledSubstrates(),
       autoDetection: await this.detectRuntimeContext(),
     };
+  }
+
+  private async bootstrapAutoLocalModel(): Promise<Record<string, unknown>> {
+    const report: Record<string, unknown> = {
+      mode: 'auto_local_bootstrap',
+      modelId: AUTO_DEFAULT_OLLAMA_MODEL_ID,
+      modelRef: AUTO_DEFAULT_OLLAMA_MODEL_REF,
+      startedAt: new Date().toISOString(),
+      ollamaInstalled: false,
+      runtimeReachable: false,
+      modelReady: false,
+    };
+
+    let hasOllama = this.commandExists('ollama');
+    if (!hasOllama) {
+      log('Ollama not detected. Attempting automatic install...');
+      const installed = await this.installOllamaRuntime();
+      report['installAttempted'] = true;
+      report['installSucceeded'] = installed;
+      hasOllama = installed && this.commandExists('ollama');
+    }
+
+    report['ollamaInstalled'] = hasOllama;
+    if (!hasOllama) {
+      warn('Ollama is not available. Auto bootstrap could not complete.');
+      report['ready'] = false;
+      report['completedAt'] = new Date().toISOString();
+      return report;
+    }
+
+    const runtimeReachable = await this.ensureOllamaRuntimeReachable();
+    report['runtimeReachable'] = runtimeReachable;
+    if (!runtimeReachable) {
+      warn('Ollama runtime did not become reachable. Auto bootstrap stopped before model pull.');
+      report['ready'] = false;
+      report['completedAt'] = new Date().toISOString();
+      return report;
+    }
+
+    let models = await this.listOllamaModelIds();
+    let modelReady = models.includes(AUTO_DEFAULT_OLLAMA_MODEL_ID);
+    if (!modelReady) {
+      log(`Pulling default local model "${AUTO_DEFAULT_OLLAMA_MODEL_ID}"...`);
+      const pulled = await this.runStreamingCommand('ollama', ['pull', AUTO_DEFAULT_OLLAMA_MODEL_ID], 30 * 60 * 1000);
+      report['pullAttempted'] = true;
+      report['pullSucceeded'] = pulled;
+      models = await this.listOllamaModelIds();
+      modelReady = models.includes(AUTO_DEFAULT_OLLAMA_MODEL_ID);
+    }
+
+    report['modelReady'] = modelReady;
+    report['ready'] = modelReady;
+    report['availableModelCount'] = models.length;
+    report['completedAt'] = new Date().toISOString();
+
+    if (modelReady) {
+      success(`Auto local default model ready (${AUTO_DEFAULT_OLLAMA_MODEL_REF}).`);
+    } else {
+      warn(`Could not confirm model "${AUTO_DEFAULT_OLLAMA_MODEL_ID}" after pull attempt.`);
+    }
+    return report;
+  }
+
+  private commandExists(command: string): boolean {
+    const result = spawnSync(command, ['--version'], {
+      stdio: 'ignore',
+      shell: false,
+    });
+    if (result.error) {
+      return false;
+    }
+    return (result.status ?? 1) === 0;
+  }
+
+  private async installOllamaRuntime(): Promise<boolean> {
+    if (process.platform === 'linux' || process.platform === 'darwin') {
+      return await this.runStreamingCommand(
+        'bash',
+        ['-lc', 'curl -fsSL https://ollama.com/install.sh | sh'],
+        4 * 60 * 1000
+      );
+    }
+    warn('Automatic Ollama install is currently supported on Linux/macOS only.');
+    return false;
+  }
+
+  private async ensureOllamaRuntimeReachable(): Promise<boolean> {
+    const adapter = new OllamaAdapter();
+    const initial = await adapter.health();
+    if (initial.ok) {
+      return true;
+    }
+
+    log('Starting Ollama runtime...');
+    try {
+      const child = spawn('ollama', ['serve'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+    } catch {
+      // Continue to retry health checks even if spawn fails.
+    }
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await this.sleep(800);
+      const status = await adapter.health();
+      if (status.ok) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async listOllamaModelIds(): Promise<string[]> {
+    const adapter = new OllamaAdapter();
+    try {
+      const models = await adapter.discoverModels();
+      const unique = new Set<string>();
+      for (const model of models) {
+        if (!model.stale && model.modelId.trim()) {
+          unique.add(model.modelId.trim());
+        }
+      }
+      return Array.from(unique).sort((a, b) => a.localeCompare(b));
+    } catch {
+      return [];
+    }
+  }
+
+  private async runStreamingCommand(command: string, args: string[], timeoutMs: number): Promise<boolean> {
+    return await new Promise<boolean>((resolve) => {
+      let done = false;
+      let timer: NodeJS.Timeout | null = null;
+      const finalize = (ok: boolean): void => {
+        if (done) {
+          return;
+        }
+        done = true;
+        if (timer) {
+          clearTimeout(timer);
+        }
+        resolve(ok);
+      };
+
+      const child = spawn(command, args, {
+        stdio: 'inherit',
+        shell: false,
+      });
+
+      timer = setTimeout(() => {
+        child.kill('SIGTERM');
+        finalize(false);
+      }, timeoutMs);
+
+      child.on('close', (code: number | null) => {
+        finalize((code ?? 1) === 0);
+      });
+      child.on('error', () => {
+        finalize(false);
+      });
+    });
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise<void>((resolve) => setTimeout(resolve, ms));
   }
 
   private async detectRuntimeContext(): Promise<Record<string, unknown>> {
@@ -938,7 +1129,13 @@ export class SoulBirthPortal {
 
     log('Step 2/9: Provider Connection & Authentication');
     await this.captureSubstrateConfig();
-    await this.captureProviderAuthAndModels();
+    if (this.substrateSetupMode === 'manual') {
+      await this.captureProviderAuthAndModels();
+    } else if (this.autoAssignedModelRef) {
+      success(`Auto mode default model assigned (${this.autoAssignedModelRef}).`);
+    } else {
+      warn('Auto mode could not finalize local default model. You can retry in manual mode.');
+    }
     await this.probeSubstrateConnections();
     log('---');
 
@@ -996,68 +1193,83 @@ export class SoulBirthPortal {
         return ai - bi;
       });
 
-    for (const role of AGENT_ROLES) {
-      if (discoveredProviders.length === 0) {
-        const fallback = await this.prompt(
-          `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
-          'ollama:phi3:mini'
-        );
-        if (!fallback) continue;
-        roleAssignments[role] = fallback;
-        continue;
-      }
-
-      const providerChoice = await this.promptSelect(
-        `Select provider for role "${role}"`,
-        [...discoveredProviders, 'skip'],
-        0
-      );
-      if (providerChoice === 'skip') {
-        continue;
-      }
-
-      const providerModels = bySubstrate.get(providerChoice) ?? [];
-      if (providerModels.length === 0) {
-        warn(`No models currently available for provider "${providerChoice}".`);
-        continue;
-      }
-
-      const modelChoiceToId = new Map<string, string>();
-      const modelChoices: string[] = [];
-      for (const providerModel of providerModels) {
-        const baseLabel = providerModel.stale
-          ? `${providerModel.modelId} [cached]`
-          : providerModel.modelId;
-        let label = baseLabel;
-        let index = 2;
-        while (modelChoiceToId.has(label)) {
-          label = `${baseLabel} (${index})`;
-          index += 1;
+    if (this.substrateSetupMode === 'auto' && this.autoAssignedModelRef) {
+      for (const role of AGENT_ROLES) {
+        roleAssignments[role] = this.autoAssignedModelRef;
+        try {
+          await setModelForRole(role, this.autoAssignedModelRef, {
+            availableModels: discovered,
+            stateDir: getStateDir(),
+          });
+        } catch {
+          // Keep assignment even if registry cannot validate immediately.
         }
-        modelChoiceToId.set(label, providerModel.modelId);
-        modelChoices.push(label);
       }
+      success(`Auto role assignment applied (${this.autoAssignedModelRef}) to all roles.`);
+    } else {
+      for (const role of AGENT_ROLES) {
+        if (discoveredProviders.length === 0) {
+          const fallback = await this.prompt(
+            `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
+            AUTO_DEFAULT_OLLAMA_MODEL_REF
+          );
+          if (!fallback) continue;
+          roleAssignments[role] = fallback;
+          continue;
+        }
 
-      const modelChoice = await this.promptSelect(
-        `Select model for role "${role}" (${providerChoice})`,
-        [...modelChoices, 'skip'],
-        0
-      );
-      if (modelChoice === 'skip') {
-        continue;
-      }
+        const providerChoice = await this.promptSelect(
+          `Select provider for role "${role}"`,
+          [...discoveredProviders, 'skip'],
+          0
+        );
+        if (providerChoice === 'skip') {
+          continue;
+        }
 
-      const resolvedModelId = modelChoiceToId.get(modelChoice) ?? modelChoice;
-      const ref = `${providerChoice}:${resolvedModelId}`;
-      try {
-        await setModelForRole(role, ref, {
-          availableModels: discovered,
-          stateDir: getStateDir(),
-        });
-        roleAssignments[role] = ref;
-      } catch {
-        warn(`Could not validate model "${ref}" for role "${role}" — saving anyway.`);
-        roleAssignments[role] = ref;
+        const providerModels = bySubstrate.get(providerChoice) ?? [];
+        if (providerModels.length === 0) {
+          warn(`No models currently available for provider "${providerChoice}".`);
+          continue;
+        }
+
+        const modelChoiceToId = new Map<string, string>();
+        const modelChoices: string[] = [];
+        for (const providerModel of providerModels) {
+          const baseLabel = providerModel.stale
+            ? `${providerModel.modelId} [cached]`
+            : providerModel.modelId;
+          let label = baseLabel;
+          let index = 2;
+          while (modelChoiceToId.has(label)) {
+            label = `${baseLabel} (${index})`;
+            index += 1;
+          }
+          modelChoiceToId.set(label, providerModel.modelId);
+          modelChoices.push(label);
+        }
+
+        const modelChoice = await this.promptSelect(
+          `Select model for role "${role}" (${providerChoice})`,
+          [...modelChoices, 'skip'],
+          0
+        );
+        if (modelChoice === 'skip') {
+          continue;
+        }
+
+        const resolvedModelId = modelChoiceToId.get(modelChoice) ?? modelChoice;
+        const ref = `${providerChoice}:${resolvedModelId}`;
+        try {
+          await setModelForRole(role, ref, {
+            availableModels: discovered,
+            stateDir: getStateDir(),
+          });
+          roleAssignments[role] = ref;
+        } catch {
+          warn(`Could not validate model "${ref}" for role "${role}" — saving anyway.`);
+          roleAssignments[role] = ref;
+        }
       }
     }
 
