@@ -854,6 +854,7 @@ async function configureCredentialEntry(
   secrets: Record<string, string>
 ): Promise<boolean> {
   const providerId = normalizeProviderId(entry.provider ?? entry.label);
+  const entryLabel = sanitizeDisplayText(entry.label) || 'entry';
   if (entry.category === 'provider' && providerId === 'ollama') {
     // Local Ollama defaults should not prompt for API/base-url before model selection.
     return true;
@@ -864,7 +865,7 @@ async function configureCredentialEntry(
     mode = entry.authModes[0] ?? null;
   } else {
     const choice = await promptSelect(
-      `Auth method for ${entry.label}`,
+      `Auth method for ${entryLabel}`,
       ['API key', 'OAuth', 'Skip'],
       0
     );
@@ -894,7 +895,8 @@ async function configureCredentialEntry(
 
   // If oauth mode is selected and no oauth requirement exists, still allow token paste.
   if (mode === 'oauth' && requirements.length === 0) {
-    const inferredEnv = `${normalizeEnvToken(entry.provider ?? entry.label)}_OAUTH_TOKEN`;
+    const inferredEnvSource = sanitizeDisplayText(entry.provider ?? entry.label) || entryLabel;
+    const inferredEnv = `${normalizeEnvToken(inferredEnvSource)}_OAUTH_TOKEN`;
     await captureRequirementValue(
       {
         env: inferredEnv,
@@ -942,7 +944,8 @@ async function captureRequirementValue(
     }
   }
 
-  const promptMessage = `Enter ${requirement.env}${requirement.label ? ` (${requirement.label})` : ''}`;
+  const requirementLabel = sanitizeDisplayText(requirement.label);
+  const promptMessage = `Enter ${requirement.env}${requirementLabel ? ` (${requirementLabel})` : ''}`;
   const value = treatAsSecret ? await promptSecret(promptMessage) : await promptInput(promptMessage);
   if (!value.trim()) {
     return;
@@ -991,9 +994,7 @@ function groupByCategory(entries: CredentialEntry[]): Record<CredentialCategory,
 }
 
 function entryToChoiceLabel(entry: CredentialEntry): string {
-  const label = typeof entry.label === 'string' && entry.label.trim()
-    ? entry.label.trim()
-    : 'Unnamed entry';
+  const label = sanitizeDisplayText(entry.label) || 'Unnamed entry';
   const category = (entry.category === 'provider'
     || entry.category === 'tool'
     || entry.category === 'channel'
@@ -1007,12 +1008,8 @@ function entryToChoiceLabel(entry: CredentialEntry): string {
       .join('/')
     : '';
   const sourceRaw = entry.source === 'builtin' ? 'core' : entry.source;
-  const source = typeof sourceRaw === 'string' && sourceRaw.trim()
-    ? sourceRaw.trim()
-    : 'catalog';
-  const description = typeof entry.description === 'string' && entry.description.trim()
-    ? entry.description.trim()
-    : 'No description available';
+  const source = sanitizeDisplayText(sourceRaw) || 'catalog';
+  const description = sanitizeDisplayText(entry.description);
   const tags: string[] = [];
   if (category) {
     tags.push(`[${category}]`);
@@ -1021,7 +1018,23 @@ function entryToChoiceLabel(entry: CredentialEntry): string {
     tags.push(`[${mode}]`);
   }
   const tagSuffix = tags.length > 0 ? ` ${tags.join(' ')}` : '';
-  return `${label}${tagSuffix} (${source}) — ${description}`;
+  const descriptionSuffix = description ? ` -- ${description}` : ' --';
+  return `${label}${tagSuffix} (${source})${descriptionSuffix}`;
+}
+
+function sanitizeDisplayText(value: unknown): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  const lowered = trimmed.toLowerCase();
+  if (lowered === 'undefined' || lowered === 'null' || lowered === 'nan') {
+    return '';
+  }
+  return trimmed;
 }
 
 function dedupeEntries(entries: CredentialEntry[]): CredentialEntry[] {
