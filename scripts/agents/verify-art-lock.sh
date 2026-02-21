@@ -5,7 +5,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 LOCK_FILE="terminalart/ART_LOCK.sha256"
-ART_FILE="terminalart/art.6.py"
+ART_FILE="terminalart/art.9.py"
 
 if [[ ! -f "$LOCK_FILE" ]]; then
   echo "Missing ${LOCK_FILE}"

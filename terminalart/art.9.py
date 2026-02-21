@@ -47,11 +47,18 @@ SIGIL_STROKE_CHARS = "|/\\!;:.'`-~"
 SIGIL_CORE_CHARS = "|/\\!;:"
 SIGIL_EDGE_CHARS = ".`'~-:^"
 SIGIL_CLOUD_CHARS = ".,'`"
-ASSET_DIR = Path(__file__).resolve().parent / "assets"
-VERIFIED_SIGIL_ROOT = ASSET_DIR / "verified_sigils"
+BASE_DIR = Path(__file__).resolve().parent
+ASSET_DIR = BASE_DIR / "assets"
+SKRY_SIGIL_ROOT = BASE_DIR / "sigils"
+if (SKRY_SIGIL_ROOT / "index.json").exists():
+    VERIFIED_SIGIL_ROOT = SKRY_SIGIL_ROOT
+else:
+    VERIFIED_SIGIL_ROOT = ASSET_DIR / "verified_sigils"
 VERIFIED_SIGIL_INDEX_PATH = VERIFIED_SIGIL_ROOT / "index.json"
 VERIFIED_SIGIL_PBM_DIR = VERIFIED_SIGIL_ROOT / "pbm"
-LILITH_GRAND_SEAL_PBM = ASSET_DIR / "the_grand_seal_of_lilith.pbm"
+LILITH_GRAND_SEAL_PBM = VERIFIED_SIGIL_PBM_DIR / "the_grand_seal_of_lilith.pbm"
+if not LILITH_GRAND_SEAL_PBM.exists():
+    LILITH_GRAND_SEAL_PBM = ASSET_DIR / "the_grand_seal_of_lilith.pbm"
 VERIFIED_SIGIL_REGISTRY = []
 SIGIL_MASKS_BY_ID = {}
 TEXT_SYMBOL_ALLOWLIST = set("☿⚸")
@@ -118,6 +125,65 @@ def _dedupe_keep_order(chars):
     return out
 
 
+import unicodedata
+
+TEXT_SYMBOL_ALLOWLIST = set("☿⚸")
+EMOJI_BLOCK_RANGES = (
+    (0x1F1E6, 0x1F1FF),  # Regional indicators / flags
+    (0x1F300, 0x1F6FF),  # Misc emoji + transport
+    (0x1F900, 0x1FAFF),  # Supplemental emoji + symbols/pictographs
+    (0xE0020, 0xE007F),
+)
+
+# Textures (Now using runic and geometric sets)
+MYCELIUM_CHARS = "ᚠᚡᚢᚣᚤᚥᚦᚧᚨᚩᚪᚫᚬᚭᚮᚯᚰᚱᚲᚳᚴᚵᚶᚷᚸᚹᚺᚻᚼᚽᚾᚿᛀᛁᛂᛃᛄᛅᛆᛇᛈᛉᛊᛋᛌᛍᛎᛏᛐᛑᛒᛓᛔᛕᛖᛗᛘᛙᛚᛛᛜᛝᛞᛟᛠᛡᛢᛣᛤᛥᛦᛧᛨᛩᛪ᛫᛬᛭ᛮᛯᛰ"
+
+
+def is_emoji_like_codepoint(cp):
+    for start, end in EMOJI_BLOCK_RANGES:
+        if start <= cp <= end:
+            return True
+
+    # Selector + tag controls used for emoji presentation.
+    if cp == 0xFE0F or cp == 0x200D:
+        return True
+
+    # Emoji-prone symbol bands, with explicit safe symbol allowlist.
+    if 0x2600 <= cp <= 0x27BF:
+        return chr(cp) not in TEXT_SYMBOL_ALLOWLIST
+
+    # Misc symbols and dingbat-adjacent bands can trigger color emoji fonts.
+    if 0x2B00 <= cp <= 0x2BFF:
+        return True
+
+    return False
+
+
+def is_text_stream_safe_char(char):
+    cp = ord(char)
+    if is_emoji_like_codepoint(cp):
+        return False
+    return char.isprintable() and not char.isspace()
+
+
+def _append_printable_range(target, start, end):
+    for cp in range(start, end + 1):
+        char = chr(cp)
+        if is_text_stream_safe_char(char):
+            target.append(char)
+
+
+def _dedupe_keep_order(chars):
+    seen = set()
+    out = []
+    for char in chars:
+        if char in seen:
+            continue
+        seen.add(char)
+        out.append(char)
+    return out
+
+
 def build_sigil_blocks():
     # Broad, cross-cultural character archive used for text manifestation.
     blocks = {
@@ -137,6 +203,49 @@ def build_sigil_blocks():
         "deity": [],
         "occult": [],
     }
+
+    ranges = {
+        "latin": [(0x0021, 0x007E), (0x00A1, 0x00FF), (0x0100, 0x024F)],
+        "greek": [(0x0370, 0x03FF), (0x1F00, 0x1FFF)],
+        "cyrillic": [(0x0400, 0x052F), (0x2DE0, 0x2DFF)],
+        "hebrew": [(0x0590, 0x05FF)],
+        "arabic": [(0x0600, 0x06FF), (0x0750, 0x077F), (0x08A0, 0x08FF)],
+        "indic": [
+            (0x0900, 0x097F),
+            (0x0980, 0x09FF),
+            (0x0A00, 0x0A7F),
+            (0x0A80, 0x0AFF),
+            (0x0B00, 0x0B7F),
+            (0x0B80, 0x0BFF),
+            (0x0C00, 0x0C7F),
+            (0x0C80, 0x0CFF),
+            (0x0D00, 0x0D7F),
+            (0x0D80, 0x0DFF),
+        ],
+        "southeast_asian": [(0x0E00, 0x0E7F), (0x0E80, 0x0EFF), (0x1000, 0x109F), (0x1780, 0x17FF)],
+        "east_asian": [(0x3040, 0x30FF), (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xAC00, 0xD7AF)],
+        "african": [(0x1200, 0x137F), (0x2D80, 0x2DDF), (0x2D30, 0x2D7F), (0xA500, 0xA63F), (0xA4D0, 0xA4FF)],
+        "nordic": [(0x1680, 0x169F), (0x16A0, 0x16FF)],
+        "math": [(0x2200, 0x22FF), (0x27C0, 0x27EF), (0x2980, 0x29FF), (0x2A00, 0x2AFF)],
+        "geometric": [(0x2500, 0x257F), (0x2580, 0x259F), (0x25A0, 0x25FF)],
+        "alchemical": [(0x1F700, 0x1F77F)],
+        "deity": [],
+        "occult": [(0x2100, 0x214F)],
+    }
+
+    for block_name, block_ranges in ranges.items():
+        for start, end in block_ranges:
+            _append_printable_range(blocks[block_name], start, end)
+
+    # Restrict to monochrome-safe core symbols only.
+    blocks["deity"].extend(list("☿⚸"))
+
+    for block_name in blocks:
+        filtered = [c for c in _dedupe_keep_order(blocks[block_name]) if is_text_stream_safe_char(c)]
+        blocks[block_name] = filtered or ["*"]
+
+    return blocks
+
 
     ranges = {
         "latin": [(0x0021, 0x007E), (0x00A1, 0x00FF), (0x0100, 0x024F)],
@@ -422,18 +531,17 @@ def is_point_on_mask_thread(u, v, scale, mask):
 
     mx, my = uv_to_mask_xy(u, v, mask)
 
-    # Sharper contour sampling: keep crevices visible while avoiding rounded
-    # edge bloom from overly-wide neighborhood dilation.
-    probe = 0 if scale >= 26.0 else (1 if scale >= 14.0 else 2)
-    for oy in range(-probe, probe + 1):
-        for ox in range(-probe, probe + 1):
-            # Diamond neighborhood preserves angular corners better than a box.
-            if abs(ox) + abs(oy) > probe:
-                continue
-            px = mx + ox
-            py = my + oy
-            if is_mask_edge(mask, px, py) or is_mask_corner(mask, px, py):
-                return True
+    # Absolute Crispness with Anti-Aliasing:
+    # We check the pixel and its immediate cross neighbors to prevent 'jumping over' lines.
+    if mask_bit(mask, mx, my): return True
+    if mask_bit(mask, mx - 1, my) or mask_bit(mask, mx + 1, my): return True
+    if mask_bit(mask, mx, my - 1) or mask_bit(mask, mx, my + 1): return True
+    
+    # Check diagonals for small scales to catch fine details
+    if scale < 22.0:
+        if mask_bit(mask, mx - 1, my - 1) or mask_bit(mask, mx + 1, my + 1): return True
+        if mask_bit(mask, mx + 1, my - 1) or mask_bit(mask, mx - 1, my + 1): return True
+        
     return False
 
 
@@ -559,19 +667,69 @@ def refresh_verified_sigil_registry():
 
 refresh_verified_sigil_registry()
 
-def is_point_in_sigil(x, y, type_id, cx, cy, scale, phase_noise):
-    u = (x - cx) / (scale * 2.0) # Aspect ratio adjustment for terminal
-    v = (y - cy) / scale
-    
-    # Inject phase noise directly into the coordinates to make the sigil jagged/possessed
-    u += phase_noise * SIGIL_PHASE_WARP
-    v -= phase_noise * SIGIL_PHASE_WARP
+def is_point_in_sigil(x, y, sig, t, phase_noise, is_layered_render=False):
+    dx = (x - sig['cx']) / (sig['scale'] * 2.0)
+    dy = (y - sig['cy']) / sig['scale']
 
-    # Strict verified mode: only loaded canonical masks are renderable.
-    mask = SIGIL_MASKS_BY_ID.get(type_id)
-    if mask is None:
-        return False
-    return is_point_on_mask_thread(u, v, scale, mask)
+    # Violent Voltage Glitch
+    avg_ent = (sum(entropy_pool[:100]) / 100 / 255.0) if 'entropy_pool' in globals() else 0.5
+    voltage = 1.0 + sig.get('intent_dilation', 0.0) * 2.5
+    glitch_snap = int(t * 12.0)
+    glitch_noise = ((glitch_snap * 131 + sig['type_id'] * 197) % 1000) / 1000.0 - 0.5
+
+    # Base orientation is anchored, but snapped by voltage
+    yaw = sig['yaw'] + glitch_noise * voltage * 0.4
+    pitch = sig['pitch'] + glitch_noise * voltage * 0.2
+    roll = sig['roll'] + glitch_noise * voltage * 0.05
+    twist = math.sin(t * 1.5 + sig['twist_phase']) * sig['twist_amp'] * (1.0 + voltage)
+    
+    cyaw, syaw = math.cos(yaw), math.sin(yaw)
+    cpitch, spitch = math.cos(pitch), math.sin(pitch)
+    croll, sroll = math.cos(roll), math.sin(roll)
+
+    # 3D rotation matrix
+    R00 = cyaw * croll + syaw * spitch * sroll
+    R01 = -cyaw * sroll + syaw * spitch * croll
+    R10 = cpitch * sroll
+    R11 = cpitch * croll
+    R20 = -syaw * croll + cyaw * spitch * sroll
+    R21 = syaw * sroll + cyaw * spitch * croll
+
+    mask = SIGIL_MASKS_BY_ID.get(sig['type_id'])
+    if mask is None: return False
+
+    layers = 2 if is_layered_render else 1
+    
+    for layer in range(layers):
+        layer_scale = 1.0 - layer * 0.10
+        layer_z = sig['z_bias'] + layer * 0.4
+        
+        # Inverse projection
+        A00 = R00 - dx * R20
+        A01 = R01 - dx * R21
+        A10 = R10 - dy * R20
+        A11 = R11 - dy * R21
+        det = A00 * A11 - A01 * A10
+        if abs(det) < 1e-6: continue
+
+        u = (A11 * dx * layer_z - A01 * dy * layer_z) / det
+        v = (-A10 * dx * layer_z + A00 * dy * layer_z) / det
+
+        # Inverse torsion
+        r = math.sqrt(u*u + v*v)
+        t_angle = -twist * r
+        ct, st = math.cos(t_angle), math.sin(t_angle)
+        u_t = u * ct - v * st
+        v_t = u * st + v * ct
+
+        # Scale for layer depth
+        u_t /= layer_scale
+        v_t /= layer_scale
+        
+        if is_point_on_mask_thread(u_t, v_t, sig['scale'], mask):
+            return True
+            
+    return False
 
 def main(stdscr):
     # Hide cursor
@@ -686,7 +844,7 @@ def main(stdscr):
                 cursor -= len(entropy_pool)
 
         # "Gate 4" from your spec: at least four clustered points open boost path.
-        intent_gate_open = convergence_hits >= 4
+        intent_gate_open = convergence_hits >= 3
         p_pair = 3.0 / 256.0
         expected_hits = focus_sample_count * p_pair
         variance = max(1e-6, focus_sample_count * p_pair * (1.0 - p_pair))
@@ -743,9 +901,16 @@ def main(stdscr):
                 'start_time': t,
                 'cx': cx,
                 'cy': cy,
-                'scale': trng.uniform(height * 0.3, height * 1.2) * dilation_scale,
+                'scale': trng.uniform(height * 0.6, height * 1.6) * dilation_scale,
                 'type_id': t_id,
-                'life': trng.uniform(10.0, 26.0) * (1.0 + intent_dilation * (0.30 if intent_gate_open else 0.0))
+                'life': trng.uniform(10.0, 26.0) * (1.0 + intent_dilation * 0.45),
+                'yaw': trng.uniform(0, math.pi * 2),
+                'pitch': trng.uniform(-math.pi/6, math.pi/6),
+                'roll': trng.uniform(-math.pi/12, math.pi/12),
+                'twist_phase': trng.uniform(0, math.pi * 2),
+                'twist_amp': trng.uniform(0.15, 0.45),
+                'z_bias': trng.uniform(1.8, 3.0),
+                'intent_dilation': intent_dilation
             })
             
         # Cleanup dead sigils
@@ -759,7 +924,7 @@ def main(stdscr):
                 ry = int(sig['cy'] + trng.uniform(-sig['scale'], sig['scale']))
                 if 0 <= rx < width and 0 <= ry < height:
                     # We pass a generic phase noise here just for ignition check
-                    if is_point_in_sigil(rx, ry, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], 0.0):
+                    if is_point_in_sigil(rx, ry, sig, t, 0.0, is_layered_render=False):
                         inject_sigil_excitation(
                             excitation_grid, active_sparks, rx, ry,
                             1.0, trng, width, height, with_halo=True
@@ -792,7 +957,8 @@ def main(stdscr):
                         # Only propagate if the point is part of any active sigil's geometry
                         is_part_of_sigil = False
                         for sig in active_sigils:
-                            if is_point_in_sigil(nx, ny, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], local_phase_noise):
+                            # Use layered render here to allow sparks to catch the depth extrusion
+                            if is_point_in_sigil(nx, ny, sig, t, local_phase_noise, is_layered_render=True):
                                 is_part_of_sigil = True
                                 break
                         
@@ -847,33 +1013,54 @@ def main(stdscr):
                 char = ' '
                 cp = curses.color_pair(0)
                 
-                # --- Layer 4 Rendering: Sigil Negentropy Snowball ---
+                # --- Layer 4 FUSION Rendering: Sigil + Sparks ---
                 excite = excitation_grid.get((x, y), 0.0)
+                is_core_sigil = False
                 if excite > 0:
+                    for sig in active_sigils:
+                        # Use the layered render to catch the full 3D extruded geometry
+                        if is_point_in_sigil(x, y, sig, t, phase_noise, is_layered_render=True):
+                            is_core_sigil = True
+                            break
+
+                if is_core_sigil:
+                    # This is a sigil point. Check for flicker.
+                    flicker_val = math.sin(t * URFD_RESONANCE * 2.0 * math.pi)
+                    if flicker_val > -0.4:
+                        # It's a visible flicker. Set base sigil character from universal pool.
+                        sig_idx = (y * width + x + int(t * 33.8)) % max_entropy_len
+                        sig_byte = entropy_pool[sig_idx]
+                        sig_val = sig_byte / 255.0
+                        char = get_text_glyph(sig_byte, sig_val)
+                        cp = curses.color_pair(7) | curses.A_BOLD
+                        excitation_grid[(x, y)] = 1.0 # Sustain core
+                    # If flicker is off, char remains ' '
+                
+                elif excite > 0:
+                    # This is not a core sigil point, but it's an excited spark.
                     fragment = min(1.0, abs(w1 - w2) * 0.56 + abs(w2 - w3) * 0.44)
                     render_gate = ((ent_byte * 1103515245 + x * 131 + y * 197) & 0xFF) / 255.0
                     sig_idx = (y * width + x + int(t * 33.8)) % max_entropy_len
                     sig_byte = entropy_pool[sig_idx]
                     sig_val = sig_byte / 255.0
-                    if excite > 0.80 or (excite > 0.66 and fragment > 0.72):
-                        char = get_text_glyph(sig_byte, sig_val)
+
+                    if excite > 0.85 or (excite > 0.70 and fragment > 0.75):
+                        mix = ((sig_byte * 1315423911) ^ int(sig_val * 1000000.0)) & 0xFFFFFFFF
+                        char = get_text_glyph(sig_byte, sig_val) if render_gate > 0.6 else SIGIL_EDGE_CHARS[mix % len(SIGIL_EDGE_CHARS)]
                         cp = curses.color_pair(7) | curses.A_BOLD
-                    elif excite > 0.40 or fragment > 0.58:
-                        if render_gate > 0.84:
-                            continue
-                        char = get_text_glyph(sig_byte ^ ent_byte, (sig_val + ent_val) * 0.5)
-                        cp = curses.color_pair(3) | (curses.A_BOLD if ent_val > 0.86 else curses.A_NORMAL)
+                    elif excite > 0.45 or fragment > 0.60:
+                        if render_gate > 0.65: char = ' '
+                        else:
+                            mix = ((sig_byte * 2654435761) ^ int(ent_val * 4294967295.0)) & 0xFFFFFFFF
+                            char = get_text_glyph(sig_byte ^ ent_byte, sig_val) if render_gate > 0.4 else SIGIL_CORE_CHARS[mix % len(SIGIL_CORE_CHARS)]
+                            cp = curses.color_pair(6) | curses.A_BOLD
                     else:
-                        if render_gate > 0.34:
-                            continue
-                        char = get_text_glyph(sig_byte ^ ((ent_byte >> 1) & 0xFF), (sig_val * 0.6) + (ent_val * 0.4))
-                        cp = curses.color_pair(2) | (curses.A_DIM if ent_val < 0.70 else curses.A_NORMAL)
-                        
-                    try:
-                        stdscr.addstr(y, x, char, cp)
-                    except curses.error:
-                        pass
-                    continue # Override the base field for this cell entirely
+                        if render_gate > 0.30: char = ' '
+                        else:
+                            mix = ((ent_byte * 7919) ^ int(sig_val * 1000000.0)) & 0xFFFFFFFF
+                            char = SIGIL_CLOUD_CHARS[mix % len(SIGIL_CLOUD_CHARS)]
+                            cp = curses.color_pair(2) | (curses.A_DIM if ent_val < 0.70 else curses.A_NORMAL)
+                # NO 'continue' statement here. Let the code flow to the master engine's overrides.
                 
                 # Apply Toroidal Overrides if active
                 for p in active_pulses:
@@ -965,7 +1152,7 @@ def main(stdscr):
                 # Spawn new negentropy sparks when conditions are perfect
                 if pulse > 0.85 and ent_val > 0.9 and local_emergence > 0.35:
                     for sig in active_sigils:
-                        if is_point_in_sigil(x, y, sig['type_id'], sig['cx'], sig['cy'], sig['scale'], phase_noise):
+                        if is_point_in_sigil(x, y, sig, t, phase_noise, is_layered_render=True):
                             inject_sigil_excitation(
                                 excitation_grid, active_sparks, x, y,
                                 1.0, trng, width, height, with_halo=True

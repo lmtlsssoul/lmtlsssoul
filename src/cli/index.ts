@@ -648,14 +648,14 @@ function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void 
 
 function resolveTerminalArtEntrypoint(): string {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  const homeInstall = path.resolve(os.homedir(), '.lmtlss/src/terminalart/art.6.py');
+  const homeInstall = path.resolve(os.homedir(), '.lmtlss/src/terminalart/art.9.py');
   const candidates = [
     // Canonical install location (always prefer current installed art).
     homeInstall,
-    // Source layout: src/cli/index.ts -> ../../terminalart/art.6.py
-    path.resolve(moduleDir, '../../terminalart/art.6.py'),
-    // Bundled layout: dist/index.js -> ../terminalart/art.6.py
-    path.resolve(moduleDir, '../terminalart/art.6.py'),
+    // Source layout: src/cli/index.ts -> ../../terminalart/art.9.py
+    path.resolve(moduleDir, '../../terminalart/art.9.py'),
+    // Bundled layout: dist/index.js -> ../terminalart/art.9.py
+    path.resolve(moduleDir, '../terminalart/art.9.py'),
   ];
 
   for (const candidate of candidates) {
@@ -664,7 +664,7 @@ function resolveTerminalArtEntrypoint(): string {
     }
   }
 
-  throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.6.py).');
+  throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.9.py).');
 }
 
 function enterTerminalArtViewport(): () => void {

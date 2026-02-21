@@ -17,7 +17,7 @@ OUT_FILE="${TMP_DIR}/pack.out"
 pnpm pack --pack-destination "$TMP_DIR" > "$OUT_FILE"
 
 if ! rg -q "terminalart/art\.6\.py" "$OUT_FILE"; then
-  echo "Packed tarball missing terminalart/art.6.py"
+  echo "Packed tarball missing terminalart/art.9.py"
   exit 1
 fi
 

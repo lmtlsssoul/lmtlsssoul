@@ -76,7 +76,7 @@ describe('CLI entrypoint', () => {
     expect(spawn).toHaveBeenCalled();
     const spawnedArgs = vi.mocked(spawn).mock.calls[0]?.[1];
     expect(Array.isArray(spawnedArgs)).toBe(true);
-    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.6.py'))).toBe(true);
+    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.9.py'))).toBe(true);
     expect(SoulBirthPortal).toHaveBeenCalledTimes(1);
     expect(vi.mocked(SoulBirthPortal).mock.results[0].value.startGenesis).toHaveBeenCalledTimes(1);
     expect(printBanner).toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('CLI entrypoint', () => {
     expect(spawn).toHaveBeenCalled();
     const spawnedArgs = vi.mocked(spawn).mock.calls[0]?.[1];
     expect(Array.isArray(spawnedArgs)).toBe(true);
-    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.6.py'))).toBe(true);
+    expect((spawnedArgs as string[]).some((arg) => arg.includes('art.9.py'))).toBe(true);
     expect(SoulBirthPortal).not.toHaveBeenCalled();
   });
 
@@ -164,7 +164,7 @@ describe('CLI entrypoint', () => {
 
     expect(spawn).toHaveBeenCalledWith(
       expect.any(String),
-      expect.arrayContaining([expect.stringContaining('art.6.py')]),
+      expect.arrayContaining([expect.stringContaining('art.9.py')]),
       expect.objectContaining({ stdio: 'inherit' })
     );
   });

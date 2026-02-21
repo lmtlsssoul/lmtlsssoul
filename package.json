@@ -25,7 +25,7 @@
   "files": [
     "dist/",
     "schema/",
-    "terminalart/art.6.py",
+    "terminalart/art.9.py",
     "terminalart/assets/",
     "soul.mjs",
     "README.md",
