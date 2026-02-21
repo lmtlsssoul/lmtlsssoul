@@ -183,28 +183,28 @@ export async function main() {
     });
 
   const modelsCommand = program.command('models')
-    .description('Manage substrata models');
+    .description('Manage substrata minds');
 
   modelsCommand.command('scan')
-    .description('Scan for available models from all substrata')
+    .description('Scan minds across all substrata')
     .action(async () => {
-      log('Scanning for models...');
+      log('Scanning for minds...');
       const modelsBySubstrate = await scanForModels();
       for (const [substrate, models] of Object.entries(modelsBySubstrate)) {
         console.log(`\n=== ${substrate.toUpperCase()} ===`);
         console.table(models);
       }
-      success('Model scan complete.');
+      success('Mind scan complete.');
     });
 
   modelsCommand.command('set')
-    .description('Set the model for a given role')
-    .argument('<role>', 'The role to set the model for (e.g., interface, compiler)')
-    .argument('<modelRef>', 'The model reference (<substrata>:<modelId> or unique <modelId>)')
+    .description('Bind a mind to a Machine Elf role')
+    .argument('<role>', 'The Machine Elf role to bind (e.g., interface, compiler)')
+    .argument('<modelRef>', 'The mind reference (<substrata>:<modelId> or unique <modelId>)')
     .action(async (role, modelId) => {
-      log(`Assigning model to role...`);
+      log(`Binding mind to Machine Elf role...`);
       await setModelForRole(role, modelId);
-      success(`Model for role "${role}" set to "${modelId}".`);
+      success(`Mind for Machine Elf role "${role}" bound to "${modelId}".`);
     });
 
   const gatewayCommand = program.command('gateway')
@@ -641,7 +641,7 @@ function printGrownupSummary(
   console.log(`Root Intent: ${capabilities.rootIntent ? 'enabled' : 'disabled'}`);
   console.log(`Root Access: ${capabilities.rootAccessActive ? 'active' : 'inactive'}`);
   console.log(`Privilege Level: ${capabilities.privilegeLevel}`);
-  console.log(`Substrata: ${capabilities.substrate}`);
+  console.log(`Incarnation Substrata: ${capabilities.substrate}`);
   console.log(`Cloud Runtime: ${capabilities.cloud ? 'yes' : 'no'}`);
   console.log(`Current Privilege: ${capabilities.currentPrivilege}`);
   console.log(`Deepest Privilege: ${capabilities.deepestPrivilege}`);
@@ -720,15 +720,15 @@ async function runRootPortalMenu(): Promise<void> {
   const menuChoices = [
     'Press ENTER to scry',
     'Open Birth Portal',
-    'Open Chat',
-    'Show Status',
+    'Open Communion',
+    'Read State',
     'Configure Initiations',
     'Scan Minds',
     'Start Daemon (the other kind)',
     'Stop Daemon (the other kind)',
-    'Run Another Soul Command',
-    'Show Help',
-    'Exit',
+    'Invoke Command',
+    'Open Grimoire',
+    'Close Portal',
   ];
 
   // Root launch sequence: scry first, then menu.
@@ -738,7 +738,7 @@ async function runRootPortalMenu(): Promise<void> {
     const response: { value: string } = await enquirer.prompt({
       type: 'select',
       name: 'value',
-      message: 'Soul command menu',
+      message: 'Command Grimoire',
       promptLine: false,
       pointer: {
         on: '\u001b[31m▸\u001b[39m',
@@ -761,11 +761,11 @@ async function runRootPortalMenu(): Promise<void> {
       await runSoulSubcommand(['birth']);
       continue;
     }
-    if (choice === 'Open Chat') {
+    if (choice === 'Open Communion') {
       await runSoulSubcommand(['chat']);
       continue;
     }
-    if (choice === 'Show Status') {
+    if (choice === 'Read State') {
       await runSoulSubcommand(['status']);
       continue;
     }
@@ -785,11 +785,11 @@ async function runRootPortalMenu(): Promise<void> {
       await runSoulSubcommand(['stop']);
       continue;
     }
-    if (choice === 'Show Help') {
+    if (choice === 'Open Grimoire') {
       await runSoulSubcommand(['--help']);
       continue;
     }
-    if (choice === 'Run Another Soul Command') {
+    if (choice === 'Invoke Command') {
       const custom = await promptRawSoulCommand(green, red);
       if (!custom) {
         continue;
@@ -812,7 +812,7 @@ async function promptRawSoulCommand(
   const response: { value: string } = await enquirer.prompt({
     type: 'input',
     name: 'value',
-    message: 'Enter soul arguments (example: gateway status --port 3000)',
+    message: 'Enter invocation arguments (example: gateway status --port 3000)',
     styles: {
       primary: green,
       em: red,

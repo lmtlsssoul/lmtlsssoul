@@ -372,9 +372,9 @@ tr:hover td { background: var(--bg3); }
 
         <!-- Tabs -->
         <div class="tabs">
-          <div class="tab active" data-tab="chat">Chat</div>
+          <div class="tab active" data-tab="chat">Communion</div>
           <div class="tab" data-tab="capsule">Soul Capsule</div>
-          <div class="tab" data-tab="models">Models</div>
+          <div class="tab" data-tab="models">Minds</div>
           <div class="tab" data-tab="openclaw">OpenClaw</div>
         </div>
 
@@ -386,8 +386,8 @@ tr:hover td { background: var(--bg3); }
             </div>
           </div>
           <div class="chat-input-row">
-            <textarea class="chat-input" id="chat-input" placeholder="Speak to the soul..." rows="2"></textarea>
-            <button class="chat-send" id="chat-send">Send</button>
+            <textarea class="chat-input" id="chat-input" placeholder="Speak into the field..." rows="2"></textarea>
+            <button class="chat-send" id="chat-send">Transmit</button>
           </div>
         </div>
 
@@ -401,14 +401,14 @@ tr:hover td { background: var(--bg3); }
         <!-- Models Tab -->
         <div class="tab-content" id="tab-models">
           <div class="models-table">
-            <h2 style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green-dim);margin-bottom:12px">Role Assignments</h2>
+            <h2 style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green-dim);margin-bottom:12px">Machine Elf Bindings</h2>
             <table id="models-assignments">
-              <thead><tr><th>Role</th><th>Model Reference</th></tr></thead>
+              <thead><tr><th>Machine Elf</th><th>Mind Reference</th></tr></thead>
               <tbody id="models-tbody-assignments"></tbody>
             </table>
-            <h2 style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green-dim);margin:20px 0 12px">Discovered Models</h2>
+            <h2 style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green-dim);margin:20px 0 12px">Discovered Minds</h2>
             <table id="models-discovered">
-              <thead><tr><th>Substrate</th><th>Model ID</th><th>Status</th></tr></thead>
+              <thead><tr><th>Substrata</th><th>Mind ID</th><th>Status</th></tr></thead>
               <tbody id="models-tbody-discovered"></tbody>
             </table>
           </div>
@@ -424,7 +424,7 @@ tr:hover td { background: var(--bg3); }
               </p>
 
               <div class="widget" style="margin-bottom:16px">
-                <div class="widget-title">Connection Status</div>
+                <div class="widget-title">Portal Status</div>
                 <div class="widget-body">
                   <div class="stat">
                     <span class="stat-label">Endpoint</span>
@@ -601,7 +601,7 @@ async function sendChat() {
 
   state.chatBusy = false;
   btn.disabled = false;
-  btn.textContent = 'Send';
+  btn.textContent = 'Transmit';
   input.focus();
 }
 

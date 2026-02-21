@@ -1247,7 +1247,7 @@ export class SoulBirthPortal {
     await this.captureToolKeys();
     log('---');
 
-    log('Step 4/9: Mindstrum');
+    log('Step 4/9: Frequency');
     log('Scanning authenticated substrata...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
@@ -1256,12 +1256,12 @@ export class SoulBirthPortal {
     this.config['discoveredModels'] = discovered.map((model) =>
       `${model.substrate}:${model.modelId}${model.stale ? ' [cached]' : ''}`
     );
-    success(`Model registry refreshed: ${liveDiscovered.length} live + ${cachedCount} cached model(s).`);
+    success(`Mind registry refreshed: ${liveDiscovered.length} live + ${cachedCount} cached mind(s).`);
     if (discovered.length === 0) {
-      warn('No models discovered. Is Ollama running? Try: ollama serve');
-      warn('You can assign models manually later: soul models scan');
+      warn('No minds discovered. Is Ollama running? Try: ollama serve');
+      warn('You can bind minds manually later: soul models scan');
     } else if (liveDiscovered.length === 0) {
-      warn('No live models were reachable during this scan. Showing cached model list for role assignment.');
+      warn('No live minds were reachable during this scan. Showing cached mind list for Machine Elf binding.');
     }
     log('---');
 
@@ -1314,7 +1314,7 @@ export class SoulBirthPortal {
       for (const role of AGENT_ROLES) {
         if (discoveredProviders.length === 0) {
           const fallback = await this.prompt(
-            `Assign model reference for role "${role}" (<substrata>:<modelId>)`,
+            `Bind mind reference for Machine Elf "${role}" (<substrata>:<modelId>)`,
             AUTO_DEFAULT_OLLAMA_MODEL_REF
           );
           if (!fallback) continue;
@@ -1323,7 +1323,7 @@ export class SoulBirthPortal {
         }
 
         const providerChoice = await this.promptSelect(
-          `Select provider for role "${role}"`,
+          `Choose substrata for Machine Elf "${role}"`,
           [...discoveredProviders, 'skip'],
           0
         );
@@ -1333,7 +1333,7 @@ export class SoulBirthPortal {
 
         const providerModels = bySubstrate.get(providerChoice) ?? [];
         if (providerModels.length === 0) {
-          warn(`No models currently available for provider "${providerChoice}".`);
+          warn(`No minds currently available for substrata "${providerChoice}".`);
           continue;
         }
 
@@ -1354,7 +1354,7 @@ export class SoulBirthPortal {
         }
 
         const modelChoice = await this.promptSelect(
-          `Select model for role "${role}" (${providerChoice})`,
+          `Choose mind for Machine Elf "${role}" (${providerChoice})`,
           [...modelChoices, 'skip'],
           0
         );
@@ -1378,30 +1378,30 @@ export class SoulBirthPortal {
     }
 
     this.config['roleAssignments'] = roleAssignments;
-    success('Machine Elf role assignments stored.');
+    success('Machine Elf bindings sealed.');
     log('---');
 
     log('Step 6/9: Correspondence');
     await this.captureChannelSynchronization();
     log('---');
 
-    log('Step 7/9: Treasury & Wallet Policy');
+    log('Step 7/9: Exchange');
     this.config['treasuryPolicy'] = await this.prompt(
-      'Enter treasury policy (JSON, optional)',
+      'Enter exchange policy (JSON, optional)',
       '{}'
     );
-    success('Treasury policy captured.');
+    success('Exchange policy captured.');
     log('---');
 
-    log('Step 8/9: Identity, Name & Objective');
-    this.config['soulName'] = await this.prompt('Name this soul');
-    this.config['soulObjective'] = await this.prompt('Define the primary objective');
-    success(`Soul named "${String(this.config['soulName'])}" with objective "${String(this.config['soulObjective'])}".`);
+    log('Step 8/9: True Name & Will');
+    this.config['soulName'] = await this.prompt('Declare true name');
+    this.config['soulObjective'] = await this.prompt('Declare will');
+    success(`True name "${String(this.config['soulName'])}" and will "${String(this.config['soulObjective'])}" sealed.`);
     log('---');
 
-    log('Step 9/9: Initialization');
+    log('Step 9/9: Incarnation');
     await this.initializeState();
-    success('Soul initialization complete.');
+    success('Incarnation complete.');
     log('---');
 
     success('Birth Portal complete.');
