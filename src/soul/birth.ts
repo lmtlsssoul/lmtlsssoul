@@ -100,7 +100,7 @@ export class SoulBirthPortal {
     this.preloadedAutoBootstrap = options?.preloadedAutoBootstrap ?? null;
     if (!options?.silent) {
       log('Incarnation Portal');
-      log('This setup flow initializes lmtlss soul.');
+      log('This setup flow incarnates lmtlss soul.');
       warn('Press Ctrl+C to cancel the ceremony.');
       log('---');
     }
@@ -1405,7 +1405,7 @@ export class SoulBirthPortal {
     log('---');
 
     success('Incarnation Portal complete.');
-    log(`Soul "${String(this.config['soulName'])}" is initialized.`);
+    log(`Soul "${String(this.config['soulName'])}" is born.`);
     log("Run 'soul kindle' (alias: soul start) to activate runtime services.");
     log("Run 'soul commune' (alias: soul chat) for interactive terminal communion.");
     return this.config;

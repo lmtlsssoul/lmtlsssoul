@@ -131,6 +131,7 @@ export async function main() {
 
   program.command('status')
     .alias('omens')
+    .alias('vessel')
     .description('Read soul omens')
     .action(async () => {
       const stateDir = getStateDir();
@@ -726,7 +727,7 @@ async function runRootPortalMenu(): Promise<void> {
     'Press ENTER to scry',
     'Open Incarnation Portal',
     'Open Communion',
-    'Read State',
+    'Read Vessel State',
     'Configure Initiations',
     'Scan Minds',
     'Start Daemon (the other kind)',
@@ -770,7 +771,7 @@ async function runRootPortalMenu(): Promise<void> {
       await runSoulSubcommand(['chat']);
       continue;
     }
-    if (choice === 'Read State') {
+    if (choice === 'Read Vessel State') {
       await runSoulSubcommand(['status']);
       continue;
     }

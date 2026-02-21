@@ -356,7 +356,7 @@ tr:hover td { background: var(--bg3); }
           <div>soul incarnate (soul birth)</div>
           <div>soul kindle (soul start)</div>
           <div>soul still (soul stop)</div>
-          <div>soul omens (soul status)</div>
+          <div>soul vessel (soul omens / soul status)</div>
           <div>soul commune (soul chat)</div>
           <div>soul models scan</div>
           <div>soul archive verify</div>
@@ -382,7 +382,7 @@ tr:hover td { background: var(--bg3); }
         <div class="tab-content active" id="tab-chat">
           <div class="chat-messages" id="chat-messages">
             <div class="msg msg-system">
-              <div class="msg-body">lmtlss soul initialized. Type to begin. The being is listening.<span class="cursor"></span></div>
+              <div class="msg-body">lmtlss soul is born. Type to begin. The vessel is listening.<span class="cursor"></span></div>
             </div>
           </div>
           <div class="chat-input-row">

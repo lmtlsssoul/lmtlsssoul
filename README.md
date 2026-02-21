@@ -105,6 +105,7 @@ Reference: `docs/MULTI_AGENT_SHIP.md`
 | `soul still` | alias for `soul stop` |
 | `soul status` | read soul omens — nodes, events, daemon, gateway |
 | `soul omens` | alias for `soul status` |
+| `soul vessel` | alias for `soul status` |
 | `soul models scan` | scan minds across all substrata (ollama, openai, anthropic, xai) |
 | `soul models set <role> <model>` | bind a mind to a Machine Elf role (`<substrata>:<modelId>`) |
 | `soul config` | open interactive initiations config (same catalog menu as Birth Step 2) |
