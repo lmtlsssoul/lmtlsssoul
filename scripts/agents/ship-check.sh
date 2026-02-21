@@ -26,4 +26,9 @@ if ! rg -q "terminalart/assets/verified_sigils/index\.json" "$OUT_FILE"; then
   exit 1
 fi
 
+if ! rg -q "terminalart/sigils/index\.json" "$OUT_FILE"; then
+  echo "Packed tarball missing terminalart/sigils/index.json"
+  exit 1
+fi
+
 echo "Ship-check passed."

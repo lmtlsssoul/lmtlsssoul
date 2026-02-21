@@ -23,7 +23,6 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { SubstrateAdapter } from '../substrate/types.ts';
@@ -666,7 +665,7 @@ async function launchTerminalArtBlocking(pythonOverride?: string): Promise<void>
 function spawnTerminalArtProcess(pythonOverride?: string) {
   const entrypoint = resolveTerminalArtEntrypoint();
   const python = (pythonOverride?.trim() || process.env.SOUL_ART_PYTHON?.trim() || 'python3');
-  log(`Launching terminal art from ${entrypoint}`);
+  log('Launching scrying terminal...');
   const restoreViewport = enterTerminalArtViewport();
 
   const child = spawn(python, [entrypoint], {
@@ -691,10 +690,7 @@ function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void 
 
 function resolveTerminalArtEntrypoint(): string {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  const homeInstall = path.resolve(os.homedir(), '.lmtlss/src/terminalart/art.9.py');
   const candidates = [
-    // Canonical install location (always prefer current installed art).
-    homeInstall,
     // Source layout: src/cli/index.ts -> ../../terminalart/art.9.py
     path.resolve(moduleDir, '../../terminalart/art.9.py'),
     // Bundled layout: dist/index.js -> ../terminalart/art.9.py
