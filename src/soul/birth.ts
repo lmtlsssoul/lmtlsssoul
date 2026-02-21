@@ -791,7 +791,6 @@ export class SoulBirthPortal {
 
     log('Step 1/8: Substrate Connection & Authentication');
     await this.captureSubstrateConfig();
-    log('Step 2 is independent from Step 1 probe results.');
     log('\n---\n');
 
     log('Step 2/8: Tool Keys & Search Connectors (Optional)');
