@@ -308,7 +308,7 @@ export class SoulBirthPortal {
     if (choice === 'Auto setup (recommended)') {
       this.config['substrateConfig'] = {
         mode: 'auto',
-        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+        enabledSubstrates: this.buildAutoEnabledSubstrates(),
       };
       success('Substrate config auto-initialized.');
       await this.probeSubstrateConnections();
@@ -339,7 +339,7 @@ export class SoulBirthPortal {
 
       this.config['substrateConfig'] = {
         mode: 'auto',
-        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+        enabledSubstrates: this.buildAutoEnabledSubstrates(),
       };
       success('Substrate config auto-initialized.');
       await this.probeSubstrateConnections();
@@ -356,11 +356,27 @@ export class SoulBirthPortal {
       warn('Falling back to auto setup.');
       this.config['substrateConfig'] = {
         mode: 'auto',
-        enabledSubstrates: ['ollama', 'openai', 'anthropic', 'xai'],
+        enabledSubstrates: this.buildAutoEnabledSubstrates(),
       };
       success('Substrate config auto-initialized.');
       await this.probeSubstrateConnections();
     }
+  }
+
+  private buildAutoEnabledSubstrates(): SubstrateId[] {
+    const enabled: SubstrateId[] = ['ollama'];
+
+    if ((process.env.OPENAI_API_KEY ?? '').trim()) {
+      enabled.push('openai');
+    }
+    if ((process.env.ANTHROPIC_API_KEY ?? '').trim() || (process.env.ANTHROPIC_OAUTH_TOKEN ?? '').trim()) {
+      enabled.push('anthropic');
+    }
+    if ((process.env.XAI_API_KEY ?? '').trim()) {
+      enabled.push('xai');
+    }
+
+    return enabled;
   }
 
   private getEnabledSubstratesFromConfig(): SubstrateId[] {
@@ -395,7 +411,12 @@ export class SoulBirthPortal {
     } as const;
 
     const enabled = this.getEnabledSubstratesFromConfig();
-    const statuses: Partial<Record<SubstrateId, { ok: boolean; detail?: string; lastCheckedAt: string }>> = {};
+    const statuses: Partial<Record<SubstrateId, {
+      ok: boolean;
+      detail?: string;
+      lastCheckedAt: string;
+      modelCount?: number;
+    }>> = {};
 
     log('Running substrate authentication probe...');
     for (const substrate of enabled) {
@@ -405,11 +426,31 @@ export class SoulBirthPortal {
       }
       try {
         const status = await adapter.health();
-        statuses[substrate] = status;
+        const statusWithModels: {
+          ok: boolean;
+          detail?: string;
+          lastCheckedAt: string;
+          modelCount?: number;
+        } = { ...status };
+
         if (status.ok) {
-          success(`[${substrate}] connected (${status.detail ?? 'reachable'})`);
+          try {
+            const discovered = await adapter.discoverModels();
+            statusWithModels.modelCount = discovered.filter((model) => !model.stale).length;
+          } catch (err) {
+            const detail = err instanceof Error ? err.message : String(err);
+            statusWithModels.detail = `${status.detail ?? 'reachable'}; model discovery failed (${detail})`;
+          }
+        }
+
+        statuses[substrate] = statusWithModels;
+        if (statusWithModels.ok) {
+          const modelDetail = typeof statusWithModels.modelCount === 'number'
+            ? `; ${statusWithModels.modelCount} model(s) visible`
+            : '';
+          success(`[${substrate}] connected (${statusWithModels.detail ?? 'reachable'}${modelDetail})`);
         } else {
-          warn(`[${substrate}] not ready (${status.detail ?? 'missing credentials or unreachable'})`);
+          warn(`[${substrate}] not ready (${statusWithModels.detail ?? 'missing credentials or unreachable'})`);
         }
       } catch (err) {
         const detail = err instanceof Error ? err.message : String(err);

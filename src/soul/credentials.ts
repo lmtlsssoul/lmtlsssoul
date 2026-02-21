@@ -870,26 +870,13 @@ async function promptSelect(message: string, choices: string[], initial: number 
 }
 
 async function promptMultiSelectWithFallback(message: string, choices: string[]): Promise<string[]> {
-  const response: { value: string[] } = await enquirer.prompt({
-    type: 'multiselect',
-    name: 'value',
-    message,
-    choices,
-  } as never);
-  const selected = Array.isArray(response.value) ? response.value : [];
-  if (selected.length > 0) {
-    return selected;
-  }
-
-  const fallback = await promptSelect(
-    'No selections captured. Use fallback picker?',
-    ['No', 'Yes'],
-    0
-  );
-  if (fallback !== 'Yes') {
+  if (choices.length === 0) {
     return [];
   }
-  return await fallbackTogglePicker(message, choices);
+  return await fallbackTogglePicker(
+    `${message} (Enter toggles, Done continues)`,
+    choices
+  );
 }
 
 async function fallbackTogglePicker(message: string, choices: string[]): Promise<string[]> {
