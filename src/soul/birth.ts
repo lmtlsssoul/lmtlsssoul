@@ -1032,6 +1032,106 @@ export class SoulBirthPortal {
     success(`Channel synchronization configured (${channels.length} channel(s)).`);
   }
 
+  private async captureTransmutationSetup(): Promise<void> {
+    const existing = (this.config['transmutation'] as {
+      bitcoinReceiveAddress?: string;
+      lightningAddress?: string;
+      custody?: string;
+      walletControlPolicy?: string;
+      userPolicy?: string;
+    } | undefined) ?? {};
+
+    let bitcoinReceiveAddress = typeof existing.bitcoinReceiveAddress === 'string'
+      ? existing.bitcoinReceiveAddress
+      : '';
+    let lightningAddress = typeof existing.lightningAddress === 'string'
+      ? existing.lightningAddress
+      : '';
+
+    while (true) {
+      const choice = await this.promptSelect(
+        'Transmutation setup',
+        [
+          `Bitcoin Wallet (receive)${bitcoinReceiveAddress ? ' [configured]' : ''}`,
+          `Lightning Address (send/receive)${lightningAddress ? ' [configured]' : ''}`,
+          'Done',
+        ],
+        0
+      );
+
+      if (choice === 'Done') {
+        break;
+      }
+
+      if (choice.startsWith('Bitcoin Wallet')) {
+        const value = await this.prompt(
+          'Enter Bitcoin receive address (watch-only; private keys remain with Author offline)',
+          bitcoinReceiveAddress || undefined
+        );
+        bitcoinReceiveAddress = value.trim();
+        if (bitcoinReceiveAddress) {
+          success('Bitcoin receive wallet linked.');
+        } else {
+          warn('Bitcoin receive wallet left empty.');
+        }
+        continue;
+      }
+
+      if (choice.startsWith('Lightning Address')) {
+        const value = await this.prompt(
+          'Enter Lightning address or connector (send/receive)',
+          lightningAddress || undefined
+        );
+        lightningAddress = value.trim();
+        if (lightningAddress) {
+          success('Lightning address linked.');
+        } else {
+          warn('Lightning address left empty.');
+        }
+        continue;
+      }
+    }
+
+    this.config['transmutation'] = {
+      bitcoinReceiveAddress: bitcoinReceiveAddress || undefined,
+      lightningAddress: lightningAddress || undefined,
+      custody: 'Author-held cold storage (no private keys in soul state)',
+      walletControlPolicy: 'Funds are controlled by connected wallet ownership.',
+      userPolicy: "Do not fund what you do not want it to control.",
+    };
+
+    // Preserve treasuryPolicy compatibility while keeping wallet control unconstrained by budget caps.
+    this.config['treasuryPolicy'] = {
+      mode: 'wallet_connected',
+      enforceBudgetCaps: false,
+      ownership: 'wallet_owner_controls_funds',
+      userPolicy: "Do not fund what you do not want it to control.",
+      transmutation: this.config['transmutation'],
+    };
+
+    const configuredCount = [bitcoinReceiveAddress, lightningAddress].filter((value) => value.length > 0).length;
+    success(`Transmutation channels configured (${configuredCount}/2).`);
+  }
+
+  private async captureProtocolAgreement(): Promise<void> {
+    const choice = await this.promptSelect(
+      'I understand and agree to the entire lmtlss soul protocol and all its reach.',
+      ['Agree and continue', 'Cancel incarnation'],
+      0
+    );
+
+    if (choice !== 'Agree and continue') {
+      throw new Error('Protocol agreement required to complete incarnation.');
+    }
+
+    this.config['protocolAgreement'] = {
+      accepted: true,
+      acceptedAt: new Date().toISOString(),
+      statement: 'I understand and agree to the entire lmtlss soul protocol and all its reach.',
+    };
+    success('Protocol agreement sealed.');
+  }
+
   private async captureProviderAuthAndModels(): Promise<void> {
     const result = await runProviderCredentialSetupMenu({
       stateDir: getStateDir(),
@@ -1386,17 +1486,14 @@ export class SoulBirthPortal {
     log('---');
 
     log('Step 7/9: Transmutation');
-    this.config['treasuryPolicy'] = await this.prompt(
-      'Enter transmutation policy (JSON, optional)',
-      '{}'
-    );
-    success('Transmutation policy captured.');
+    await this.captureTransmutationSetup();
     log('---');
 
     log('Step 8/9: True Name & Will');
     this.config['soulName'] = await this.prompt('Declare True Name');
     this.config['soulObjective'] = await this.prompt('Declare Will (one sentence: what this soul exists to do)');
     success(`True Name "${String(this.config['soulName'])}" and Will "${String(this.config['soulObjective'])}" sealed.`);
+    await this.captureProtocolAgreement();
     log('---');
 
     log('Step 9/9: Incarnation');
@@ -1506,6 +1603,8 @@ export class SoulBirthPortal {
         soulObjective,
         birthday: this.config['birthday'],
         astrologyChart: this.config['astrologyChart'],
+        transmutation: this.config['transmutation'],
+        protocolAgreement: this.config['protocolAgreement'],
         latticeSeeded: { nodes: latticeStats.nodes, edges: latticeStats.edges },
       },
     });
