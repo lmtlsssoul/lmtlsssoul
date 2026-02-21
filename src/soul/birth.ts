@@ -1263,7 +1263,7 @@ export class SoulBirthPortal {
     }
     log('---');
 
-    log('Step 5/9: Daemons');
+    log('Step 5/9: Machine Elves');
     const roleAssignments: Record<string, string> = {};
     const assignmentCandidates = liveDiscovered.length > 0 ? liveDiscovered : discovered;
     const bySubstrate = new Map<string, Array<{ modelId: string; stale: boolean }>>();
@@ -1376,7 +1376,7 @@ export class SoulBirthPortal {
     }
 
     this.config['roleAssignments'] = roleAssignments;
-    success('Agent role assignments stored.');
+    success('Machine Elf role assignments stored.');
     log('---');
 
     log('Step 6/9: Communion');
