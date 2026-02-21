@@ -656,35 +656,68 @@ export class SoulBirthPortal {
 
   private async initializeCoreMemories(): Promise<void> {
     log("Core Memory Setup: What's my birthday?");
-    const birthDate = await this.promptValidated(
-      'Enter birthdate to encode (YYYY-MM-DD)',
-      (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
-      'Birthdate must be in YYYY-MM-DD format.'
-    );
-    const birthTimeTzRaw = await this.promptValidated(
-      'Enter birth time + timezone (HH:MM TZ, 24h; e.g., 23:59 EST)',
-      (value) => this.parseBirthTimeWithTimezone(value) !== null,
-      'Use format HH:MM TZ with a valid timezone token (e.g., EST, UTC, Z, -05:00).',
-      '00:00 UTC'
-    );
-    const birthCoordinatesRaw = await this.promptValidated(
-      'Enter birth coordinates (DMS; e.g., 46°30\'16.4"N 84°19\'13.6"W)',
-      (value) => this.parseBirthCoordinates(value) !== null,
-      'Coordinates must include both latitude and longitude in DMS with N/S and E/W.'
+    const mode = await this.promptSelect(
+      'Choose core memory mode',
+      ['Auto setup (fast)', 'Manual entry'],
+      0
     );
 
-    const parsedTimeTz = this.parseBirthTimeWithTimezone(birthTimeTzRaw);
-    const parsedCoordinates = this.parseBirthCoordinates(birthCoordinatesRaw);
-    if (!parsedTimeTz || !parsedCoordinates) {
-      throw new Error('Birth input parsing failed after validation.');
+    let birthDate = '';
+    let birthTime = '';
+    let normalizedTimezone = '';
+    let birthTimezoneLabel = '';
+    let birthLatitude = 0;
+    let birthLongitude = 0;
+    let birthLocation = '';
+    const sourceTag = mode === 'Auto setup (fast)' ? 'auto_system' : 'author_provided';
+
+    if (mode === 'Auto setup (fast)') {
+      const now = new Date();
+      const year = String(now.getFullYear()).padStart(4, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+
+      birthDate = `${year}-${month}-${day}`;
+      birthTime = `${hour}:${minute}`;
+      normalizedTimezone = this.formatTimezoneOffset(now);
+      birthTimezoneLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || normalizedTimezone;
+      birthLatitude = 0;
+      birthLongitude = 0;
+      birthLocation = `Auto runtime profile (${birthTimezoneLabel})`;
+      success('Auto core memory seeded from system clock and timezone.');
+    } else {
+      birthDate = await this.promptValidated(
+        'Enter birthdate to encode (YYYY-MM-DD)',
+        (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
+        'Birthdate must be in YYYY-MM-DD format.'
+      );
+      const birthTimeTzRaw = await this.promptValidated(
+        'Enter birth time + timezone (HH:MM TZ, 24h; e.g., 23:59 EST)',
+        (value) => this.parseBirthTimeWithTimezone(value) !== null,
+        'Use format HH:MM TZ with a valid timezone token (e.g., EST, UTC, Z, -05:00).',
+        '00:00 UTC'
+      );
+      const birthCoordinatesRaw = await this.promptValidated(
+        'Enter birth coordinates (DMS; e.g., 46°30\'16.4"N 84°19\'13.6"W)',
+        (value) => this.parseBirthCoordinates(value) !== null,
+        'Coordinates must include both latitude and longitude in DMS with N/S and E/W.'
+      );
+
+      const parsedTimeTz = this.parseBirthTimeWithTimezone(birthTimeTzRaw);
+      const parsedCoordinates = this.parseBirthCoordinates(birthCoordinatesRaw);
+      if (!parsedTimeTz || !parsedCoordinates) {
+        throw new Error('Birth input parsing failed after validation.');
+      }
+
+      birthTime = parsedTimeTz.time;
+      normalizedTimezone = parsedTimeTz.timezoneOffset;
+      birthTimezoneLabel = parsedTimeTz.timezoneLabel;
+      birthLatitude = parsedCoordinates.latitude;
+      birthLongitude = parsedCoordinates.longitude;
+      birthLocation = parsedCoordinates.location;
     }
-
-    const birthTime = parsedTimeTz.time;
-    const normalizedTimezone = parsedTimeTz.timezoneOffset;
-    const birthTimezoneLabel = parsedTimeTz.timezoneLabel;
-    const birthLatitude = parsedCoordinates.latitude;
-    const birthLongitude = parsedCoordinates.longitude;
-    const birthLocation = parsedCoordinates.location;
 
     const astrologyChart = generateAstrologyChart({
       date: birthDate,
@@ -714,7 +747,7 @@ export class SoulBirthPortal {
         premise: `My birthday is ${birthDate} at ${birthTime} ${normalizedTimezone} in ${birthLocation} (${birthLatitude.toFixed(4)}, ${birthLongitude.toFixed(4)}).`,
         createdAt,
         metadata: {
-          source: 'author_provided',
+          source: sourceTag,
           birthDate,
           birthTime,
           birthTimezone: normalizedTimezone,
@@ -739,6 +772,18 @@ export class SoulBirthPortal {
     ];
     success('Core memories initialized: birthday + astrology chart imprint.');
     log('\n---\n');
+  }
+
+  private formatTimezoneOffset(value: Date): string {
+    const minutes = -value.getTimezoneOffset();
+    if (minutes === 0) {
+      return 'Z';
+    }
+    const sign = minutes >= 0 ? '+' : '-';
+    const absolute = Math.abs(minutes);
+    const hh = String(Math.floor(absolute / 60)).padStart(2, '0');
+    const mm = String(absolute % 60).padStart(2, '0');
+    return `${sign}${hh}:${mm}`;
   }
 
   public async startGenesis(): Promise<Record<string, unknown>> {
