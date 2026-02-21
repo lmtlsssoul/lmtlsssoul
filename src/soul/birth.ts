@@ -551,6 +551,7 @@ export class SoulBirthPortal {
 
     log('Step 1/8: Substrate Connection & Authentication');
     await this.captureSubstrateConfig();
+    log('Step 2 is independent from Step 1 probe results.');
     log('\n---\n');
 
     log('Step 2/8: Tool Keys & Search Connectors (Optional)');
@@ -561,27 +562,39 @@ export class SoulBirthPortal {
     log('Scanning authenticated substrates...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
-    this.config['discoveredModels'] = discovered.map((model) => `${model.substrate}:${model.modelId}`);
-    success(`Discovered ${discovered.length} callable model(s).`);
+    const liveDiscovered = discovered.filter((model) => !model.stale);
+    const cachedCount = discovered.length - liveDiscovered.length;
+    this.config['discoveredModels'] = discovered.map((model) =>
+      `${model.substrate}:${model.modelId}${model.stale ? ' [cached]' : ''}`
+    );
+    success(`Model registry refreshed: ${liveDiscovered.length} live + ${cachedCount} cached model(s).`);
     if (discovered.length === 0) {
       warn('No models discovered. Is Ollama running? Try: ollama serve');
       warn('You can assign models manually later: soul models scan');
+    } else if (liveDiscovered.length === 0) {
+      warn('No live models were reachable during this scan. Showing cached model list for role assignment.');
     }
     log('\n---\n');
 
     log('Step 4/8: Agent Role Assignment');
     const roleAssignments: Record<string, string> = {};
-    const bySubstrate = new Map<string, string[]>();
-    for (const model of discovered) {
-      if (model.stale) continue;
+    const assignmentCandidates = liveDiscovered.length > 0 ? liveDiscovered : discovered;
+    const bySubstrate = new Map<string, Array<{ modelId: string; stale: boolean }>>();
+    for (const model of assignmentCandidates) {
       const list = bySubstrate.get(model.substrate) ?? [];
-      if (!list.includes(model.modelId)) {
-        list.push(model.modelId);
+      const existing = list.find((entry) => entry.modelId === model.modelId);
+      if (!existing) {
+        list.push({
+          modelId: model.modelId,
+          stale: Boolean(model.stale),
+        });
+      } else if (existing.stale && !model.stale) {
+        existing.stale = false;
       }
       bySubstrate.set(model.substrate, list);
     }
     for (const list of bySubstrate.values()) {
-      list.sort((a, b) => a.localeCompare(b));
+      list.sort((a, b) => a.modelId.localeCompare(b.modelId));
     }
 
     const providerOrder = ['ollama', 'openai', 'anthropic', 'xai'];
@@ -621,16 +634,33 @@ export class SoulBirthPortal {
         continue;
       }
 
+      const modelChoiceToId = new Map<string, string>();
+      const modelChoices: string[] = [];
+      for (const providerModel of providerModels) {
+        const baseLabel = providerModel.stale
+          ? `${providerModel.modelId} [cached]`
+          : providerModel.modelId;
+        let label = baseLabel;
+        let index = 2;
+        while (modelChoiceToId.has(label)) {
+          label = `${baseLabel} (${index})`;
+          index += 1;
+        }
+        modelChoiceToId.set(label, providerModel.modelId);
+        modelChoices.push(label);
+      }
+
       const modelChoice = await this.promptSelect(
         `Select model for role "${role}" (${providerChoice})`,
-        [...providerModels, 'skip'],
+        [...modelChoices, 'skip'],
         0
       );
       if (modelChoice === 'skip') {
         continue;
       }
 
-      const ref = `${providerChoice}:${modelChoice}`;
+      const resolvedModelId = modelChoiceToId.get(modelChoice) ?? modelChoice;
+      const ref = `${providerChoice}:${resolvedModelId}`;
       try {
         await setModelForRole(role, ref, {
           availableModels: discovered,
