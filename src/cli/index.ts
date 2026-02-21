@@ -724,8 +724,8 @@ async function runRootPortalMenu(): Promise<void> {
     'Show Status',
     'Configure Credentials',
     'Scan Minds',
-    'Start Daemon (runtime)',
-    'Stop Daemon (runtime)',
+    'Start Daemon (the other kind)',
+    'Stop Daemon (the other kind)',
     'Run Another Soul Command',
     'Show Help',
     'Exit',
@@ -774,11 +774,11 @@ async function runRootPortalMenu(): Promise<void> {
       await runSoulSubcommand(['models', 'scan']);
       continue;
     }
-    if (choice === 'Start Daemon (runtime)') {
+    if (choice === 'Start Daemon (the other kind)') {
       await runSoulSubcommand(['start']);
       continue;
     }
-    if (choice === 'Stop Daemon (runtime)') {
+    if (choice === 'Stop Daemon (the other kind)') {
       await runSoulSubcommand(['stop']);
       continue;
     }
