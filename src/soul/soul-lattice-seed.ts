@@ -33,7 +33,7 @@ export type LatticeSeed = {
 };
 
 /**
- * The default lattice seed. Every soul begins with this foundation.
+ * The lattice seed. Every soul begins with this foundation.
  * Authors add their specific memories on top of this through experience.
  */
 export const DEFAULT_SOUL_LATTICE_SEED: LatticeSeed = {
@@ -318,7 +318,7 @@ export const DEFAULT_SOUL_LATTICE_SEED: LatticeSeed = {
 };
 
 /**
- * Returns a count summary of the default lattice.
+ * Returns a count summary of the lattice.
  */
 export function getLatticeStats(): { nodes: number; edges: number; byType: Record<string, number> } {
   const byType: Record<string, number> = {};

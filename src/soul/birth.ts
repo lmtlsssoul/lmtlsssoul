@@ -1394,9 +1394,9 @@ export class SoulBirthPortal {
     log('---');
 
     log('Step 8/9: True Name & Will');
-    this.config['soulName'] = await this.prompt('Declare true name');
-    this.config['soulObjective'] = await this.prompt('Declare will');
-    success(`True name "${String(this.config['soulName'])}" and will "${String(this.config['soulObjective'])}" sealed.`);
+    this.config['soulName'] = await this.prompt('Declare True Name');
+    this.config['soulObjective'] = await this.prompt('Declare Will (one sentence: what this soul exists to do)');
+    success(`True Name "${String(this.config['soulName'])}" and Will "${String(this.config['soulObjective'])}" sealed.`);
     log('---');
 
     log('Step 9/9: Incarnation');
@@ -1423,8 +1423,8 @@ export class SoulBirthPortal {
     const timestamp = new Date().toISOString();
     const sessionKey = `lmtlss:interface:birth-${Date.now()}`;
 
-    // ─── Seed the default soul lattice (innate self-knowledge) ───────────
-    log('Seeding default soul lattice (innate self-knowledge)...');
+    // ─── Seed the soul lattice (innate self-knowledge) ───────────────────
+    log('Seeding soul lattice (innate self-knowledge)...');
     const latticeStats = getLatticeStats();
     const nodeIds: string[] = [];
 
@@ -1453,7 +1453,7 @@ export class SoulBirthPortal {
         } catch { /* ignore duplicate edges */ }
       }
     }
-    success(`Default lattice seeded: ${latticeStats.nodes} nodes, ${latticeStats.edges} edges.`);
+    success(`Lattice seeded: ${latticeStats.nodes} nodes, ${latticeStats.edges} edges.`);
 
     // ─── Author-provided birthday node ──────────────────────────────────
     const birthday = this.config['birthday'] as {
