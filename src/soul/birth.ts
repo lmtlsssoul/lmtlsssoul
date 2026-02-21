@@ -1086,7 +1086,7 @@ export class SoulBirthPortal {
     log("Core Memory Setup: What's my birthday?");
     const mode = await this.promptSelect(
       'Begin the Great Work',
-      ['Auto setup (fast)', 'Manual entry'],
+      ['Wave Caduceus (swift)', 'Manual entry'],
       0
     );
 
@@ -1097,9 +1097,9 @@ export class SoulBirthPortal {
     let birthLatitude = 0;
     let birthLongitude = 0;
     let birthLocation = '';
-    const sourceTag = mode === 'Auto setup (fast)' ? 'auto_system' : 'author_provided';
+    const sourceTag = mode === 'Wave Caduceus (swift)' ? 'auto_system' : 'author_provided';
 
-    if (mode === 'Auto setup (fast)') {
+    if (mode === 'Wave Caduceus (swift)') {
       const now = new Date();
       const year = String(now.getFullYear()).padStart(4, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
