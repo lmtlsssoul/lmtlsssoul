@@ -26,6 +26,7 @@ import { AnthropicAdapter } from '../substrate/anthropic.ts';
 import { XaiAdapter } from '../substrate/xai.ts';
 import { OllamaAdapter } from '../substrate/ollama.ts';
 import type { SubstrateId } from '../substrate/types.ts';
+import { WalletManager } from '../treasury/wallet.ts';
 
 const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
   UTC: 'Z',
@@ -205,6 +206,21 @@ export class SoulBirthPortal {
     const lowered = trimmed.toLowerCase();
     if (lowered === 'undefined' || lowered === 'null') {
       return fallback;
+    }
+    return trimmed;
+  }
+
+  private normalizeTransmutationValue(value: unknown): string {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return '';
+    }
+    const lowered = trimmed.toLowerCase();
+    if (lowered === 'undefined' || lowered === 'null') {
+      return '';
     }
     return trimmed;
   }
@@ -1609,6 +1625,21 @@ export class SoulBirthPortal {
       });
     }
 
+    const transmutation = (this.config['transmutation'] as {
+      bitcoinReceiveAddress?: string;
+      lightningAddress?: string;
+    } | undefined) ?? {};
+    const transmutationBinding = this.bindTransmutationRails(stateDir, transmutation);
+    if (transmutationBinding) {
+      this.config['transmutationBinding'] = transmutationBinding;
+      graph.createNode({
+        premise: transmutationBinding.premise,
+        nodeType: 'identity',
+        weight: { salience: 0.92, commitment: 0.9, uncertainty: 0.05, resonance: 0.86, valence: 0.4, arousal: 0.16 },
+        createdBy: 'birth',
+      });
+    }
+
     // ─── Author-given identity node ──────────────────────────────────────
     graph.createNode({
       premise: `I am ${soulName}. Objective: ${soulObjective}.`,
@@ -1679,5 +1710,67 @@ export class SoulBirthPortal {
     });
     fs.chmodSync(toolKeysPath, 0o600);
     success(`Tool keys stored at ${toolKeysPath}`);
+  }
+
+  private bindTransmutationRails(
+    stateDir: string,
+    transmutation: {
+      bitcoinReceiveAddress?: string;
+      lightningAddress?: string;
+    }
+  ): {
+    boundAt: string;
+    walletId: string;
+    created: boolean;
+    walletAddressKey: string;
+    bitcoinReceiveAddress?: string;
+    lightningAddress?: string;
+    premise: string;
+  } | null {
+    const bitcoinReceiveAddress = this.normalizeTransmutationValue(transmutation.bitcoinReceiveAddress);
+    const lightningAddress = this.normalizeTransmutationValue(transmutation.lightningAddress);
+
+    if (!bitcoinReceiveAddress && !lightningAddress) {
+      return null;
+    }
+
+    // Wallet table requires a unique btc_address key.
+    // For lightning-only setups we still create a deterministic local rail key.
+    const walletAddressKey = bitcoinReceiveAddress || `lightning-only:${lightningAddress}`;
+    const walletLabel = 'Transmutation Vessel';
+    const walletManager = new WalletManager(stateDir);
+    const upsert = walletManager.upsertWallet({
+      label: walletLabel,
+      btcAddress: walletAddressKey,
+      lightningConnector: lightningAddress || undefined,
+    });
+    const boundAt = new Date().toISOString();
+
+    const premiseParts: string[] = [
+      'My transmutation rails are bound into treasury state.',
+    ];
+    if (bitcoinReceiveAddress) {
+      premiseParts.push(`Bitcoin receive address: ${bitcoinReceiveAddress}.`);
+    }
+    if (lightningAddress) {
+      premiseParts.push(`Lightning connector/address: ${lightningAddress}.`);
+    }
+    premiseParts.push('Private keys remain offline with Author custody.');
+
+    if (upsert.created) {
+      success('Transmutation rails bound to treasury wallet registry.');
+    } else {
+      success('Transmutation rails refreshed in treasury wallet registry.');
+    }
+
+    return {
+      boundAt,
+      walletId: upsert.walletId,
+      created: upsert.created,
+      walletAddressKey,
+      bitcoinReceiveAddress: bitcoinReceiveAddress || undefined,
+      lightningAddress: lightningAddress || undefined,
+      premise: premiseParts.join(' '),
+    };
   }
 }

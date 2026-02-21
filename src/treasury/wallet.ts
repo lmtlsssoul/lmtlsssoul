@@ -55,6 +55,60 @@ export class WalletManager {
   }
 
   /**
+   * Returns wallet by btc address if present.
+   */
+  public getWalletByAddress(btcAddress: string): WalletInfo | null {
+    const normalizedAddress = btcAddress.trim();
+    if (!normalizedAddress) {
+      return null;
+    }
+    const stmt = this.db.prepare('SELECT * FROM wallets WHERE btc_address = ?');
+    const row = stmt.get(normalizedAddress) as any;
+    if (!row) return null;
+    return this.mapWallet(row);
+  }
+
+  /**
+   * Upserts a wallet using btc_address as unique key.
+   * Existing wallet label/lightning connector are updated in-place.
+   */
+  public upsertWallet(params: Omit<WalletInfo, 'walletId' | 'balanceSats' | 'createdAt' | 'updatedAt'>): {
+    walletId: string;
+    created: boolean;
+  } {
+    const normalizedAddress = params.btcAddress.trim();
+    const normalizedLabel = params.label.trim() || 'Primary Wallet';
+    const normalizedConnector = typeof params.lightningConnector === 'string'
+      ? params.lightningConnector.trim()
+      : '';
+    if (!normalizedAddress) {
+      throw new Error('btcAddress is required for upsertWallet.');
+    }
+
+    const existing = this.getWalletByAddress(normalizedAddress);
+    if (!existing) {
+      const walletId = this.registerWallet({
+        label: normalizedLabel,
+        btcAddress: normalizedAddress,
+        lightningConnector: normalizedConnector || undefined,
+      });
+      return { walletId, created: true };
+    }
+
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(
+      'UPDATE wallets SET label = ?, lightning_connector = ?, updated_at = ? WHERE wallet_id = ?'
+    );
+    stmt.run(
+      normalizedLabel,
+      normalizedConnector || null,
+      now,
+      existing.walletId
+    );
+    return { walletId: existing.walletId, created: false };
+  }
+
+  /**
    * Updates the balance of a wallet.
    */
   public updateBalance(walletId: string, balanceSats: number): void {

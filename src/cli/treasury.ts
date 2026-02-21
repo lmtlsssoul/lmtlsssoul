@@ -65,6 +65,7 @@ export function registerTreasuryCommands(program: Command) {
       console.table(wallets.map(w => ({
         Label: w.label,
         Address: w.btcAddress,
+        Lightning: w.lightningConnector ?? '--',
         'Balance (Sats)': w.balanceSats,
         Updated: w.updatedAt
       })));

@@ -44,4 +44,27 @@ describe('WalletManager', () => {
 
     expect(wallet.getTotalBalanceSats()).toBe(2000);
   });
+
+  it('should upsert wallet by address and avoid duplicates', () => {
+    const first = wallet.upsertWallet({
+      label: 'Primary',
+      btcAddress: 'bc1q-upsert',
+      lightningConnector: 'lnurlp://example',
+    });
+    expect(first.created).toBe(true);
+
+    const second = wallet.upsertWallet({
+      label: 'Primary Updated',
+      btcAddress: 'bc1q-upsert',
+      lightningConnector: 'ln-address@example.com',
+    });
+    expect(second.created).toBe(false);
+    expect(second.walletId).toBe(first.walletId);
+
+    const info = wallet.getWalletByAddress('bc1q-upsert');
+    expect(info?.walletId).toBe(first.walletId);
+    expect(info?.label).toBe('Primary Updated');
+    expect(info?.lightningConnector).toBe('ln-address@example.com');
+    expect(wallet.listWallets()).toHaveLength(1);
+  });
 });
