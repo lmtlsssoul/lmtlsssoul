@@ -333,6 +333,13 @@ export async function main() {
       launchTerminalArt(options.python);
     });
 
+  // Hard fast-path: plain `soul` should only open the scrying terminal
+  // and should not parse/enter other program flows.
+  if (process.argv.slice(2).length === 0) {
+    await launchTerminalArtBlocking();
+    return;
+  }
+
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
