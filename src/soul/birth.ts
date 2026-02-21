@@ -355,7 +355,7 @@ export class SoulBirthPortal {
 
   private async captureSubstrateConfig(): Promise<void> {
     const choice = await this.promptSelect(
-      'Choose mind substrate mode',
+      'Choose Substrata',
       [
         'Eidolon (recommended)',
         'Manual provider/model setup',
@@ -379,7 +379,7 @@ export class SoulBirthPortal {
           catalogLastRefreshed: new Date().toISOString(),
         };
       }
-      success('Mind substrate initialized via Eidolon profile.');
+      success('Mind substrata initialized via Eidolon profile.');
       return;
     }
 
@@ -394,14 +394,14 @@ export class SoulBirthPortal {
       };
       this.config['substrateSetupMode'] = 'manual';
       this.autoAssignedModelRef = null;
-      success(`Substrate config captured (${selected.join(', ')}).`);
+      success(`Substrata config captured (${selected.join(', ')}).`);
       return;
     }
     warn('Unknown setup selection. Falling back to Eidolon.');
     this.substrateSetupMode = 'auto';
     this.config['substrateConfig'] = await this.buildAutoSubstrateConfig();
     this.config['substrateSetupMode'] = 'auto';
-    success('Mind substrate initialized via Eidolon profile.');
+    success('Mind substrata initialized via Eidolon profile.');
   }
 
   private buildAutoEnabledSubstrates(): SubstrateId[] {
@@ -416,7 +416,7 @@ export class SoulBirthPortal {
       const choices = all.map((substrate) => `${selected.has(substrate) ? '[x]' : '[ ]'} ${substrate}`);
       choices.push('Done');
       const pick = await this.promptSelect(
-        'Select enabled substrates (toggle entries, then Done)',
+        'Select enabled substrata (toggle entries, then Done)',
         choices,
         0
       );
@@ -441,7 +441,7 @@ export class SoulBirthPortal {
       return out;
     }
 
-    warn('No substrates selected. Defaulting to ollama.');
+    warn('No substrata selected. Defaulting to ollama.');
     return ['ollama'];
   }
 
@@ -908,7 +908,7 @@ export class SoulBirthPortal {
     }>> = {};
     let connectedCount = 0;
 
-    log('Running substrate authentication probe...');
+    log('Running substrata authentication probe...');
     for (const substrate of enabled) {
       const adapter = adapters[substrate];
       if (!adapter) {
@@ -952,7 +952,7 @@ export class SoulBirthPortal {
     }
 
     if (connectedCount === 0) {
-      log('No substrate connections detected in this probe.');
+      log('No substrata connections detected in this probe.');
     }
 
     this.config['substrateAuth'] = {
@@ -1084,7 +1084,7 @@ export class SoulBirthPortal {
   private async initializeCoreMemories(): Promise<void> {
     log("Core Memory Setup: What's my birthday?");
     const mode = await this.promptSelect(
-      'Choose core memory mode',
+      'Begin the Great Work',
       ['Auto setup (fast)', 'Manual entry'],
       0
     );
@@ -1247,7 +1247,7 @@ export class SoulBirthPortal {
     log('---');
 
     log('Step 4/9: Mindstrum');
-    log('Scanning authenticated substrates...');
+    log('Scanning authenticated substrata...');
     const modelsBySubstrate = await scanForModels({ persist: true });
     const discovered = Object.values(modelsBySubstrate).flat();
     const liveDiscovered = discovered.filter((model) => !model.stale);
@@ -1313,7 +1313,7 @@ export class SoulBirthPortal {
       for (const role of AGENT_ROLES) {
         if (discoveredProviders.length === 0) {
           const fallback = await this.prompt(
-            `Assign model reference for role "${role}" (<substrate>:<modelId>)`,
+            `Assign model reference for role "${role}" (<substrata>:<modelId>)`,
             AUTO_DEFAULT_OLLAMA_MODEL_REF
           );
           if (!fallback) continue;

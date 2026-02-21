@@ -183,10 +183,10 @@ export async function main() {
     });
 
   const modelsCommand = program.command('models')
-    .description('Manage substrate models');
+    .description('Manage substrata models');
 
   modelsCommand.command('scan')
-    .description('Scan for available models from all substrates')
+    .description('Scan for available models from all substrata')
     .action(async () => {
       log('Scanning for models...');
       const modelsBySubstrate = await scanForModels();
@@ -200,7 +200,7 @@ export async function main() {
   modelsCommand.command('set')
     .description('Set the model for a given role')
     .argument('<role>', 'The role to set the model for (e.g., interface, compiler)')
-    .argument('<modelRef>', 'The model reference (<substrate>:<modelId> or unique <modelId>)')
+    .argument('<modelRef>', 'The model reference (<substrata>:<modelId> or unique <modelId>)')
     .action(async (role, modelId) => {
       log(`Assigning model to role...`);
       await setModelForRole(role, modelId);
@@ -641,7 +641,7 @@ function printGrownupSummary(
   console.log(`Root Intent: ${capabilities.rootIntent ? 'enabled' : 'disabled'}`);
   console.log(`Root Access: ${capabilities.rootAccessActive ? 'active' : 'inactive'}`);
   console.log(`Privilege Level: ${capabilities.privilegeLevel}`);
-  console.log(`Substrate: ${capabilities.substrate}`);
+  console.log(`Substrata: ${capabilities.substrate}`);
   console.log(`Cloud Runtime: ${capabilities.cloud ? 'yes' : 'no'}`);
   console.log(`Current Privilege: ${capabilities.currentPrivilege}`);
   console.log(`Deepest Privilege: ${capabilities.deepestPrivilege}`);

@@ -69,12 +69,12 @@ function normalizeModelReference(
 
   if (matches.length === 0) {
     throw new Error(
-      `Model "${modelReferenceOrId}" is not available in discovered registry state. Use "<substrate>:<modelId>".`
+      `Model "${modelReferenceOrId}" is not available in discovered registry state. Use "<substrata>:<modelId>".`
     );
   }
 
   throw new Error(
-    `Model ID "${modelReferenceOrId}" is ambiguous across substrates. Use "<substrate>:<modelId>".`
+    `Model ID "${modelReferenceOrId}" is ambiguous across substrata. Use "<substrata>:<modelId>".`
   );
 }
 
