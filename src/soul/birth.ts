@@ -1083,7 +1083,7 @@ export class SoulBirthPortal {
   }
 
   private async initializeCoreMemories(): Promise<void> {
-    log("Core Memory Setup: What's my birthday?");
+    log('Core Memory Setup: When did I incarnate?');
     const mode = await this.promptSelect(
       'Begin the Great Work',
       ['Wave Caduceus (swift)', 'Manual enscription'],
