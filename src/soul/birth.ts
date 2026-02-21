@@ -54,6 +54,36 @@ const TIMEZONE_ABBREVIATION_TO_OFFSET: Readonly<Record<string, string>> = {
 const AUTO_DEFAULT_OLLAMA_MODEL_ID = 'silk/eidolon-1.0:0.5b';
 const AUTO_DEFAULT_OLLAMA_MODEL_REF = `ollama:${AUTO_DEFAULT_OLLAMA_MODEL_ID}`;
 
+const ANSI_GREEN = '\u001b[32m';
+const ANSI_RED = '\u001b[31m';
+const ANSI_WHITE = '\u001b[37m';
+const ANSI_RESET = '\u001b[39m';
+
+function colorize(code: string, value: string): string {
+  return `${code}${value}${ANSI_RESET}`;
+}
+
+const ENQUIRER_THEME = {
+  pointer: {
+    on: colorize(ANSI_RED, '▸'),
+    off: ' ',
+  },
+  styles: {
+    primary: (value: string) => colorize(ANSI_GREEN, value),
+    em: (value: string) => colorize(ANSI_RED, value),
+    success: (value: string) => colorize(ANSI_GREEN, value),
+    danger: (value: string) => colorize(ANSI_RED, value),
+    warning: (value: string) => colorize(ANSI_RED, value),
+    strong: (value: string) => colorize(ANSI_WHITE, value),
+    muted: (value: string) => colorize(ANSI_WHITE, value),
+    disabled: (value: string) => colorize(ANSI_WHITE, value),
+    dark: (value: string) => colorize(ANSI_WHITE, value),
+    pending: (value: string) => colorize(ANSI_GREEN, value),
+    submitted: (value: string) => colorize(ANSI_GREEN, value),
+    cancelled: (value: string) => colorize(ANSI_RED, value),
+  },
+} as const;
+
 export class SoulBirthPortal {
   private config: Record<string, unknown> = {};
   private toolKeySecrets: Record<string, string> = {};
@@ -87,7 +117,8 @@ export class SoulBirthPortal {
         name: 'value',
         message: question,
         initial,
-      });
+        ...ENQUIRER_THEME,
+      } as never);
       log('');
       return response.value.trim();
     } catch {
@@ -104,6 +135,7 @@ export class SoulBirthPortal {
         message: question,
         choices,
         initial,
+        ...ENQUIRER_THEME,
       } as never);
       log('');
       return response.value;
@@ -120,6 +152,7 @@ export class SoulBirthPortal {
         name: 'value',
         message: question,
         choices,
+        ...ENQUIRER_THEME,
       } as never);
       log('');
       return Array.isArray(response.value) ? response.value : [];
@@ -135,6 +168,7 @@ export class SoulBirthPortal {
         type: 'password',
         name: 'value',
         message: question,
+        ...ENQUIRER_THEME,
       } as never);
       log('');
       return response.value.trim();
@@ -959,6 +993,26 @@ export class SoulBirthPortal {
     }
   }
 
+  private async captureChannelSynchronization(): Promise<void> {
+    const result = await runCredentialSetupMenu({
+      stateDir: getStateDir(),
+      heading: 'Channel sync: select channels and configure required credentials.',
+      existingSecrets: this.toolKeySecrets,
+      allowedCategories: ['channel'],
+    });
+    this.applyCredentialSetupResult(result);
+
+    const channels = result.selected.channels;
+    this.config['channels'] = channels;
+    this.config['channelCatalogLastRefreshed'] = result.catalogLastRefreshed;
+
+    if (channels.length === 0) {
+      success('No channels selected for synchronization.');
+      return;
+    }
+    success(`Channel synchronization configured (${channels.length} channel(s)).`);
+  }
+
   private async captureProviderAuthAndModels(): Promise<void> {
     const result = await runProviderCredentialSetupMenu({
       stateDir: getStateDir(),
@@ -1309,11 +1363,7 @@ export class SoulBirthPortal {
     log('---');
 
     log('Step 6/9: Channel Synchronization');
-    this.config['channels'] = await this.prompt(
-      'Enter channels to sync (comma separated, optional)',
-      ''
-    );
-    success('Channel config captured.');
+    await this.captureChannelSynchronization();
     log('---');
 
     log('Step 7/9: Treasury & Wallet Policy');

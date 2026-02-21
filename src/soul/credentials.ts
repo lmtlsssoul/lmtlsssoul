@@ -6,6 +6,36 @@ import { loadRegistryState, refreshModelRegistry, saveRegistryState } from '../s
 import type { SubstrateId } from '../substrate/types.ts';
 import { warn } from './branding.ts';
 
+const ANSI_GREEN = '\u001b[32m';
+const ANSI_RED = '\u001b[31m';
+const ANSI_WHITE = '\u001b[37m';
+const ANSI_RESET = '\u001b[39m';
+
+function colorize(code: string, value: string): string {
+  return `${code}${value}${ANSI_RESET}`;
+}
+
+const ENQUIRER_THEME = {
+  pointer: {
+    on: colorize(ANSI_RED, '▸'),
+    off: ' ',
+  },
+  styles: {
+    primary: (value: string) => colorize(ANSI_GREEN, value),
+    em: (value: string) => colorize(ANSI_RED, value),
+    success: (value: string) => colorize(ANSI_GREEN, value),
+    danger: (value: string) => colorize(ANSI_RED, value),
+    warning: (value: string) => colorize(ANSI_RED, value),
+    strong: (value: string) => colorize(ANSI_WHITE, value),
+    muted: (value: string) => colorize(ANSI_WHITE, value),
+    disabled: (value: string) => colorize(ANSI_WHITE, value),
+    dark: (value: string) => colorize(ANSI_WHITE, value),
+    pending: (value: string) => colorize(ANSI_GREEN, value),
+    submitted: (value: string) => colorize(ANSI_GREEN, value),
+    cancelled: (value: string) => colorize(ANSI_RED, value),
+  },
+} as const;
+
 export type CredentialCategory = 'provider' | 'tool' | 'channel' | 'service';
 export type CredentialAuthMode = 'api_key' | 'oauth';
 
@@ -1288,7 +1318,8 @@ async function promptInput(message: string, initial?: string): Promise<string> {
     name: 'value',
     message,
     initial,
-  });
+    ...ENQUIRER_THEME,
+  } as never);
   return response.value ?? '';
 }
 
@@ -1297,6 +1328,7 @@ async function promptSecret(message: string): Promise<string> {
     type: 'password',
     name: 'value',
     message,
+    ...ENQUIRER_THEME,
   } as never);
   return response.value ?? '';
 }
@@ -1308,6 +1340,7 @@ async function promptSelect(message: string, choices: string[], initial: number 
     message,
     choices,
     initial,
+    ...ENQUIRER_THEME,
   } as never);
   return response.value;
 }

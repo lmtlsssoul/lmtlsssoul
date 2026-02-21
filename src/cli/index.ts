@@ -684,6 +684,7 @@ async function launchTerminalArtBlocking(pythonOverride?: string): Promise<void>
 
 async function runBirthPreludeMenu(pythonOverride?: string): Promise<void> {
   const green = (value: string): string => `\u001b[32m${value}\u001b[39m`;
+  const red = (value: string): string => `\u001b[31m${value}\u001b[39m`;
   while (true) {
     const response: { value: string } = await enquirer.prompt({
       type: 'select',
@@ -691,12 +692,12 @@ async function runBirthPreludeMenu(pythonOverride?: string): Promise<void> {
       message: 'Scrying terminal controls',
       promptLine: false,
       pointer: {
-        on: '\u001b[32m▸\u001b[39m',
+        on: '\u001b[31m▸\u001b[39m',
         off: ' ',
       },
       styles: {
         primary: green,
-        em: green,
+        em: red,
       },
       choices: [
         'Press ENTER to scry',
