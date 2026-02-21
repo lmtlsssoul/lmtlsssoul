@@ -71,6 +71,7 @@ const ENQUIRER_THEME = {
   styles: {
     primary: (value: string) => colorize(ANSI_GREEN, value),
     em: (value: string) => colorize(ANSI_RED, value),
+    placeholder: (value: string) => colorize(ANSI_WHITE, value),
     success: (value: string) => colorize(ANSI_GREEN, value),
     danger: (value: string) => colorize(ANSI_RED, value),
     warning: (value: string) => colorize(ANSI_RED, value),
