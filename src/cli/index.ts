@@ -26,6 +26,7 @@ import path from 'node:path';
 import os from 'node:os';
 import readline from 'node:readline';
 import { spawn } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { SubstrateAdapter } from '../substrate/types.ts';
 
@@ -720,7 +721,8 @@ function spawnTerminalArtProcess(pythonOverride?: string) {
   log('Launching scrying terminal...');
   const restoreViewport = enterTerminalArtViewport();
 
-  const child = spawn(python, [entrypoint], {
+  const launch = resolveTerminalArtLaunchCommand(python, entrypoint);
+  const child = spawn(launch.command, launch.args, {
     stdio: 'inherit',
     env: process.env,
   });
@@ -806,6 +808,7 @@ function enterTerminalArtViewport(): () => void {
     out.write('\x1b[H');        // cursor home
     out.write('\x1b[9;1t');     // maximize window
     out.write('\x1b[10;1t');    // request fullscreen mode where supported
+    requestNativeFullscreen();
   }
 
   return () => {
@@ -819,6 +822,60 @@ function enterTerminalArtViewport(): () => void {
     }
     out.write('\x1b[?25h');
   };
+}
+
+function resolveTerminalArtLaunchCommand(
+  python: string,
+  entrypoint: string
+): { command: string; args: string[] } {
+  // Keep display awake while the scrying terminal runs.
+  // Linux systemd-inhibit path.
+  if (process.platform === 'linux' && commandExists('systemd-inhibit')) {
+    return {
+      command: 'systemd-inhibit',
+      args: [
+        '--what=idle:sleep',
+        '--mode=block',
+        '--why=lmtlss soul scrying terminal',
+        python,
+        entrypoint,
+      ],
+    };
+  }
+
+  // macOS caffeinate path.
+  if (process.platform === 'darwin' && commandExists('caffeinate')) {
+    return {
+      command: 'caffeinate',
+      args: ['-dimsu', python, entrypoint],
+    };
+  }
+
+  return { command: python, args: [entrypoint] };
+}
+
+let fullscreenRequested = false;
+
+function requestNativeFullscreen(): void {
+  if (fullscreenRequested) {
+    return;
+  }
+  fullscreenRequested = true;
+
+  // Best effort: trigger actual window fullscreen via F11 on Linux/X11.
+  // If unavailable, we still keep the ANSI fullscreen request above.
+  if (process.platform === 'linux' && process.env.DISPLAY && commandExists('xdotool')) {
+    spawnSync('xdotool', ['key', '--clearmodifiers', 'F11'], {
+      stdio: 'ignore',
+    });
+  }
+}
+
+function commandExists(command: string): boolean {
+  const result = spawnSync('bash', ['-lc', `command -v ${command} >/dev/null 2>&1`], {
+    stdio: 'ignore',
+  });
+  return (result.status ?? 1) === 0;
 }
 
 function terminalSupportsWindowOps(): boolean {
