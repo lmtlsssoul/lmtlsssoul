@@ -79,7 +79,7 @@ export async function main() {
     .action(async (options: { port: string; host: string }) => {
       const state = readDaemonState();
       if (state && isProcessAlive(state.pid)) {
-        warn(`Runtime daemon (the other kind) already running (pid=${state.pid}) on ${state.host}:${state.port}.`);
+        warn(`Daemon (the other kind) already running (pid=${state.pid}) on ${state.host}:${state.port}.`);
         return;
       }
 
@@ -87,7 +87,7 @@ export async function main() {
       const port = Number.parseInt(options?.port ?? '3000', 10);
       const entrypoint = resolveDaemonEntrypoint();
 
-      log(`Summoning runtime daemon (the other kind) on ${host}:${port}...`);
+      log(`Summoning daemon (the other kind) on ${host}:${port}...`);
       const child = spawn(process.execPath, [entrypoint, 'gateway', 'start', '--host', host, '--port', String(port)], {
         detached: true,
         stdio: 'ignore',
@@ -95,7 +95,7 @@ export async function main() {
       child.unref();
 
       if (!child.pid) {
-        throw new Error('Failed to start runtime daemon (the other kind) process.');
+        throw new Error('Failed to start daemon (the other kind) process.');
       }
 
       writeDaemonState({
@@ -104,7 +104,7 @@ export async function main() {
         port,
         startedAt: new Date().toISOString(),
       });
-      success(`Runtime daemon (the other kind) started (pid=${child.pid}).`);
+      success(`Daemon (the other kind) started (pid=${child.pid}).`);
     });
 
   program.command('stop')
@@ -112,15 +112,15 @@ export async function main() {
     .action(async () => {
       const state = readDaemonState();
       if (!state) {
-        warn('No runtime daemon (the other kind) state file found.');
+        warn('No daemon (the other kind) state file found.');
         return;
       }
 
       if (isProcessAlive(state.pid)) {
         process.kill(state.pid, 'SIGTERM');
-        success(`Runtime daemon (the other kind) process ${state.pid} stopped.`);
+        success(`Daemon (the other kind) process ${state.pid} stopped.`);
       } else {
-        warn(`Runtime daemon (the other kind) process ${state.pid} was not running.`);
+        warn(`Daemon (the other kind) process ${state.pid} was not running.`);
       }
 
       removeDaemonState();
@@ -134,7 +134,7 @@ export async function main() {
       const daemonRunning = state ? isProcessAlive(state.pid) : false;
       const gatewayHealth = state
         ? await getGatewayHealth(state.host, state.port)
-        : { ok: false, detail: 'Runtime daemon (the other kind) not started.' };
+        : { ok: false, detail: 'Daemon (the other kind) not started.' };
 
       const graph = new GraphDB(stateDir);
       const archive = new ArchiveDB(stateDir);
@@ -149,7 +149,7 @@ export async function main() {
           console.log(`Build Installed At: ${buildInfo.installedAt}`);
         }
       }
-      console.log(`Runtime Daemon (the other kind): ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
+      console.log(`Daemon (the other kind): ${daemonRunning ? `running (pid=${state?.pid})` : 'stopped'}`);
       console.log(`Gateway: ${gatewayHealth.ok ? 'healthy' : 'unreachable'}`);
       if (gatewayHealth.detail) {
         console.log(`Gateway Detail: ${gatewayHealth.detail}`);
@@ -621,7 +621,7 @@ function resolveDaemonEntrypoint(): string {
     }
   }
 
-  throw new Error('Unable to resolve runtime daemon (the other kind) entrypoint (soul.mjs).');
+  throw new Error('Unable to resolve daemon (the other kind) entrypoint (soul.mjs).');
 }
 
 function printGrownupModeStatus(): void {
