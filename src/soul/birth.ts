@@ -194,6 +194,21 @@ export class SoulBirthPortal {
     }
   }
 
+  private normalizeIdentityText(value: unknown, fallback: string = ''): string {
+    if (typeof value !== 'string') {
+      return fallback;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return fallback;
+    }
+    const lowered = trimmed.toLowerCase();
+    if (lowered === 'undefined' || lowered === 'null') {
+      return fallback;
+    }
+    return trimmed;
+  }
+
   private parseJsonObject(raw: string, fieldName: string): Record<string, unknown> {
     const trimmed = raw.trim();
     if (!trimmed) {
@@ -1490,9 +1505,21 @@ export class SoulBirthPortal {
     log('---');
 
     log('Step 8/9: True Name & Will');
-    this.config['soulName'] = await this.prompt('Declare True Name');
-    this.config['soulObjective'] = await this.prompt('Declare Will (one sentence: what this soul exists to do)');
-    success(`True Name "${String(this.config['soulName'])}" and Will "${String(this.config['soulObjective'])}" sealed.`);
+    const soulNameInput = await this.promptValidated(
+      'Declare True Name',
+      (value) => this.normalizeIdentityText(value).length > 0,
+      'True Name is required.'
+    );
+    const soulObjectiveInput = await this.promptValidated(
+      'Declare Will (one sentence: what this soul exists to do)',
+      (value) => this.normalizeIdentityText(value).length > 0,
+      'Will is required.'
+    );
+    const soulName = this.normalizeIdentityText(soulNameInput, 'unnamed');
+    const soulObjective = this.normalizeIdentityText(soulObjectiveInput, 'No Will declared.');
+    this.config['soulName'] = soulName;
+    this.config['soulObjective'] = soulObjective;
+    success(`True Name "${soulName}" and Will "${soulObjective}" sealed.`);
     await this.captureProtocolAgreement();
     log('---');
 
@@ -1502,7 +1529,7 @@ export class SoulBirthPortal {
     log('---');
 
     success('Incarnation Portal complete.');
-    log(`Soul "${String(this.config['soulName'])}" is born.`);
+    log(`Soul "${this.normalizeIdentityText(this.config['soulName'], 'unnamed')}" is born.`);
     log("Run 'soul kindle' (alias: soul start) to activate runtime services.");
     log("Run 'soul commune' (alias: soul chat) for interactive terminal communion.");
     return this.config;
@@ -1515,8 +1542,8 @@ export class SoulBirthPortal {
 
     const graph = new GraphDB(stateDir);
     const archive = new ArchiveDB(stateDir);
-    const soulName = String(this.config['soulName'] ?? 'unnamed');
-    const soulObjective = String(this.config['soulObjective'] ?? '');
+    const soulName = this.normalizeIdentityText(this.config['soulName'], 'unnamed');
+    const soulObjective = this.normalizeIdentityText(this.config['soulObjective'], '');
     const timestamp = new Date().toISOString();
     const sessionKey = `lmtlss:interface:birth-${Date.now()}`;
 

@@ -991,9 +991,37 @@ function groupByCategory(entries: CredentialEntry[]): Record<CredentialCategory,
 }
 
 function entryToChoiceLabel(entry: CredentialEntry): string {
-  const mode = entry.authModes.map((value) => value.toUpperCase()).join('/');
-  const source = entry.source === 'builtin' ? 'core' : entry.source;
-  return `${entry.label} [${entry.category}] [${mode}] (${source}) — ${entry.description}`;
+  const label = typeof entry.label === 'string' && entry.label.trim()
+    ? entry.label.trim()
+    : 'Unnamed entry';
+  const category = (entry.category === 'provider'
+    || entry.category === 'tool'
+    || entry.category === 'channel'
+    || entry.category === 'service')
+    ? entry.category
+    : null;
+  const mode = Array.isArray(entry.authModes)
+    ? entry.authModes
+      .filter((value): value is CredentialAuthMode => value === 'api_key' || value === 'oauth')
+      .map((value) => value.toUpperCase())
+      .join('/')
+    : '';
+  const sourceRaw = entry.source === 'builtin' ? 'core' : entry.source;
+  const source = typeof sourceRaw === 'string' && sourceRaw.trim()
+    ? sourceRaw.trim()
+    : 'catalog';
+  const description = typeof entry.description === 'string' && entry.description.trim()
+    ? entry.description.trim()
+    : 'No description available';
+  const tags: string[] = [];
+  if (category) {
+    tags.push(`[${category}]`);
+  }
+  if (mode) {
+    tags.push(`[${mode}]`);
+  }
+  const tagSuffix = tags.length > 0 ? ` ${tags.join(' ')}` : '';
+  return `${label}${tagSuffix} (${source}) — ${description}`;
 }
 
 function dedupeEntries(entries: CredentialEntry[]): CredentialEntry[] {
