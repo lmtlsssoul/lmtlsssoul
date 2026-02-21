@@ -748,6 +748,7 @@ async function captureRequirementValue(
   requirement: CredentialRequirement,
   secrets: Record<string, string>
 ): Promise<void> {
+  const treatAsSecret = requirement.secret || looksSensitive(requirement.env);
   const existing = (secrets[requirement.env] ?? process.env[requirement.env] ?? '').trim();
   if (existing) {
     const action = await promptSelect(
@@ -778,7 +779,7 @@ async function captureRequirementValue(
   }
 
   const promptMessage = `Enter ${requirement.env}${requirement.label ? ` (${requirement.label})` : ''}`;
-  const value = requirement.secret ? await promptSecret(promptMessage) : await promptInput(promptMessage);
+  const value = treatAsSecret ? await promptSecret(promptMessage) : await promptInput(promptMessage);
   if (!value.trim()) {
     return;
   }
@@ -789,6 +790,14 @@ async function configureCustomCredential(secrets: Record<string, string>): Promi
   const env = (await promptInput('Custom env var name (e.g., MY_SERVICE_API_KEY)')).trim().toUpperCase();
   if (!/^[A-Z][A-Z0-9_]{2,}$/.test(env)) {
     warn('Invalid env var name; skipped.');
+    return;
+  }
+  if (looksSensitive(env)) {
+    const value = await promptSecret(`Enter ${env}`);
+    if (!value.trim()) {
+      return;
+    }
+    secrets[env] = value.trim();
     return;
   }
   const mode = await promptSelect('Custom credential auth type', ['Secret value', 'Plain value'], 0);
@@ -878,7 +887,7 @@ function normalizeEntry(entry: CredentialEntry): CredentialEntry {
       ...requirement,
       env: requirement.env.trim().toUpperCase(),
       label: requirement.label.trim(),
-      secret: Boolean(requirement.secret),
+      secret: Boolean(requirement.secret || looksSensitive(requirement.env.trim().toUpperCase())),
       optional: Boolean(requirement.optional),
     }))
     .filter((requirement) => requirement.env.length > 0);
