@@ -2124,16 +2124,6 @@
       "weight": 0.68
     },
     {
-      "id": 213,
-      "entity": "Grand Lilith",
-      "tradition": "demon",
-      "source_title": "the-grand-seal-of-lilith",
-      "source_url": "local:/home/eebee/lmtlss_soul/art/assets/verified_sigils/raw_local/the-grand-seal-of-lilith",
-      "pbm": "the-grand-seal-of-lilith.pbm",
-      "verified": true,
-      "weight": 4.2
-    },
-    {
       "id": 214,
       "entity": "Belial",
       "tradition": "demon",

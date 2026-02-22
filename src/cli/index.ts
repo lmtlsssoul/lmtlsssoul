@@ -922,9 +922,12 @@ function handleTerminalArtSpawnError(err: Error, pythonOverride?: string): void 
 function resolveTerminalArtEntrypoint(): string {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    // Source layout: src/cli/index.ts -> ../../terminalart/art.9.py
+    // Source layout: src/cli/index.ts -> ../../terminalart/lmtlss_scryer.py
+    path.resolve(moduleDir, '../../terminalart/lmtlss_scryer.py'),
+    // Bundled layout: dist/index.js -> ../terminalart/lmtlss_scryer.py
+    path.resolve(moduleDir, '../terminalart/lmtlss_scryer.py'),
+    // Fallback: direct CPU version
     path.resolve(moduleDir, '../../terminalart/art.9.py'),
-    // Bundled layout: dist/index.js -> ../terminalart/art.9.py
     path.resolve(moduleDir, '../terminalart/art.9.py'),
   ];
 
@@ -934,7 +937,7 @@ function resolveTerminalArtEntrypoint(): string {
     }
   }
 
-  throw new Error('Unable to resolve terminal art entrypoint (terminalart/art.9.py).');
+  throw new Error('Unable to resolve terminal art entrypoint (terminalart/lmtlss_scryer.py).');
 }
 
 function resolveBuildInfo(): { ref: string; commit: string; installedAt?: string } | null {

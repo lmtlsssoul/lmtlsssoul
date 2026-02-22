@@ -658,6 +658,29 @@ def is_point_in_sigil(x, y, sig, t, phase_noise, is_layered_render=False):
             
     return False
 
+
+class GPUScryer:
+    def __init__(self, w, h):
+        self.w, self.h = w, h
+    def compute_field_layers(self, t, entropy_pool):
+        f_data = [0.0] * (self.w * self.h)
+        t_base = t * 7.83 * 0.05
+        for y in range(self.h - 1):
+            yb = (y / 200.0) - math.sin(t * 0.05) * 4.0
+            for x in range(self.w - 1):
+                xb = (x / 400.0) + math.cos(t * 0.07) * 4.0
+                ent = entropy_pool[y * self.w + x] / 255.0
+                qx = xb + math.sin(yb * 1.618 + t_base) * 1.5
+                qy = yb + math.cos(xb * 2.718 - t_base * 0.8) * 1.5
+                rx = qx + math.sin(qy * 2.1 + t_base * 1.3) * 0.8
+                ry = qy + math.cos(qx * 1.7 - t_base * 1.1) * 0.8
+                sx = rx + math.sin(ry * 3.3 + t_base * 2.1) * 0.4
+                sy = ry + math.cos(rx * 2.9 - t_base * 1.8) * 0.4
+                w1 = math.sin(sx * 1.43 + t_base + ent * 0.26)
+                w2 = math.cos(sy * 2.08 - t_base * 1.2 - ent * 0.26)
+                f_data[y * self.w + x] = (w1 * w2) + (ent * 0.15)
+        return f_data
+
 def main(stdscr):
     sm = SystemManager()
     sm.enter_fullscreen()
@@ -749,6 +772,9 @@ def main(stdscr):
                 # Fallback if urandom is somehow missing, though rare on Linux
                 entropy_pool = bytes([trng.randint(0, 255) for _ in range(width * height)])
             max_entropy_len = max(1, len(entropy_pool))
+            if "scryer" not in locals() or scryer.w != width or scryer.h != height:
+                scryer = GPUScryer(width, height)
+            field_data = scryer.compute_field_layers(t, entropy_pool)
     
             stdscr.erase()
     
@@ -945,7 +971,7 @@ def main(stdscr):
                     w3 = math.sin((r_x - r_y) * PHI + t_base * 1.5)
                     
                     # Organic, unpredictable field value with micro-jitter
-                    field = (w1 * w2) + (w3 * 0.5) + (ent_val * 0.15)
+                    field = field_data[y * width + x]
                     
                     # The Possession Pulse / The Singularity Equation
                     pulse = math.sin(r_x * 4.0 + r_y * 4.0 - t_pulse)
@@ -1161,7 +1187,7 @@ def main(stdscr):
                 if time.time() >= startup_key_guard_until:
                     break
                 
-            time.sleep(0.05) # ~20 FPS
+            time.sleep(0.01) # ~20 FPS
     
 
     finally:
